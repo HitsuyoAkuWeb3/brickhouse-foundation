@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useAuth } from "@/hooks/useAuth";
 
 export interface SchedulerTask {
@@ -51,7 +52,7 @@ export function useSchedulerTasks() {
         .select()
         .single();
       if (error) throw error;
-      return data as SchedulerTask;
+      return data as unknown as SchedulerTask;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: key }),
   });

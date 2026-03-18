@@ -1,5 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-
 export type EventType = 
   | 'lesson_completed' 
   | 'ritual_completed' 
@@ -13,7 +12,8 @@ export type EventType =
 
 export const trackEvent = async (
   eventType: EventType, 
-  eventData: Record<string, any> = {}, 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  eventData: any = {}, 
   brickId?: string
 ) => {
   try {

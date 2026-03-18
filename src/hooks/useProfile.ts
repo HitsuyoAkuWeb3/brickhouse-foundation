@@ -11,7 +11,7 @@ export interface Profile {
   email: string | null;
   name: string | null;
   avatar_url: string | null;
-  audit_scores: any | null;
+  audit_scores: Record<string, number> | null;
   birth_date: string | null;
   goals: string[] | null;
   transformation_choice: string | null;

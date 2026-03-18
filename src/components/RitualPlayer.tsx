@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Play, Pause, Sparkles, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Slider } from "@/components/ui/slider";
+import { useAudioAnalyzer } from "@/hooks/useAudioAnalyzer";
 
 export type RitualType = "morning_affirmation" | "midday_checkin" | "evening_reflection";
 
@@ -40,8 +41,14 @@ const RITUAL_CONFIGS: Record<RitualType, Step[]> = {
 
 const slideVariants = {
   initial: { opacity: 0, scale: 0.95 },
-  animate: { opacity: 1, scale: 1, transition: { duration: 0.4, ease: "easeOut" } },
+  animate: { opacity: 1, scale: 1, transition: { duration: 0.4 } },
   exit: { opacity: 0, scale: 1.05, transition: { duration: 0.2 } },
+};
+
+const AUDIO_URLS: Record<RitualType, string> = {
+  morning_affirmation: "/audio/morning-ritual.m4a",
+  midday_checkin: "/audio/midday-ritual.m4a",
+  evening_reflection: "/audio/evening-ritual.m4a",
 };
 
 interface RitualPlayerProps {
@@ -54,8 +61,9 @@ export const RitualPlayer = ({ type, onClose, onComplete }: RitualPlayerProps) =
   const { user } = useAuth();
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [data, setData] = useState<Record<string, string | number>>({});
-  const [timeLeft, setTimeLeft] = useState<number>(0);
-  const [timerActive, setTimerActive] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const { isSilent, isPlaying } = useAudioAnalyzer(audioRef);
+  const [audioStarted, setAudioStarted] = useState(false);
   const [passionMedia, setPassionMedia] = useState<string | null>(null);
 
   const steps = RITUAL_CONFIGS[type];
@@ -72,27 +80,22 @@ export const RitualPlayer = ({ type, onClose, onComplete }: RitualPlayerProps) =
     }
   }, [type, user]);
 
-  // Timer logic
-  useEffect(() => {
-    if ((currentStep.type === "timer" || currentStep.type === "passion_timer") && currentStep.duration) {
-      setTimeLeft(currentStep.duration);
-      setTimerActive(true);
-    } else {
-      setTimerActive(false);
+  // Auto-play audio once started
+  const handleStartAudio = () => {
+    if (audioRef.current) {
+      audioRef.current.play().catch(console.error);
+      setAudioStarted(true);
     }
-  }, [currentStepIndex, currentStep]);
+  };
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (timerActive && timeLeft > 0) {
-      interval = setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
-      }, 1000);
-    } else if (timerActive && timeLeft === 0) {
-      setTimerActive(false);
+  const toggleAudio = () => {
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play().catch(console.error);
     }
-    return () => clearInterval(interval);
-  }, [timerActive, timeLeft]);
+  };
 
   const handleNext = () => {
     if (currentStepIndex < steps.length - 1) {
@@ -109,14 +112,11 @@ export const RitualPlayer = ({ type, onClose, onComplete }: RitualPlayerProps) =
   };
 
   const isNextDisabled = () => {
+    if (!audioStarted) return true; // prevent advancing before audio starts
     if (currentStep.type === "input") {
       const val = data[currentStep.key as string];
       return !val || String(val).trim() === "";
     }
-    if ((currentStep.type === "timer" || currentStep.type === "passion_timer") && timerActive) {
-      return true; // wait for timer
-    }
-    // slider has a default of 5 if untouched, but we can just require interaction, or allow default
     if (currentStep.type === "slider") {
       return data[currentStep.key as string] === undefined;
     }
@@ -155,7 +155,6 @@ export const RitualPlayer = ({ type, onClose, onComplete }: RitualPlayerProps) =
         );
       case "passion_timer":
       case "timer": {
-        const progress = 1 - timeLeft / (currentStep.duration || 1);
         return (
           <div className="flex flex-col items-center justify-center py-10 relative">
             {currentStep.type === "passion_timer" && passionMedia && (
@@ -165,34 +164,37 @@ export const RitualPlayer = ({ type, onClose, onComplete }: RitualPlayerProps) =
             )}
             
             <div className="relative w-48 h-48 flex items-center justify-center">
-              <svg className="absolute inset-0 w-full h-full transform -rotate-90">
-                <circle
-                  cx="96"
-                  cy="96"
-                  r="88"
-                  className="stroke-border fill-none"
-                  strokeWidth="4"
-                />
-                <circle
-                  cx="96"
-                  cy="96"
-                  r="88"
-                  className="stroke-primary fill-none transition-all duration-1000 ease-linear"
-                  strokeWidth="8"
-                  strokeDasharray={2 * Math.PI * 88}
-                  strokeDashoffset={2 * Math.PI * 88 * (1 - progress)}
-                  strokeLinecap="round"
-                />
-              </svg>
+              <div className={cn(
+                "absolute inset-0 rounded-full border border-primary/20 transition-all duration-700",
+                isPlaying && !isSilent && "scale-110 opacity-50",
+                isPlaying && isSilent && "scale-105 opacity-20"
+              )} />
+              <div className={cn(
+                "absolute inset-4 rounded-full border border-primary/40 transition-all duration-500",
+                isPlaying && !isSilent && "scale-105 opacity-70",
+                isPlaying && isSilent && "scale-100 opacity-40"
+              )} />
               
               <div className={cn(
-                "flex flex-col items-center justify-center bg-background/80 backdrop-blur-md rounded-full w-36 h-36 z-10",
-                timerActive && "animate-pulse"
+                "flex flex-col items-center justify-center bg-background/80 backdrop-blur-md rounded-full w-36 h-36 z-10 transition-colors duration-1000",
+                isPlaying && isSilent && "bg-primary/5 border border-primary/20",
+                !isPlaying && "opacity-50"
               )}>
-                <span className="font-display text-4xl text-accent tracking-widest">{timeLeft}s</span>
-                <span className="font-body text-xs text-muted-foreground uppercase tracking-widest mt-1">
-                  {timerActive ? "Breathe" : "Done"}
-                </span>
+                {isSilent ? (
+                  <>
+                    <span className="font-display text-lg text-accent tracking-widest text-center px-4 leading-tight">Intentional Silence</span>
+                    <span className="font-body text-xs text-muted-foreground uppercase tracking-widest mt-2 animate-pulse">
+                      Breathe
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className={cn("w-6 h-6 text-primary mb-2", isPlaying && "animate-pulse")} />
+                    <span className="font-body text-xs text-muted-foreground uppercase tracking-widest mt-1 text-center px-2">
+                       {isPlaying ? "Listen & Reflect" : "Paused"}
+                    </span>
+                  </>
+                )}
               </div>
             </div>
             
@@ -207,6 +209,8 @@ export const RitualPlayer = ({ type, onClose, onComplete }: RitualPlayerProps) =
 
   return (
     <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-xl flex flex-col pt-safe-top pb-safe-bottom">
+      <audio ref={audioRef} src={AUDIO_URLS[type]} playsInline />
+      
       {/* Top Bar */}
       <div className="flex items-center justify-between px-6 py-4">
         <div className="flex items-center gap-2">
@@ -259,18 +263,35 @@ export const RitualPlayer = ({ type, onClose, onComplete }: RitualPlayerProps) =
       </div>
 
       {/* Bottom Footer */}
-      <div className="p-6 max-w-xl mx-auto w-full">
-        <button
-          onClick={handleNext}
-          disabled={isNextDisabled()}
-          className="w-full bg-gradient-pink text-foreground font-body font-bold text-sm tracking-wider uppercase px-8 py-5 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-40 flex items-center justify-center gap-3"
-        >
-          {currentStepIndex === steps.length - 1 ? (
-            <>Complete Ritual <Check className="w-5 h-5" /></>
-          ) : (
-            <>Continue <Play className="w-4 h-4 fill-current ml-1" /></>
-          )}
-        </button>
+      <div className="p-6 max-w-xl mx-auto w-full flex flex-col gap-4">
+        {!audioStarted ? (
+          <button
+            onClick={handleStartAudio}
+            className="w-full bg-primary/20 text-primary border border-primary/50 font-body font-bold text-sm tracking-wider uppercase px-8 py-5 rounded-xl hover:bg-primary/30 transition-colors flex items-center justify-center gap-3 animate-pulse"
+          >
+            Start Guided Audio <Play className="w-4 h-4 fill-current ml-1" />
+          </button>
+        ) : (
+          <div className="w-full flex items-center gap-3">
+             <button
+               onClick={toggleAudio}
+               className="h-14 w-14 bg-foreground/5 shrink-0 rounded-xl flex items-center justify-center hover:bg-foreground/10 transition-colors"
+             >
+               {isPlaying ? <Pause className="w-5 h-5 text-foreground" /> : <Play className="w-5 h-5 text-foreground pl-1" />}
+             </button>
+             <button
+               onClick={handleNext}
+               disabled={isNextDisabled()}
+               className="flex-1 bg-gradient-pink text-foreground font-body font-bold text-sm tracking-wider uppercase h-14 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-40 flex items-center justify-center gap-3"
+             >
+               {currentStepIndex === steps.length - 1 ? (
+                 <>Complete Ritual <Check className="w-5 h-5" /></>
+               ) : (
+                 <>Next Step <Check className="w-4 h-4 ml-1" /></>
+               )}
+             </button>
+          </div>
+        )}
       </div>
     </div>
   );

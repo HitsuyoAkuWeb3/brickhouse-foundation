@@ -1,16 +1,17 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { BookOpen, Sunrise, Sparkles, CalendarDays, User } from "lucide-react";
+import { BookOpen, Sunrise, Sparkles, CalendarDays, User, Home } from "lucide-react";
 
 export default function BottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
 
   const tabs = [
+    { to: "/dashboard", label: "Home", icon: Home },
     { to: "/bricks", label: "Bricks", icon: BookOpen },
     { to: "/daily-ritual", label: "Rituals", icon: Sunrise },
     { to: "/affirmations", label: "Affirmations", icon: Sparkles },
     { to: "/scheduler", label: "Scheduler", icon: CalendarDays },
-    { to: "/dashboard", label: "Profile", icon: User },
+    { to: "/profile", label: "Profile", icon: User },
   ];
 
   return (

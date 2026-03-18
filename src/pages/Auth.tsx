@@ -7,7 +7,9 @@ import { z } from "zod";
 import logo from "@/assets/brickhouse-logo.png";
 import { toast } from "sonner";
 
-type Mode = "login" | "signup" | "forgot";
+import { B2BWaitlist } from "@/components/B2BWaitlist";
+
+type Mode = "login" | "signup" | "forgot" | "b2b_waitlist";
 
 const emailSchema = z.string().trim().email("Enter a valid email").max(255);
 const passwordSchema = z.string().min(8, "Password must be at least 8 characters").max(72);
@@ -123,11 +125,13 @@ const Auth = () => {
           {mode === "login" && "Welcome Back"}
           {mode === "signup" && "Start Building"}
           {mode === "forgot" && "Reset Password"}
+          {mode === "b2b_waitlist" && "Corporate Access"}
         </h1>
         <p className="text-sm text-muted-foreground text-center mb-8">
           {mode === "login" && "Sign in to your Brickhouse"}
           {mode === "signup" && "Create your Brickhouse account"}
           {mode === "forgot" && "We'll send you a reset link"}
+          {mode === "b2b_waitlist" && "Priority team licenses & retreats"}
         </p>
 
         {mode !== "forgot" && (
@@ -180,33 +184,39 @@ const Auth = () => {
             {errors.email && <p className="text-destructive text-xs mt-1">{errors.email}</p>}
           </div>
 
-          {mode !== "forgot" && (
-            <div>
-              <input
-                type="password"
-                placeholder="Password (min 8 characters)"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                maxLength={72}
-                className="w-full bg-input border border-border rounded-lg px-4 py-3 font-body text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
-              />
-              {errors.password && <p className="text-destructive text-xs mt-1">{errors.password}</p>}
-            </div>
-          )}
+          {mode === "b2b_waitlist" ? (
+             <B2BWaitlist />
+          ) : (
+            <>
+              {mode !== "forgot" && (
+                <div>
+                  <input
+                    type="password"
+                    placeholder="Password (min 8 characters)"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    maxLength={72}
+                    className="w-full bg-input border border-border rounded-lg px-4 py-3 font-body text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
+                  />
+                  {errors.password && <p className="text-destructive text-xs mt-1">{errors.password}</p>}
+                </div>
+              )}
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full bg-gradient-pink text-foreground font-body font-bold text-sm tracking-wider uppercase py-3.5 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            {submitting
-              ? "..."
-              : mode === "login"
-              ? "Sign In"
-              : mode === "signup"
-              ? "Create Account"
-              : "Send Reset Link"}
-          </button>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full bg-gradient-pink text-foreground font-body font-bold text-sm tracking-wider uppercase py-3.5 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {submitting
+                  ? "..."
+                  : mode === "login"
+                  ? "Sign In"
+                  : mode === "signup"
+                  ? "Create Account"
+                  : "Send Reset Link"}
+              </button>
+            </>
+          )}
         </form>
 
         <div className="mt-6 text-center space-y-2">
@@ -224,6 +234,14 @@ const Auth = () => {
                   Sign up
                 </button>
               </p>
+              <div className="pt-4 border-t border-border/50 mt-4">
+                <button 
+                  onClick={() => { setMode("b2b_waitlist"); setErrors({}); }} 
+                  className="text-xs text-sov-gray/80 hover:text-sov-white transition-colors"
+                >
+                  Enterprise / Corporate Team? Join the B2B Waitlist
+                </button>
+              </div>
             </>
           )}
           {mode === "signup" && (
@@ -234,8 +252,8 @@ const Auth = () => {
               </button>
             </p>
           )}
-          {mode === "forgot" && (
-            <button onClick={() => { setMode("login"); setErrors({}); }} className="text-sm text-accent hover:underline">
+          {(mode === "forgot" || mode === "b2b_waitlist") && (
+            <button onClick={() => { setMode("login"); setErrors({}); }} className="text-sm text-accent hover:underline mt-4">
               ← Back to sign in
             </button>
           )}

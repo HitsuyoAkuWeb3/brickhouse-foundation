@@ -6,6 +6,7 @@ import { useDailyRitual } from "@/hooks/useDailyRitual";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { RitualPlayer, RitualType } from "@/components/RitualPlayer";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 const ritualItems = [
   {
@@ -42,6 +43,7 @@ const DailyRitual = () => {
   const [joyMoment, setJoyMoment] = useState("");
   const [gratitude, setGratitude] = useState("");
   const [activeRitual, setActiveRitual] = useState<RitualType | null>(null);
+  const { trackEvent } = useAnalytics();
 
   const completedCount = [
     ritual?.morning_completed,
@@ -61,6 +63,7 @@ const DailyRitual = () => {
       ritual_data: data 
     });
 
+    trackEvent('brick_completed', { ritual_type: activeRitual });
     setActiveRitual(null);
     toast.success("Brick laid 🧱");
   };
@@ -91,7 +94,10 @@ const DailyRitual = () => {
         {activeRitual && (
           <RitualPlayer 
             type={activeRitual} 
-            onClose={() => setActiveRitual(null)} 
+            onClose={() => {
+              trackEvent('ritual_abandoned', { ritual_type: activeRitual });
+              setActiveRitual(null);
+            }} 
             onComplete={handleRitualComplete} 
           />
         )}
@@ -172,7 +178,10 @@ const DailyRitual = () => {
                     
                     {!done ? (
                       <button
-                        onClick={() => setActiveRitual(item.key)}
+                        onClick={() => {
+                          trackEvent('ritual_started', { ritual_type: item.key });
+                          setActiveRitual(item.key);
+                        }}
                         className="flex items-center gap-2 font-body font-bold text-[10px] tracking-widest uppercase bg-foreground/5 hover:bg-primary/20 hover:text-primary px-3 py-2 rounded-lg transition-colors"
                       >
                         Start <Play className="w-3 h-3" />

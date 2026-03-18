@@ -5,11 +5,11 @@ import { useAuth } from "@/hooks/useAuth";
 export interface PassionPick {
   id: string;
   user_id: string;
-  photo_url: string | null;
+  image_url: string | null;
   song_url: string | null;
   song_title: string | null;
-  goal_text: string | null;
-  affirmation: string | null;
+  title: string | null;
+  affirmation_text: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -45,7 +45,7 @@ export const usePassionPick = () => {
       } else {
         const { error } = await supabase
           .from("passion_picks")
-          .insert({ user_id: user!.id, ...updates });
+          .insert({ user_id: user!.id, ...updates } as any);
         if (error) throw error;
       }
     },

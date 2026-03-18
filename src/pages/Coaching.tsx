@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import logo from "@/assets/brickhouse-logo.png";
 import LandingFooter from "@/components/LandingFooter";
 import ScrollReveal from "@/components/ScrollReveal";
-import { analytics } from "@/lib/analytics";
+import { trackEvent } from "@/lib/analytics";
 
 const fadeUp = {
   initial: { opacity: 0, y: 30 },
@@ -186,10 +186,10 @@ const Coaching = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() =>
-                  analytics.ctaClicked(
-                    "Coaching DM CTA",
-                    "https://instagram.com/BrickhouseMindset"
-                  )
+                  trackEvent("cta_clicked", {
+                    label: "Coaching DM CTA",
+                    url: "https://instagram.com/BrickhouseMindset"
+                  })
                 }
                 className="inline-block bg-gradient-pink text-foreground font-body font-extrabold text-[13px] tracking-[2px] uppercase px-12 py-[18px] cursor-pointer [clip-path:polygon(8px_0%,100%_0%,calc(100%-8px)_100%,0%_100%)] hover:opacity-90 hover:-translate-y-0.5 transition-all mb-4"
               >

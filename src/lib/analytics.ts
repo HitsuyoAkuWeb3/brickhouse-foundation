@@ -1,44 +1,38 @@
-/**
- * Lightweight funnel analytics tracker.
- * Replace the `send` implementation with your analytics provider
- * (e.g. Google Analytics, Mixpanel, PostHog) when ready.
- */
+import { supabase } from "@/integrations/supabase/client";
 
-type FunnelEvent =
-  | "lead_captured"
-  | "audit_started"
-  | "audit_completed"
-  | "cta_clicked"
-  | "breakthrough_registered";
+export type EventType = 
+  | 'lesson_completed' 
+  | 'ritual_completed' 
+  | 'ritual_skipped' 
+  | 'affirmation_recorded' 
+  | 'passion_pick_activated'
+  | 'task_completed'
+  | 'task_abandoned'
+  | 'subscription_started'
+  | 'cta_clicked';
 
-interface EventPayload {
-  [key: string]: string | number | boolean | null | undefined;
-}
+export const trackEvent = async (
+  eventType: EventType, 
+  eventData: Record<string, any> = {}, 
+  brickId?: string
+) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    // We can still log anonymous events or waitlist events if user is null
+    const { error } = await supabase
+      .from('analytics_events')
+      .insert({
+        user_id: user?.id || null,
+        event_type: eventType,
+        event_data: eventData,
+        brick_id: brickId || null,
+      });
 
-const send = (event: FunnelEvent, payload?: EventPayload) => {
-  // Log to console in development
-  if (import.meta.env.DEV) {
-    console.log(`[Analytics] ${event}`, payload ?? "");
+    if (error) {
+      console.error('Analytics track error:', error);
+    }
+  } catch (err) {
+    console.error('Failed to track event:', err);
   }
-
-  // TODO: Replace with real provider
-  // Example: window.gtag?.("event", event, payload);
-  // Example: posthog.capture(event, payload);
-};
-
-export const analytics = {
-  leadCaptured: (variant: string) =>
-    send("lead_captured", { variant }),
-
-  auditStarted: (leadId?: string | null) =>
-    send("audit_started", { lead_id: leadId ?? undefined }),
-
-  auditCompleted: (scores: Record<string, number>) =>
-    send("audit_completed", scores),
-
-  ctaClicked: (label: string, destination: string) =>
-    send("cta_clicked", { label, destination }),
-
-  breakthroughRegistered: () =>
-    send("breakthrough_registered"),
 };

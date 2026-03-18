@@ -2,17 +2,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
+import { Database } from "@/integrations/supabase/types";
 
-export interface DailyRitual {
-  id: string;
-  user_id: string;
-  ritual_date: string;
-  morning_affirmation: boolean;
-  midday_checkin: boolean;
-  evening_reflection: boolean;
-  joy_moment: string | null;
-  gratitude_note: string | null;
-}
+type DailyRitualsRow = Database["public"]["Tables"]["daily_rituals"]["Row"];
+
+export type DailyRitual = Omit<DailyRitualsRow, "ritual_data"> & {
+  ritual_data: Record<string, any>;
+};
 
 export const useDailyRitual = (date?: Date) => {
   const { user } = useAuth();
@@ -26,38 +22,47 @@ export const useDailyRitual = (date?: Date) => {
       const { data, error } = await supabase
         .from("daily_rituals")
         .select("*")
-        .eq("user_id", user!.id)
-        .eq("ritual_date", today)
+        .eq("profile_id", user!.id)
+        .eq("date", today)
         .maybeSingle();
       if (error) throw error;
-      return data as DailyRitual | null;
+      if (!data) return null;
+      return {
+        ...data,
+        ritual_data: (data.ritual_data as Record<string, any>) || {}
+      } as DailyRitual;
     },
   });
 
   const upsertRitual = useMutation({
-    mutationFn: async (updates: Partial<Omit<DailyRitual, "id" | "user_id" | "ritual_date">>) => {
+    mutationFn: async (updates: Partial<Omit<DailyRitual, "id" | "profile_id" | "date" | "created_at">>) => {
       const { data: existing } = await supabase
         .from("daily_rituals")
-        .select("id")
-        .eq("user_id", user!.id)
-        .eq("ritual_date", today)
+        .select("id, ritual_data")
+        .eq("profile_id", user!.id)
+        .eq("date", today)
         .maybeSingle();
+
+      const mergedRitualData = existing 
+        ? { ...((existing.ritual_data as Record<string, any>) || {}), ...(updates.ritual_data || {}) }
+        : (updates.ritual_data || {});
 
       if (existing) {
         const { error } = await supabase
           .from("daily_rituals")
-          .update({ ...updates, updated_at: new Date().toISOString() })
+          .update({ ...updates, ritual_data: mergedRitualData })
           .eq("id", existing.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("daily_rituals")
-          .insert({ user_id: user!.id, ritual_date: today, ...updates });
+          .insert({ profile_id: user!.id, date: today, ...updates, ritual_data: mergedRitualData });
         if (error) throw error;
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["daily-ritual", user?.id, today] });
+      queryClient.invalidateQueries({ queryKey: ["ritual-streak", user?.id] });
     },
   });
 
@@ -68,9 +73,9 @@ export const useDailyRitual = (date?: Date) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("daily_rituals")
-        .select("ritual_date, morning_affirmation, midday_checkin, evening_reflection")
-        .eq("user_id", user!.id)
-        .order("ritual_date", { ascending: false })
+        .select("date, morning_completed, midday_completed, evening_completed")
+        .eq("profile_id", user!.id)
+        .order("date", { ascending: false })
         .limit(90);
       if (error) throw error;
       return data;
@@ -82,12 +87,12 @@ export const useDailyRitual = (date?: Date) => {
     let count = 0;
     const now = new Date();
     for (let i = 0; i < streakData.length; i++) {
-      const d = new Date(streakData[i].ritual_date);
+      const d = new Date(streakData[i].date);
       const expected = new Date(now);
       expected.setDate(expected.getDate() - i);
       if (format(d, "yyyy-MM-dd") !== format(expected, "yyyy-MM-dd")) break;
       const r = streakData[i];
-      if (r.morning_affirmation || r.midday_checkin || r.evening_reflection) count++;
+      if (r.morning_completed || r.midday_completed || r.evening_completed) count++;
       else break;
     }
     return count;

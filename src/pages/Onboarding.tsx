@@ -420,7 +420,7 @@ const Onboarding = () => {
                   className="w-full h-full object-contain"
                   poster=""
                 >
-                  <source src="https://dl.dropboxusercontent.com/scl/fi/6znpgdleclll59ulqtxkz/Edits_App_Welcome_20260314_135437.MP4" type="video/mp4" />
+                  <source src="/welcome-video.mp4" type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
               </div>

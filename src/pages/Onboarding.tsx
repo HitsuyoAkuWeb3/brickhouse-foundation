@@ -97,15 +97,15 @@ const Onboarding = () => {
 
         const { data: profile } = await supabase
           .from("profiles")
-          .select("life_audit_scores")
+          .select("audit_scores")
           .eq("id", user.id)
           .single();
 
-        if (!profile?.life_audit_scores || Object.keys(profile.life_audit_scores).length === 0) {
+        if (!profile?.audit_scores || Object.keys(profile.audit_scores as Record<string, unknown>).length === 0) {
           await supabase
             .from("profiles")
             .update({ 
-              life_audit_scores: transferRecord.audit_scores, 
+              audit_scores: transferRecord.audit_scores, 
               updated_at: new Date().toISOString() 
             })
             .eq("id", user.id);
@@ -130,14 +130,22 @@ const Onboarding = () => {
     setSubmitting(true);
 
     try {
+      // Map the user's first goal to a valid transformation_track enum value
+      const goalToTrack = (goal: string): 'spiritual' | 'business' | 'wellness' | 'relationships' => {
+        const g = goal?.toLowerCase() || '';
+        if (g.includes('love') || g.includes('relationship')) return 'relationships';
+        if (g.includes('business') || g.includes('finance') || g.includes('book')) return 'business';
+        if (g.includes('body') || g.includes('heal')) return 'wellness';
+        return 'spiritual';
+      };
+
       const { error } = await supabase
         .from("profiles")
         .update({
           birth_date: birthDate ? format(birthDate, "yyyy-MM-dd") : null,
           goals: goals,
-          reminder_preferences: reminderPreferences,
-          life_audit_scores: lifeAuditScores,
-          passion_pick_media: passionPickMediaUrl,
+          transformation_choice: goalToTrack(goals[0] ?? ''),
+          audit_scores: lifeAuditScores,
           updated_at: new Date().toISOString(),
         })
         .eq("id", user.id);
@@ -182,7 +190,7 @@ const Onboarding = () => {
 
         {/* Step Indicator */}
         <div className="flex items-center justify-center gap-2 mb-10">
-          {([1, 2, 3, 4, 5, 6, 7] as const).map((s) => (
+          {([1, 2, 3, 4, 5, 6, 7, 8] as const).map((s) => (
             <div
               key={s}
               className={cn(
@@ -398,34 +406,55 @@ const Onboarding = () => {
           {step === 7 && (
             <motion.div key="step7" variants={stepVariants} initial="initial" animate="animate" exit="exit" className="text-center w-full">
               <h1 className="font-display text-3xl sm:text-4xl tracking-wider mb-4">
-                Watch <span className="text-gradient-pink">Your Primer</span>
+                Watch <span className="text-accent">Your Primer</span>
               </h1>
               <p className="font-body text-sm text-muted-foreground mb-8 max-w-md mx-auto">
-                Before you enter the architecture, watch this critical instruction from Che.
+                Before you enter the architecture, watch this critical instruction from Ché.
               </p>
               
-              <div className="relative aspect-video w-full rounded-2xl bg-black/50 border border-border overflow-hidden flex items-center justify-center mb-10 group cursor-pointer" onClick={() => setIsVideoPlaying(!isVideoPlaying)}>
-                {isVideoPlaying ? (
-                  <div className="absolute inset-0 bg-primary/20 flex flex-col items-center justify-center">
-                    <span className="font-display tracking-widest text-xl text-white drop-shadow-md">VIDEO PLAYING...</span>
-                    <span className="font-body text-xs mt-2 text-white/70">(Simulated Video Playback)</span>
-                  </div>
-                ) : (
-                  <>
-                    <img src="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=800&q=80" alt="Video thumbnail" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity" />
-                    <div className="relative w-16 h-16 rounded-full bg-primary/90 flex items-center justify-center backdrop-blur-sm group-hover:scale-110 transition-transform">
-                      <Play className="w-6 h-6 text-white ml-1" />
-                    </div>
-                  </>
-                )}
+              <div className="relative aspect-video w-full rounded-2xl bg-black border border-border overflow-hidden mb-10">
+                <video
+                  controls
+                  playsInline
+                  preload="metadata"
+                  className="w-full h-full object-contain"
+                  poster=""
+                >
+                  <source src="https://dl.dropboxusercontent.com/scl/fi/6znpgdleclll59ulqtxkz/Edits_App_Welcome_20260314_135437.MP4" type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
               </div>
 
               <div className="flex gap-3 justify-center">
                 <button onClick={prevStep} className="font-body text-sm text-muted-foreground hover:text-foreground transition-colors px-6 py-3">← Back</button>
                 <button
+                  onClick={nextStep}
+                  className="bg-gradient-pink text-foreground font-body font-bold text-sm tracking-wider uppercase px-8 py-3 rounded-lg hover:opacity-90 transition-opacity"
+                >
+                  Next →
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* STEP 8: FOUNDATION SET — COMPLETE */}
+          {step === 8 && (
+            <motion.div key="step8" variants={stepVariants} initial="initial" animate="animate" exit="exit" className="text-center">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-primary/15 flex items-center justify-center">
+                <CheckCircle2 className="w-10 h-10 text-primary" />
+              </div>
+              <h1 className="font-display text-3xl sm:text-4xl tracking-wider mb-4">
+                Your <span className="text-accent">Foundation</span> is Set
+              </h1>
+              <p className="font-body text-base text-muted-foreground mb-10 max-w-md mx-auto leading-relaxed">
+                Welcome to the Brickhouse. Your daily rituals, your goals, and your architecture are locked in. Time to build.
+              </p>
+              <div className="flex gap-3 justify-center">
+                <button onClick={prevStep} className="font-body text-sm text-muted-foreground hover:text-foreground transition-colors px-6 py-3">← Back</button>
+                <button
                   onClick={handleFinish}
                   disabled={submitting}
-                  className="bg-gradient-pink text-foreground font-body font-bold text-sm tracking-wider uppercase px-8 py-3 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40"
+                  className="bg-gradient-pink text-foreground font-body font-bold text-sm tracking-wider uppercase px-10 py-4 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40"
                 >
                   {submitting ? "Building Profile..." : "Enter Dashboard 🔥"}
                 </button>

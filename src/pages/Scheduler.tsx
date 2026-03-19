@@ -1,10 +1,15 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Plus, CalendarClock, Bell, BellOff, Trash2, Hammer, Heart, Sparkles, Target, CheckCircle2, Circle } from "lucide-react";
+import {
+  ArrowLeft, Plus, Bell, Trash2, Hammer, Heart, Sparkles, Target,
+  CheckCircle2, Circle, BookOpen, type LucideIcon
+} from "lucide-react";
 import { useSchedulerTasks, type SchedulerTask } from "@/hooks/useSchedulerTasks";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+
+// ─── Constants ───────────────────────────────────────────────────────────────
 
 const CATEGORIES = [
   { value: "build_it", label: "Build It", icon: Hammer, desc: "Business & Skills" },
@@ -13,10 +18,110 @@ const CATEGORIES = [
 ] as const;
 
 const TIMEFRAMES = [
-  { value: "1_week", label: "1 Week" },
+  { value: "1_week", label: "This Week" },
   { value: "1_month", label: "1 Month" },
   { value: "3_months", label: "3 Months" },
+  { value: "6_months", label: "6 Months" },
+  { value: "9_months", label: "9 Months" },
 ] as const;
+
+// ─── Goal Templates (from Ché's Spin Brief) ─────────────────────────────────
+
+interface GoalTemplate {
+  id: string;
+  title: string;
+  category: "build_it" | "feed_it" | "live_it";
+  icon: LucideIcon;
+  truth: string; // Brickhouse truth statement
+  phases: {
+    label: string;
+    timeframe: string;
+    tasks: string[];
+  }[];
+}
+
+const GOAL_TEMPLATES: GoalTemplate[] = [
+  {
+    id: "attract_love",
+    title: "Attract Love",
+    category: "live_it",
+    icon: Heart,
+    truth: "You don't chase love. You become the frequency it can't resist.",
+    phases: [
+      { label: "This Week", timeframe: "1_week", tasks: ["Complete Life Audit — Relationships score", "Write your Non-Negotiables list (10 items)", "Delete or archive 3 dead-end connections"] },
+      { label: "This Month", timeframe: "1_month", tasks: ["Read or listen to 1 attachment theory resource", "Start morning affirmation: 'I am magnetic to aligned love'", "Journal: 'What patterns do I repeat in relationships?'"] },
+      { label: "3 Months", timeframe: "3_months", tasks: ["Attend 1 social event outside your comfort zone", "Practice boundary-setting in 3 real conversations", "Create your Goddess Rx self-care ritual"] },
+      { label: "6 Months", timeframe: "6_months", tasks: ["Evaluate new connections against your Non-Negotiables", "Book a solo trip or experience to celebrate your growth", "Write a letter to your future partner"] },
+    ],
+  },
+  {
+    id: "body_transformation",
+    title: "Body Transformation",
+    category: "feed_it",
+    icon: Heart,
+    truth: "Your body is the first brick. Every discipline builds the next one.",
+    phases: [
+      { label: "This Week", timeframe: "1_week", tasks: ["Complete Life Audit — Body & Health score", "Log 3 days of meals (no judgment, just data)", "Walk 20 minutes every morning before screens"] },
+      { label: "This Month", timeframe: "1_month", tasks: ["Establish a consistent sleep schedule (±30 min)", "Replace 1 unhealthy meal habit per week", "Start body movement routine (yoga, weights, or dance)"] },
+      { label: "3 Months", timeframe: "3_months", tasks: ["Take progress photos (front, side, back)", "Complete 30-day consistency streak on any exercise", "Research supplementation for your body type"] },
+      { label: "6 Months", timeframe: "6_months", tasks: ["Hit at least 1 measurable fitness milestone", "Overhaul pantry/kitchen to reflect new standards", "Write your Body Manifesto — what your body means to you"] },
+    ],
+  },
+  {
+    id: "publish_book",
+    title: "Publish a Book",
+    category: "build_it",
+    icon: BookOpen,
+    truth: "A book is a brick. It proves you can build something that outlives the conversation.",
+    phases: [
+      { label: "This Week", timeframe: "1_week", tasks: ["Define your book's core thesis in 1 sentence", "List 10-15 chapter topics from your lived experience", "Set a daily writing block (minimum 25 minutes)"] },
+      { label: "This Month", timeframe: "1_month", tasks: ["Write 10,000+ words of raw content", "Research 3 self-publishing platforms (KDP, Lulu, IngramSpark)", "Create working title + subtitle options"] },
+      { label: "3 Months", timeframe: "3_months", tasks: ["Complete first draft (minimum 30,000 words)", "Get 2 trusted readers for honest feedback", "Design the book cover (or commission it)"] },
+      { label: "6 Months", timeframe: "6_months", tasks: ["Complete final edit and formatting", "Set up pre-order campaign", "Launch book + host a virtual release event"] },
+    ],
+  },
+  {
+    id: "build_business",
+    title: "Build / Relaunch Business",
+    category: "build_it",
+    icon: Hammer,
+    truth: "A business without architecture is just an expensive hobby. Build the infra first.",
+    phases: [
+      { label: "This Week", timeframe: "1_week", tasks: ["Define your 1-sentence value proposition", "Identify your ICP (Ideal Client Profile) in detail", "Audit your current digital presence (website, socials)"] },
+      { label: "This Month", timeframe: "1_month", tasks: ["Build or update your core landing page", "Set up your offer stack (free → mid → high-ticket)", "Launch 1 lead magnet or diagnostic tool"] },
+      { label: "3 Months", timeframe: "3_months", tasks: ["Reach first 10 paying clients or customers", "Automate onboarding and fulfillment workflows", "Build a content engine (weekly output cadence)"] },
+      { label: "6 Months", timeframe: "6_months", tasks: ["Hit revenue target of $5K/mo recurring", "Hire or contract 1 support role", "Create a 90-day scaling roadmap for next phase"] },
+    ],
+  },
+  {
+    id: "rebuild_finances",
+    title: "Rebuild Finances",
+    category: "build_it",
+    icon: Target,
+    truth: "Financial sovereignty starts with visibility. You can't manage what you refuse to measure.",
+    phases: [
+      { label: "This Week", timeframe: "1_week", tasks: ["Complete Life Audit — Business & Wealth score", "List ALL debts with balances and interest rates", "Set up a budget tracker or spreadsheet"] },
+      { label: "This Month", timeframe: "1_month", tasks: ["Cut 3 unnecessary subscriptions or expenses", "Open a dedicated savings account (even if starting at $25)", "Research 1 new income stream aligned with your skills"] },
+      { label: "3 Months", timeframe: "3_months", tasks: ["Build emergency fund to $500+", "Pay off or negotiate 1 debt balance", "Start investing in financial education (1 book or course)"] },
+      { label: "6 Months", timeframe: "6_months", tasks: ["Achieve consistent positive cash flow for 2+ months", "Create a 12-month financial roadmap", "Automate savings (pay yourself first)"] },
+    ],
+  },
+  {
+    id: "heal_rebuild",
+    title: "Heal and Rebuild",
+    category: "feed_it",
+    icon: Sparkles,
+    truth: "Healing isn't soft. It's the most aggressive renovation project you'll ever run.",
+    phases: [
+      { label: "This Week", timeframe: "1_week", tasks: ["Complete Life Audit — Spirit & Purpose score", "Identify 1 specific wound or pattern to address", "Begin a daily journaling practice (5 min minimum)"] },
+      { label: "This Month", timeframe: "1_month", tasks: ["Start a morning ritual (meditation, prayer, or breathwork)", "Read or listen to 1 healing-focused resource", "Have 1 honest conversation you've been avoiding"] },
+      { label: "3 Months", timeframe: "3_months", tasks: ["Establish consistent therapy, coaching, or support group", "Forgive or release 1 person/situation through a ritual", "Notice and document 3 behavioral pattern shifts"] },
+      { label: "6 Months", timeframe: "6_months", tasks: ["Write a letter of closure (sent or unsent)", "Create a 'new foundation' vision board for your next chapter", "Celebrate progress — host a small ceremony for yourself"] },
+    ],
+  },
+];
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const formatTime = (t?: string) => {
   if (!t) return "";
@@ -27,23 +132,34 @@ const formatTime = (t?: string) => {
   return `${display}:${m} ${ampm}`;
 };
 
+// ─── Component ───────────────────────────────────────────────────────────────
+
 const Scheduler = () => {
   const { tasks, isLoading, addTask, updateTask, deleteTask } = useSchedulerTasks();
   const [showGoalForm, setShowGoalForm] = useState(false);
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState<string>("build_it");
   const [timeframe, setTimeframe] = useState<string>("1_week");
+  const [selectedTemplate, setSelectedTemplate] = useState<GoalTemplate | null>(null);
 
-  // Filter tasks into goals and subtasks
+  // Filter tasks
   const goals = tasks.filter((t) => !t.parent_goal_id && t.reminder_type === "goal");
   const subtasks = tasks.filter((t) => t.parent_goal_id);
-  const standaloneReminders = tasks.filter((t) => !t.parent_goal_id && t.reminder_type !== "goal");
+
+  const filteredTemplates = GOAL_TEMPLATES.filter((t) => t.category === category);
 
   const resetForm = () => {
     setTitle("");
     setCategory("build_it");
     setTimeframe("1_week");
+    setSelectedTemplate(null);
     setShowGoalForm(false);
+  };
+
+  const selectTemplate = (template: GoalTemplate) => {
+    setSelectedTemplate(template);
+    setTitle(template.title);
+    setCategory(template.category);
   };
 
   const handleGenerateRoadmap = async () => {
@@ -52,7 +168,23 @@ const Scheduler = () => {
       return;
     }
 
-    // 1. Create the Parent Goal
+    // If a template is selected, generate time-phased subtasks from it.
+    // Otherwise, generate generic subtasks (backward compatible).
+    const phasedTasks = selectedTemplate
+      ? selectedTemplate.phases
+          .flatMap((phase) =>
+            phase.tasks.map((taskTitle, i) => ({
+              title: `[${phase.label}] ${taskTitle}`,
+              time_of_day: i === 0 ? "09:00:00" : i === 1 ? "13:00:00" : "18:00:00",
+              escalation_level: Math.min(i + 1, 3),
+            }))
+          )
+      : [
+          { title: "Research & Preparation", time_of_day: "09:00:00", escalation_level: 1 },
+          { title: "Execute Core Actions", time_of_day: "13:00:00", escalation_level: 2 },
+          { title: "Review & Refine", time_of_day: "18:00:00", escalation_level: 3 },
+        ];
+
     addTask.mutate(
       {
         title: title.trim(),
@@ -63,14 +195,7 @@ const Scheduler = () => {
       },
       {
         onSuccess: (newGoal) => {
-          // 2. Generate Subtasks based on timeframe (Simulation of AI Generator)
-          const generatedSubtasks = [
-            { title: "Research & Preparation", time_of_day: "09:00:00", escalation_level: 1 },
-            { title: "Execute Core Actions", time_of_day: "13:00:00", escalation_level: 2 },
-            { title: "Review & Refine", time_of_day: "18:00:00", escalation_level: 3 },
-          ];
-
-          generatedSubtasks.forEach((sub) => {
+          phasedTasks.forEach((sub) => {
             addTask.mutate({
               title: sub.title,
               category,
@@ -82,7 +207,6 @@ const Scheduler = () => {
               is_active: true,
             });
           });
-
           toast.success("Goal & Roadmap Generated 🗺️");
           resetForm();
         },
@@ -92,16 +216,12 @@ const Scheduler = () => {
 
   const toggleTaskCompletion = (t: SchedulerTask) => {
     updateTask.mutate({ id: t.id, is_completed: !t.is_completed });
-    if (!t.is_completed) {
-      toast.success("Task completed! 🎯");
-    }
+    if (!t.is_completed) toast.success("Task completed! 🎯");
   };
 
   const handleDelete = (id: string, isGoal: boolean) => {
     deleteTask.mutate(id, {
-      onSuccess: () => {
-        toast.success(isGoal ? "Goal deleted" : "Task removed");
-      },
+      onSuccess: () => toast.success(isGoal ? "Goal deleted" : "Task removed"),
     });
   };
 
@@ -147,22 +267,7 @@ const Scheduler = () => {
               className="overflow-hidden mb-8"
             >
               <div className="bg-gradient-card border border-border rounded-xl p-5 space-y-5">
-                {/* Title */}
-                <div>
-                  <label className="font-body text-[10px] text-muted-foreground uppercase tracking-wider block mb-1.5">
-                    Target Goal
-                  </label>
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="e.g. Launch my agency"
-                    maxLength={100}
-                    className="w-full bg-input border border-border rounded-lg px-3 py-2.5 font-body text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
-                  />
-                </div>
-
-                {/* Category */}
+                {/* Category Selector */}
                 <div>
                   <label className="font-body text-[10px] text-muted-foreground uppercase tracking-wider block mb-1.5">
                     Architecture Category
@@ -174,7 +279,7 @@ const Scheduler = () => {
                       return (
                         <button
                           key={c.value}
-                          onClick={() => setCategory(c.value)}
+                          onClick={() => { setCategory(c.value); setSelectedTemplate(null); setTitle(""); }}
                           className={cn(
                             "flex items-center gap-3 p-3 rounded-xl border transition-all text-left",
                             isActive
@@ -195,18 +300,76 @@ const Scheduler = () => {
                   </div>
                 </div>
 
+                {/* Goal Templates for Selected Category */}
+                {filteredTemplates.length > 0 && (
+                  <div>
+                    <label className="font-body text-[10px] text-muted-foreground uppercase tracking-wider block mb-1.5">
+                      Brickhouse Templates
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {filteredTemplates.map((t) => {
+                        const Icon = t.icon;
+                        const isActive = selectedTemplate?.id === t.id;
+                        return (
+                          <button
+                            key={t.id}
+                            onClick={() => selectTemplate(t)}
+                            className={cn(
+                              "p-3 rounded-xl border text-left transition-all",
+                              isActive
+                                ? "bg-accent/10 border-accent/40"
+                                : "bg-foreground/[0.02] border-border hover:border-accent/20"
+                            )}
+                          >
+                            <Icon className={cn("w-4 h-4 mb-1", isActive ? "text-accent" : "text-muted-foreground")} />
+                            <div className="font-display text-xs tracking-wide">{t.title}</div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Truth Statement */}
+                {selectedTemplate && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-primary/5 border border-primary/20 rounded-xl p-4"
+                  >
+                    <p className="font-body text-xs text-primary/80 italic leading-relaxed">
+                      "{selectedTemplate.truth}"
+                    </p>
+                  </motion.div>
+                )}
+
+                {/* Title (pre-filled from template or custom) */}
+                <div>
+                  <label className="font-body text-[10px] text-muted-foreground uppercase tracking-wider block mb-1.5">
+                    Goal Name
+                  </label>
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder={selectedTemplate ? selectedTemplate.title : "e.g. Launch my agency"}
+                    maxLength={100}
+                    className="w-full bg-input border border-border rounded-lg px-3 py-2.5 font-body text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
+                  />
+                </div>
+
                 {/* Timeframe */}
                 <div>
                   <label className="font-body text-[10px] text-muted-foreground uppercase tracking-wider block mb-1.5">
                     Timeframe
                   </label>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     {TIMEFRAMES.map((t) => (
                       <button
                         key={t.value}
                         onClick={() => setTimeframe(t.value)}
                         className={cn(
-                          "flex-1 py-2 rounded-lg font-body text-[10px] tracking-wider border transition-all",
+                          "py-2 px-3 rounded-lg font-body text-[10px] tracking-wider border transition-all",
                           timeframe === t.value
                             ? "bg-accent/20 border-accent/40 text-accent"
                             : "bg-foreground/[0.03] border-border text-muted-foreground hover:border-accent/20"
@@ -225,7 +388,7 @@ const Scheduler = () => {
                   className="w-full bg-foreground text-background font-body font-bold text-xs tracking-wider uppercase px-5 py-3 rounded-xl hover:bg-foreground/90 transition-colors disabled:opacity-40 flex items-center justify-center gap-2 mt-2"
                 >
                   <Sparkles className="w-4 h-4" />
-                  {addTask.isPending ? "Generating..." : "Generate Roadmap"}
+                  {addTask.isPending ? "Generating..." : selectedTemplate ? "Generate Brickhouse Roadmap" : "Generate Roadmap"}
                 </button>
               </div>
             </motion.div>
@@ -246,13 +409,15 @@ const Scheduler = () => {
             goals.map((goal) => {
               const Icon = getCategoryIcon(goal.category);
               const goalSubtasks = subtasks.filter((s) => s.parent_goal_id === goal.id);
+              const completedCount = goalSubtasks.filter((s) => s.is_completed).length;
+              const progressPercent = goalSubtasks.length > 0 ? Math.round((completedCount / goalSubtasks.length) * 100) : 0;
 
               return (
                 <div key={goal.id} className="space-y-4 group">
                   {/* Goal Header */}
                   <div className="flex items-center gap-4 bg-muted/40 p-4 rounded-xl border border-border relative overflow-hidden transition-all hover:bg-muted/60">
                     <div className="absolute top-0 left-0 w-1 h-full bg-gradient-pink" />
-                    
+
                     <div className="w-10 h-10 rounded-xl bg-background flex items-center justify-center shrink-0 border border-border shadow-sm">
                       <Icon className="w-5 h-5 text-primary" />
                     </div>
@@ -270,13 +435,30 @@ const Scheduler = () => {
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="font-body text-[10px] tracking-wider uppercase text-muted-foreground">
-                          {CATEGORIES.find(c => c.value === goal.category)?.label || goal.category}
+                          {CATEGORIES.find((c) => c.value === goal.category)?.label || goal.category}
                         </span>
                         <span className="w-1 h-1 rounded-full bg-border" />
                         <span className="font-body text-[10px] tracking-wider uppercase text-accent">
-                          {TIMEFRAMES.find(t => t.value === goal.timeframe)?.label || goal.timeframe}
+                          {TIMEFRAMES.find((t) => t.value === goal.timeframe)?.label || goal.timeframe}
                         </span>
+                        {goalSubtasks.length > 0 && (
+                          <>
+                            <span className="w-1 h-1 rounded-full bg-border" />
+                            <span className="font-body text-[10px] tracking-wider uppercase text-primary">
+                              {progressPercent}%
+                            </span>
+                          </>
+                        )}
                       </div>
+                      {/* Progress bar */}
+                      {goalSubtasks.length > 0 && (
+                        <div className="w-full h-1 bg-border/50 rounded-full mt-2 overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-pink rounded-full transition-all duration-500"
+                            style={{ width: `${progressPercent}%` }}
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -302,7 +484,7 @@ const Scheduler = () => {
                         >
                           {task.is_completed ? <CheckCircle2 className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
                         </button>
-                        
+
                         <div className="flex-1 min-w-0">
                           <p className={cn(
                             "font-body text-xs transition-colors",
@@ -315,10 +497,9 @@ const Scheduler = () => {
                               <Bell className="w-2.5 h-2.5" />
                               {formatTime(task.time_of_day)}
                               {task.escalation_level && (
-                                <span className={cn("ml-1 uppercase text-[8px]", 
+                                <span className={cn("ml-1 uppercase text-[8px]",
                                   task.escalation_level === 3 ? "text-destructive" :
-                                  task.escalation_level === 2 ? "text-accent" :
-                                  "text-primary"
+                                  task.escalation_level === 2 ? "text-accent" : "text-primary"
                                 )}>
                                   Lvl {task.escalation_level}
                                 </span>

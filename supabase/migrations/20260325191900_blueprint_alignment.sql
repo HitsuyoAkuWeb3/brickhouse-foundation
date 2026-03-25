@@ -41,28 +41,48 @@ CREATE POLICY "Anyone can read prescriptions"
   USING (true);
 
 -- ============================================================
--- 3. SCHEDULER_TASKS — Add missing blueprint columns
+-- 3. SCHEDULER_TASKS — Full table creation (all blueprint columns)
 -- ============================================================
 
-ALTER TABLE public.scheduler_tasks
-ADD COLUMN IF NOT EXISTS task_type TEXT DEFAULT 'custom',
-ADD COLUMN IF NOT EXISTS notes TEXT,
-ADD COLUMN IF NOT EXISTS due_date DATE,
-ADD COLUMN IF NOT EXISTS due_time TIME,
-ADD COLUMN IF NOT EXISTS snooze_interval TEXT DEFAULT 'none',
-ADD COLUMN IF NOT EXISTS last_reminded_at TIMESTAMP WITH TIME ZONE,
-ADD COLUMN IF NOT EXISTS brick_id UUID,
-ADD COLUMN IF NOT EXISTS affirmation_id UUID,
-ADD COLUMN IF NOT EXISTS goal_template TEXT,
-ADD COLUMN IF NOT EXISTS reminder_count INT DEFAULT 0;
+CREATE TABLE IF NOT EXISTS public.scheduler_tasks (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    profile_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+    category TEXT,                          -- 'build_it', 'feed_it', 'live_it'
+    task_type TEXT DEFAULT 'custom',        -- 'goal', 'affirmation', 'joy_moment', 'brick_task', 'custom'
+    title TEXT NOT NULL,
+    description TEXT,
+    notes TEXT,
+    due_date DATE,
+    due_time TIME,
+    scheduled_for TIMESTAMP WITH TIME ZONE, -- legacy compat
+    phase TEXT,                             -- 'tomorrow', 'this_week', 'this_month', '3_months', '6_months', '9_months'
+    is_completed BOOLEAN DEFAULT false,
+    is_active BOOLEAN DEFAULT true,
+    reminder_count INT DEFAULT 0,
+    snooze_interval TEXT DEFAULT 'none',    -- 'none', 'every_minute', 'every_hour'
+    last_reminded_at TIMESTAMP WITH TIME ZONE,
+    escalation_level INTEGER DEFAULT 1,
+    parent_goal_id UUID REFERENCES public.scheduler_tasks(id) ON DELETE CASCADE,
+    brick_id UUID,
+    affirmation_id UUID,
+    goal_template TEXT,
+    reminder_type TEXT,                     -- 'daily', 'weekly', 'one_off'
+    time_of_day TIME,
+    days_of_week INTEGER[],
+    timeframe TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
--- Add CHECK constraint for task_type (non-destructive)
--- Values: goal, affirmation, joy_moment, brick_task, custom
--- Using TEXT + app-level validation to avoid ENUM migration headaches
+ALTER TABLE public.scheduler_tasks ENABLE ROW LEVEL SECURITY;
 
--- Add CHECK constraint for snooze_interval
--- Values: none, every_minute, every_hour
--- Using TEXT + app-level validation
+DO $$ BEGIN
+    DROP POLICY IF EXISTS "Users can manage their own scheduler tasks" ON public.scheduler_tasks;
+EXCEPTION
+    WHEN undefined_object THEN null;
+END $$;
+
+CREATE POLICY "Users can manage their own scheduler tasks" ON public.scheduler_tasks
+    FOR ALL USING (auth.uid() = profile_id);
 
 -- ============================================================
 -- 4. SEED PRESCRIPTION_LIBRARY with placeholder rows

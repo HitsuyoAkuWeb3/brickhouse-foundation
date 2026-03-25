@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Plus, Trash2, Sparkles, ChevronDown, ArrowLeft, Wand2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { AudioPlayer } from "@/components/ui/AudioPlayer";
 
 const Affirmations = () => {
   const { user } = useAuth();
@@ -118,11 +119,15 @@ const Affirmations = () => {
               Today's Affirmation
             </div>
             <p className="font-display text-xl leading-relaxed tracking-wide">
-              "{dailyAffirmation.text}"
+              "{dailyAffirmation.text.replace('Audio Affirmation: ', '')}"
             </p>
+            {dailyAffirmation.audio_url && (
+              <AudioPlayer src={dailyAffirmation.audio_url} />
+            )}
             <div className="mt-3 text-[10px] text-muted-foreground uppercase tracking-wider">
               {bricks.find((b) => String(b.id) === dailyAffirmation.brick_id)?.name}
             </div>
+
           </motion.div>
         )}
 
@@ -296,8 +301,13 @@ const Affirmations = () => {
                     >
                       <div className="px-4 pb-4 space-y-2">
                         {affirmations.map((a) => (
-                          <div key={a.id} className="font-body text-sm text-muted-foreground leading-relaxed pl-8">
-                            💎 "{a.text}"
+                          <div key={a.id} className="bg-gradient-card border border-border/40 rounded-xl p-4 mb-2">
+                            <div className="font-body text-sm text-foreground leading-relaxed pl-1">
+                              💎 "{a.text.replace('Audio Affirmation: ', '')}"
+                            </div>
+                            {a.audio_url && (
+                              <AudioPlayer src={a.audio_url} />
+                            )}
                           </div>
                         ))}
                       </div>

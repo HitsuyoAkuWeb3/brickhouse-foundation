@@ -148,7 +148,7 @@ const Dashboard = () => {
   const FeaturedIcon = featuredRitual.icon;
 
   const calendlyUrl = import.meta.env.VITE_CALENDLY_URL || "#";
-  const collectiveUrl = import.meta.env.VITE_COLLECTIVE_URL || "#";
+  const collectiveUrl = "/collective";
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center px-4 sm:px-6 pt-8 pb-20 overflow-x-hidden">

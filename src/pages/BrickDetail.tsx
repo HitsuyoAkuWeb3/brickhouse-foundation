@@ -186,7 +186,7 @@ const BrickDetail = () => {
             </p>
             {/* TODO: Replace with real Collective URL from Shayna */}
             <a
-              href={import.meta.env.VITE_COLLECTIVE_URL || "#"}
+              href="/collective"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block bg-gradient-pink text-foreground font-body font-bold text-xs tracking-wider uppercase px-6 py-2.5 rounded-lg hover:opacity-90 transition-opacity"

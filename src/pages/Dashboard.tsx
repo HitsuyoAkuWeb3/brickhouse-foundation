@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useLessonProgress } from "@/hooks/useLessonProgress";
 import { useDailyRitual } from "@/hooks/useDailyRitual";
+import { useSchedulerTasks } from "@/hooks/useSchedulerTasks";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Blocks, Sunrise, Diamond, CalendarClock, Sparkles,
@@ -58,6 +59,7 @@ const Dashboard = () => {
   const [primaryGoal, setPrimaryGoal] = useState("");
   const { completedLessons } = useLessonProgress();
   const { ritual, streak } = useDailyRitual();
+  const { tasks: schedulerTasks } = useSchedulerTasks();
 
   const [showWelcomeOverlay, setShowWelcomeOverlay] = useState(false);
 
@@ -79,6 +81,20 @@ const Dashboard = () => {
   const timeWindow = useMemo(() => getTimeWindow(), []);
   const greeting = GREETINGS[timeWindow];
   const featuredRitual = RITUAL_META[timeWindow];
+
+  // §5.2 #14: Time-of-Day scheduler awareness
+  const dueTasks = useMemo(() => {
+    if (!schedulerTasks?.length) return [];
+    return schedulerTasks.filter((t) => {
+      if (t.is_completed) return false;
+      if (!t.time_of_day) return false;
+      const tod = t.time_of_day.toLowerCase();
+      if (timeWindow === "morning" && (tod.includes("morning") || tod.includes("am"))) return true;
+      if (timeWindow === "midday" && (tod.includes("afternoon") || tod.includes("midday") || tod.includes("noon"))) return true;
+      if (timeWindow === "evening" && (tod.includes("evening") || tod.includes("night") || tod.includes("pm"))) return true;
+      return false;
+    });
+  }, [schedulerTasks, timeWindow]);
   
   // Rotating affirmation based on date so it persists for the day
   const dailyAffirmation = useMemo(() => {
@@ -308,6 +324,11 @@ const Dashboard = () => {
                   : isFeaturedDone
                   ? "Done ✓ — Next ritual awaits"
                   : featuredRitual.prompt}
+              {dueTasks.length > 0 && !allDone && (
+                <span className="inline-flex items-center gap-1 ml-2 bg-accent/20 text-accent text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full">
+                  {dueTasks.length} task{dueTasks.length !== 1 ? "s" : ""} due
+                </span>
+              )}
               </p>
             </div>
             {!allDone && !isFeaturedDone && (

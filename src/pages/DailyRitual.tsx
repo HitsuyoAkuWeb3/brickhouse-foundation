@@ -96,7 +96,16 @@ const DailyRitual = () => {
 
   const handleSaveGratitude = () => {
     if (!gratitude.trim()) return;
-    upsertRitual.mutate({ ritual_data: { gratitude_note: gratitude.trim() } });
+    const note = gratitude.trim();
+    // Append to history (cap at 30 entries, newest first)
+    const existingHistory: string[] = ritual?.ritual_data?.gratitude_history || [];
+    const updatedHistory = [note, ...existingHistory].slice(0, 30);
+    upsertRitual.mutate({ 
+      ritual_data: { 
+        gratitude_note: note, 
+        gratitude_history: updatedHistory,
+      } 
+    });
     toast.success("Gratitude logged 💛");
     setGratitude("");
   };

@@ -5,7 +5,7 @@ import { useAffirmations } from "@/hooks/useAffirmations";
 import { bricks } from "@/data/bricksContent";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Plus, Trash2, Sparkles, ChevronDown, ArrowLeft, Wand2, Loader2 } from "lucide-react";
+import { Heart, Plus, Trash2, Sparkles, ChevronDown, ArrowLeft, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { AudioPlayer } from "@/components/ui/AudioPlayer";
 
@@ -15,8 +15,6 @@ const Affirmations = () => {
   const [newAffirmation, setNewAffirmation] = useState("");
   const [showBuilder, setShowBuilder] = useState(false);
   const [expandedBrick, setExpandedBrick] = useState<number | null>(null);
-  const [generating, setGenerating] = useState(false);
-  const [aiResults, setAiResults] = useState<string[]>([]);
 
   const { brickAffirmations, userAffirmations, dailyAffirmation, addAffirmation, toggleFavorite, deleteAffirmation, isLoading } = useAffirmations(selectedBrick);
 
@@ -30,47 +28,6 @@ const Affirmations = () => {
     addAffirmation.mutate({ affirmation: text, brickId: selectedBrick });
     setNewAffirmation("");
     toast.success("Affirmation added 💎");
-  };
-
-  const handleGenerate = async () => {
-    if (!user) return;
-    setGenerating(true);
-    setAiResults([]);
-    try {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("transformation_choice, goals, full_name")
-        .eq("id", user.id)
-        .single();
-
-      const { data, error } = await supabase.functions.invoke("generate-affirmations", {
-        body: {
-          transformation_choice: profile?.transformation_choice,
-          goals: profile?.goals,
-          name: profile?.full_name,
-        },
-      });
-
-      if (error) throw error;
-      if (data?.error) {
-        toast.error(data.error);
-        return;
-      }
-
-      setAiResults(data.affirmations || []);
-      toast.success("Your personalized affirmations are ready ✨");
-    } catch (e) {
-      console.error(e);
-      toast.error("Couldn't generate affirmations right now");
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  const saveAiAffirmation = (text: string) => {
-    addAffirmation.mutate({ affirmation: text });
-    setAiResults((prev) => prev.filter((a) => a !== text));
-    toast.success("Saved to My Affirmations 💎");
   };
 
   // Group brick affirmations by brick_id
@@ -130,65 +87,6 @@ const Affirmations = () => {
 
           </motion.div>
         )}
-
-        {/* AI Generator */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mb-8"
-        >
-          <button
-            onClick={handleGenerate}
-            disabled={generating}
-            className="w-full flex items-center justify-center gap-3 bg-gradient-pink border border-primary/30 rounded-xl px-5 py-4 hover:shadow-[0_0_25px_hsl(var(--primary)/0.3)] transition-all disabled:opacity-60"
-          >
-            {generating ? (
-              <Loader2 className="w-5 h-5 animate-spin text-foreground" />
-            ) : (
-              <Wand2 className="w-5 h-5 text-foreground" />
-            )}
-            <span className="font-display text-sm tracking-wider">
-              {generating ? "Channeling your energy..." : "Generate My Affirmations"}
-            </span>
-          </button>
-          <p className="text-center font-body text-[10px] text-muted-foreground mt-2">
-            AI-crafted based on your goals & transformation path
-          </p>
-
-          {/* AI Results */}
-          <AnimatePresence>
-            {aiResults.length > 0 && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="overflow-hidden"
-              >
-                <div className="mt-4 space-y-2">
-                  {aiResults.map((text, i) => (
-                    <motion.div
-                      key={text}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.1 }}
-                      className="flex items-start gap-3 bg-gradient-card border border-accent/20 rounded-xl px-4 py-3"
-                    >
-                      <Sparkles className="w-4 h-4 text-accent mt-0.5 shrink-0" />
-                      <p className="flex-1 font-body text-sm leading-relaxed">"{text}"</p>
-                      <button
-                        onClick={() => saveAiAffirmation(text)}
-                        className="shrink-0 px-3 py-1 bg-primary/20 hover:bg-primary/30 rounded-lg font-body text-[10px] text-primary uppercase tracking-wider transition-colors"
-                      >
-                        Save
-                      </button>
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
 
         {/* I AM Builder */}
         <div className="mb-8">
@@ -271,11 +169,27 @@ const Affirmations = () => {
           </div>
         )}
 
-        {/* Browse by Brick */}
+        {/* Browse by Brick — Locked to Brick 1 for Beta */}
         <h2 className="font-display text-lg tracking-wider mb-4">Browse by Brick</h2>
         <div className="space-y-2">
           {bricks.map((brick) => {
+            const isBrick1 = brick.id === 1;
             const affirmations = groupedByBrick[brick.id] || [];
+            
+            // For non-Brick 1, show locked state
+            if (!isBrick1) {
+              return (
+                <div key={brick.id} className="border border-border/50 rounded-xl overflow-hidden opacity-50">
+                  <div className="w-full flex items-center gap-3 px-4 py-3 cursor-not-allowed">
+                    <span className="text-lg">{brick.icon}</span>
+                    <span className="flex-1 text-left font-display text-sm tracking-wider text-muted-foreground">{brick.name}</span>
+                    <Lock className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span className="text-[10px] text-muted-foreground">Phase 2</span>
+                  </div>
+                </div>
+              );
+            }
+
             if (!affirmations.length) return null;
             const isOpen = expandedBrick === brick.id;
 

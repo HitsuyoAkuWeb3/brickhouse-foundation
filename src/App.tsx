@@ -10,10 +10,12 @@ import BreakthroughConfirmation from "./pages/BreakthroughConfirmation";
 import Coaching from "./pages/Coaching";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
+import Checkout from "./pages/Checkout";
 import Dashboard from "./pages/Dashboard";
 import Onboarding from "./pages/Onboarding";
 import MyBricks from "./pages/MyBricks";
 import BrickDetail from "./pages/BrickDetail";
+import LessonPlayer from "./pages/LessonPlayer";
 import DailyRitual from "./pages/DailyRitual";
 import Affirmations from "./pages/Affirmations";
 import PassionPick from "./pages/PassionPick";
@@ -45,6 +47,7 @@ const App = () => (
               <Route path="/breakthrough-confirmation" element={<BreakthroughConfirmation />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/checkout" element={<Checkout />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/contact" element={<Contact />} />
@@ -98,6 +101,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <BrickDetail />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/bricks/:slug/lesson/:lessonId"
+                element={
+                  <ProtectedRoute>
+                    <LessonPlayer />
                   </ProtectedRoute>
                 }
               />

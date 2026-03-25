@@ -4,11 +4,12 @@ import { ArrowLeft, Lock, Check } from "lucide-react";
 import { getBrickBySlug } from "@/data/bricksContent";
 import { useLessonProgress } from "@/hooks/useLessonProgress";
 import { cn } from "@/lib/utils";
+import { addDays, isBefore, formatDistanceToNow } from "date-fns";
 
 const BrickDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const brick = slug ? getBrickBySlug(slug) : undefined;
-  const { isLessonCompleted, toggleLesson, getBrickProgress } = useLessonProgress();
+  const { isLessonCompleted, toggleLesson, getBrickProgress, getCompletedAt } = useLessonProgress();
 
   if (!brick) {
     return (
@@ -78,8 +79,26 @@ const BrickDetail = () => {
 
         <div className="space-y-2">
           {brick.lessons.map((lesson, i) => {
-            const locked = !isUnlocked;
             const completed = isLessonCompleted(lesson.id);
+            
+            let locked = !isUnlocked;
+            let unlockDate: Date | null = null;
+            
+            if (!locked && i > 0) {
+              const prevLessonId = brick.lessons[i - 1].id;
+              const prevCompletedAt = getCompletedAt(prevLessonId);
+              
+              if (!prevCompletedAt) {
+                locked = true;
+              } else {
+                unlockDate = addDays(prevCompletedAt, 7);
+                if (isBefore(new Date(), unlockDate)) {
+                  locked = true;
+                } else {
+                  unlockDate = null;
+                }
+              }
+            }
 
             return (
               <motion.div
@@ -92,18 +111,19 @@ const BrickDetail = () => {
                   ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
                 }}
               >
-                <div
+                <Link
+                  to={locked ? "#" : `/bricks/${brick.slug}/lesson/${lesson.id}`}
                   className={cn(
                     "flex items-start gap-4 rounded-xl border p-4 transition-all",
                     locked
-                      ? "bg-foreground/[0.02] border-border opacity-50"
+                      ? "bg-foreground/[0.02] border-border opacity-50 cursor-not-allowed"
                       : completed
                       ? "bg-primary/[0.06] border-primary/20"
-                      : "bg-gradient-card border-border hover:border-primary/30"
+                      : "bg-gradient-card border-border hover:border-primary/30 hover:scale-[1.01]"
                   )}
                 >
                   {locked ? (
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-foreground/[0.05] text-muted-foreground">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-foreground/[0.05] text-muted-foreground relative group">
                       <Lock className="w-3.5 h-3.5" />
                     </div>
                   ) : (
@@ -136,11 +156,17 @@ const BrickDetail = () => {
                     >
                       {lesson.title}
                     </h3>
-                    <p className="font-body text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                      {lesson.summary}
-                    </p>
+                    {unlockDate ? (
+                      <p className="font-body text-xs text-accent mt-0.5 leading-relaxed">
+                        Unlocks in {formatDistanceToNow(unlockDate)}
+                      </p>
+                    ) : (
+                      <p className="font-body text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                        {lesson.summary}
+                      </p>
+                    )}
                   </div>
-                </div>
+                </Link>
               </motion.div>
             );
           })}

@@ -4,12 +4,13 @@ import { supabase } from '@/integrations/supabase/client';
 export const useAnalytics = () => {
   const { user } = useAuth();
 
-  const trackEvent = async (eventType: string, eventData: Record<string, any> = {}) => {
+  const trackEvent = async (eventType: string, eventData: Record<string, unknown> = {}) => {
     try {
       const { error } = await supabase.from('analytics_events').insert({
         user_id: user?.id || null,
         event_type: eventType,
-        event_data: eventData,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        event_data: eventData as Record<string, any>, // Supabase jsonb expects any
       });
 
       if (error) {

@@ -5,7 +5,6 @@ import { useProfile } from "@/hooks/useProfile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LogOut, Settings, User as UserIcon, Crown, Calendar, Target } from "lucide-react";
-import { createShopifyCheckout } from "@/lib/shopify";
 
 const TIER_DISPLAY_NAMES: Record<string, string> = {
   free: "Free Tier",
@@ -82,7 +81,7 @@ export default function Profile() {
                   {currentTier === "free" && (
                     <Button 
                       className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
-                      onClick={() => createShopifyCheckout("foundation")}
+                      onClick={() => navigate("/checkout?tier=foundation")}
                     >
                       Upgrade to Foundation
                     </Button>
@@ -90,7 +89,7 @@ export default function Profile() {
                   {currentTier === "foundation" && (
                      <Button 
                      className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
-                     onClick={() => createShopifyCheckout("brickhouse")}
+                     onClick={() => navigate("/checkout?tier=brickhouse")}
                    >
                      Upgrade to Brickhouse
                    </Button>

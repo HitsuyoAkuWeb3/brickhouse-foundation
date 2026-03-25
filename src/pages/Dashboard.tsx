@@ -1,16 +1,17 @@
 import { useEffect, useState, useMemo } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useLessonProgress } from "@/hooks/useLessonProgress";
 import { useDailyRitual } from "@/hooks/useDailyRitual";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Blocks, Sunrise, Diamond, Flame, CalendarClock, Sparkles,
-  Sun, Clock, Moon, Play, CheckCircle2, type LucideIcon
+  Sun, Clock, Moon, Play, CheckCircle2, MessageSquare, Heart, ArrowRight, type LucideIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/brickhouse-logo.png";
+import { brick1Lessons } from "@/data/brick1Lessons";
 
 type TimeWindow = "morning" | "midday" | "evening";
 
@@ -42,25 +43,57 @@ const RITUAL_META: Record<TimeWindow, { icon: LucideIcon; label: string; prompt:
   evening: { icon: Moon, label: "Evening Reflection", prompt: "Honor your brick. Release. Set tomorrow's intention.", dbKey: "evening_completed" },
 };
 
+// Extracted from brick1Lessons for variety
+const AFFIRMATIONS = brick1Lessons
+  .map(l => l.pullQuote || l.installedBelief)
+  .filter(Boolean)
+  .filter((v, i, a) => a.indexOf(v) === i);
+
 const Dashboard = () => {
   const { user, signOut, loading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [checkingProfile, setCheckingProfile] = useState(true);
+  const [firstName, setFirstName] = useState("Queen");
+  const [primaryGoal, setPrimaryGoal] = useState("");
   const { completedLessons } = useLessonProgress();
   const { ritual, streak } = useDailyRitual();
+
+  const [showWelcomeOverlay, setShowWelcomeOverlay] = useState(false);
+
+  useEffect(() => {
+    if (location.state && (location.state as { justFinishedOnboarding?: boolean }).justFinishedOnboarding) {
+      setShowWelcomeOverlay(true);
+      // Clear the state so it doesn't re-trigger on reload
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
+
+  useEffect(() => {
+    if (showWelcomeOverlay) {
+      const timer = setTimeout(() => setShowWelcomeOverlay(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showWelcomeOverlay]);
 
   const timeWindow = useMemo(() => getTimeWindow(), []);
   const greeting = GREETINGS[timeWindow];
   const featuredRitual = RITUAL_META[timeWindow];
+  
+  // Rotating affirmation based on date so it persists for the day
+  const dailyAffirmation = useMemo(() => {
+    const day = new Date().getDate();
+    return AFFIRMATIONS[day % AFFIRMATIONS.length];
+  }, []);
 
   useEffect(() => {
     if (loading || !user) return;
 
-    const checkOnboarding = async () => {
+    const fetchProfile = async () => {
       try {
         const { data, error } = await supabase
           .from("profiles")
-          .select("transformation_choice")
+          .select("full_name, transformation_choice, goals")
           .eq("id", user.id)
           .single();
 
@@ -74,13 +107,17 @@ const Dashboard = () => {
           navigate("/onboarding", { replace: true });
           return;
         }
+
+        if (data.full_name) setFirstName(data.full_name.split(" ")[0]);
+        if (data.goals && data.goals.length > 0) setPrimaryGoal(data.goals[0]);
+
         setCheckingProfile(false);
       } catch {
         setCheckingProfile(false);
       }
     };
 
-    checkOnboarding();
+    fetchProfile();
   }, [user, loading, navigate]);
 
   const handleSignOut = async () => {
@@ -112,33 +149,82 @@ const Dashboard = () => {
   const FeaturedIcon = featuredRitual.icon;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center px-6 py-12 text-center">
-      <img
-        src={logo}
-        alt="Brickhouse Mindset"
-        className="w-48 mb-8 drop-shadow-[0_0_30px_hsl(330_100%_42%/0.3)]"
-      />
+    <div className="min-h-screen bg-background flex flex-col items-center px-4 sm:px-6 pt-8 pb-20 overflow-x-hidden">
+      
+      {/* Top Header */}
+      <div className="w-full max-w-lg mb-8 text-center flex flex-col items-center">
+        <img
+          src={logo}
+          alt="Brickhouse Mindset"
+          className="w-32 mb-6 drop-shadow-[0_0_30px_hsl(330_100%_42%/0.3)]"
+        />
+        <h1 className="font-display text-4xl sm:text-5xl tracking-wider mb-2">
+          {greeting}, <span className="text-accent">{firstName}</span>
+        </h1>
+        <p className="font-body text-sm text-foreground/80 italic max-w-[280px]">
+          "{dailyAffirmation}"
+        </p>
+      </div>
 
-      <h1 className="font-display text-4xl sm:text-5xl tracking-wider mb-3">
-        {greeting}, <span className="text-accent">Queen</span>
-      </h1>
+      {/* Goal Anchor */}
+      {primaryGoal && (
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-lg bg-card/40 border border-primary/20 rounded-2xl p-4 mb-8 flex items-start gap-4 shadow-[0_0_20px_hsl(330_100%_42%/0.08)]"
+        >
+          <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+            <Flame className="w-5 h-5 text-primary" />
+          </div>
+          <div className="text-left">
+            <div className="font-body text-[10px] uppercase tracking-widest text-muted-foreground mb-1">What I Am Building</div>
+            <div className="font-display tracking-widest text-foreground leading-snug">{primaryGoal}</div>
+          </div>
+        </motion.div>
+      )}
 
-      <p className="font-body text-muted-foreground max-w-md mb-6">
-        Your Brickhouse is under construction.{" "}
-        {completedLessons.length > 0 && `${completedLessons.length} lessons completed.`}
-      </p>
-
-      {/* Featured Ritual Card */}
+      {/* Pulsing Lesson 1 Card */}
       <motion.div
-        initial={{ opacity: 0, y: 12 }}
+        initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-lg mb-8"
+        transition={{ duration: 0.6, delay: 0.1 }}
+        className="w-full max-w-lg mb-8 relative group"
       >
+        <div className="absolute -inset-1 rounded-[2rem] bg-gradient-to-r from-primary to-accent opacity-30 blur-lg group-hover:opacity-60 transition duration-500 animate-pulse"></div>
+        <Link 
+          to="/bricks/self-love/lesson/1" 
+          className="relative flex flex-col items-start bg-card/60 backdrop-blur-md border border-primary/30 rounded-3xl p-6 sm:p-8 overflow-hidden hover:bg-card/80 transition-all"
+        >
+          <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+            <Blocks className="w-40 h-40 transform rotate-12 translate-x-10 -translate-y-10" />
+          </div>
+          
+          <div className="font-body text-xs font-bold uppercase tracking-widest text-primary mb-2 bg-primary/10 px-3 py-1.5 rounded-full inline-block">
+            Your Owner's Manual
+          </div>
+          
+          <h2 className="font-display text-2xl sm:text-3xl text-foreground mb-3 text-left">
+            Brick 1: <br />
+            <span className="text-accent">Self-Love & Identity</span>
+          </h2>
+          
+          <p className="font-body text-sm text-foreground/70 text-left mb-6 max-w-[280px]">
+            The foundation of everything you will build. This is where we start.
+          </p>
+
+          <div className="flex items-center gap-2 font-display tracking-widest text-primary">
+            TAP TO BEGIN <ArrowRight className="w-5 h-5" />
+          </div>
+        </Link>
+      </motion.div>
+
+      {/* Daily Ritual */}
+      <div className="w-full max-w-lg mb-8">
+        <h3 className="font-display tracking-widest text-lg mb-3 text-left w-full pl-2">Daily Ritual</h3>
         <Link
           to="/daily-ritual"
           className={cn(
-            "block w-full rounded-2xl border p-5 transition-all",
+            "w-full rounded-2xl border p-5 transition-all flex flex-col",
             allDone
               ? "bg-primary/10 border-primary/30"
               : isFeaturedDone
@@ -158,10 +244,10 @@ const Dashboard = () => {
               )}
             </div>
             <div className="flex-1 text-left">
-              <h3 className="font-display text-sm tracking-wider">
-                {allDone ? "All Rituals Complete 🔥" : featuredRitual.label}
+              <h3 className="font-display text-base tracking-wider">
+                {allDone ? "Rituals Complete 🔥" : featuredRitual.label}
               </h3>
-              <p className="font-body text-[10px] text-muted-foreground mt-0.5">
+              <p className="font-body text-[11px] text-muted-foreground mt-0.5">
                 {allDone
                   ? "You laid every brick today. Rest well, Queen."
                   : isFeaturedDone
@@ -170,95 +256,149 @@ const Dashboard = () => {
               </p>
             </div>
             {!allDone && !isFeaturedDone && (
-              <div className="flex items-center gap-1.5 font-body font-bold text-[10px] tracking-widest uppercase text-accent bg-accent/10 px-3 py-2 rounded-lg">
-                Start <Play className="w-3 h-3" />
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-accent/20 text-accent">
+                <Play className="w-3.5 h-3.5 ml-0.5" />
               </div>
             )}
           </div>
 
-          {/* Mini ritual progress */}
-          <div className="flex items-center gap-3 mt-4 pt-3 border-t border-border/50">
+          <div className="flex items-center gap-2 mt-5 pt-4 border-t border-border/50">
             {(["morning", "midday", "evening"] as const).map((w) => {
               const meta = RITUAL_META[w];
               const Icon = meta.icon;
               const done = ritualStatus[w];
               return (
                 <div key={w} className={cn(
-                  "flex items-center gap-1.5 flex-1 py-1.5 px-2 rounded-lg text-left",
-                  done ? "bg-primary/10" : w === timeWindow ? "bg-foreground/[0.04]" : ""
+                  "flex items-center justify-center gap-1.5 flex-1 py-2 px-1 rounded-xl text-center border transition-colors",
+                  done ? "bg-primary/10 border-primary/20" : w === timeWindow ? "bg-foreground/[0.04] border-border" : "bg-transparent border-transparent"
                 )}>
                   <Icon className={cn("w-3.5 h-3.5 shrink-0", done ? "text-primary" : "text-muted-foreground")} />
                   <span className={cn(
-                    "font-body text-[9px] tracking-wider uppercase",
-                    done ? "text-primary" : "text-muted-foreground"
+                    "font-body text-[9px] tracking-widest uppercase",
+                    done ? "text-primary font-bold" : "text-muted-foreground"
                   )}>
-                    {done ? "✓" : w === timeWindow ? "Now" : w}
+                    {done ? "Done" : w}
                   </span>
                 </div>
               );
             })}
           </div>
         </Link>
-      </motion.div>
+      </div>
 
-      {/* Quick stats */}
-      <div className="flex gap-4 mb-8">
-        <div className="bg-gradient-card border border-border rounded-xl px-4 py-3 text-center">
-          <div className="font-display text-2xl text-accent">{streak}</div>
-          <div className="font-body text-[9px] text-muted-foreground uppercase tracking-wider">Day Streak</div>
-        </div>
-        <div className="bg-gradient-card border border-border rounded-xl px-4 py-3 text-center">
-          <div className="font-display text-2xl text-primary">{completedLessons.length}</div>
-          <div className="font-body text-[9px] text-muted-foreground uppercase tracking-wider">Lessons Done</div>
-        </div>
-        <div className="bg-gradient-card border border-border rounded-xl px-4 py-3 text-center">
-          <div className="font-display text-2xl">{todayComplete}/3</div>
-          <div className="font-body text-[9px] text-muted-foreground uppercase tracking-wider">Today's Ritual</div>
+      {/* Toolbox Grid */}
+      <div className="w-full max-w-lg mb-10">
+        <h3 className="font-display tracking-widest text-lg mb-3 text-left w-full pl-2">Your Toolbox</h3>
+        <div className="grid grid-cols-3 gap-3">
+          {tiles.slice(0, 3).map((tile) => {
+            const Icon = tile.icon;
+            return (
+              <Link
+                key={tile.label}
+                to={tile.link!}
+                className="bg-gradient-card border border-border rounded-xl p-4 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-all hover:-translate-y-1 hover:shadow-[0_4px_15px_hsl(var(--primary)/0.1)] aspect-square"
+              >
+                <div className={`w-10 h-10 rounded-xl ${tile.iconBg} flex items-center justify-center mb-2`}>
+                  <Icon className={`w-5 h-5 ${tile.accent}`} />
+                </div>
+                <div className="font-display text-xs tracking-wider leading-tight">{tile.label}</div>
+              </Link>
+            );
+          })}
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-w-lg w-full mb-10">
-        {tiles.map((tile) => {
-          const Icon = tile.icon;
-          const isActive = !!tile.link;
-
-          const content = (
-            <>
-              <div className={`w-11 h-11 rounded-xl ${tile.iconBg} flex items-center justify-center mx-auto mb-3`}>
-                <Icon className={`w-5 h-5 ${tile.accent}`} />
+      {/* MVP Static Community Feed Preview */}
+      <div className="w-full max-w-lg mb-12">
+        <div className="flex items-center justify-between mb-3 pl-2 pr-2">
+          <h3 className="font-display tracking-widest text-lg">Community Feed</h3>
+          <span className="font-body text-[10px] uppercase tracking-widest text-accent bg-accent/10 px-2 py-1 rounded">Beta Preview</span>
+        </div>
+        <div className="bg-card border border-border rounded-2xl p-5 shadow-sm space-y-4 relative overflow-hidden">
+          
+          {/* Post 1 */}
+          <div className="pb-4 border-b border-border/50">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-accent flex items-center justify-center text-xs font-bold text-white">SA</div>
+                <div className="font-display text-sm">Sarah A.</div>
               </div>
-              <div className="font-display text-xs tracking-wider">{tile.label}</div>
-              <div className={`text-[9px] mt-1 uppercase tracking-wider ${isActive ? "text-accent" : "text-muted-foreground"}`}>
-                {isActive ? tile.subtitle : "Coming Soon"}
-              </div>
-            </>
-          );
-
-          return isActive ? (
-            <Link
-              key={tile.label}
-              to={tile.link!}
-              className="bg-gradient-card border border-border rounded-xl p-4 text-center hover:border-primary/40 transition-all hover:shadow-[0_0_20px_hsl(var(--primary)/0.15)]"
-            >
-              {content}
-            </Link>
-          ) : (
-            <div
-              key={tile.label}
-              className="bg-gradient-card border border-border rounded-xl p-4 text-center opacity-50"
-            >
-              {content}
+              <div className="font-body text-[10px] text-muted-foreground">2 hrs ago</div>
             </div>
-          );
-        })}
+            <p className="font-body text-sm text-foreground/80 leading-relaxed indent-1">
+              "Just finished Brick 1 Lesson 4. The part about 'what are you actually comparing yourself to' hit me so hard. I've been exhausted performing for an audience that doesn't even care."
+            </p>
+            <div className="flex items-center gap-4 mt-3">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground"><Heart className="w-3.5 h-3.5" /> 12</div>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground"><MessageSquare className="w-3.5 h-3.5" /> 3</div>
+            </div>
+          </div>
+          
+          {/* Post 2 */}
+          <div className="relative">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold">MJ</div>
+                <div className="font-display text-sm text-muted-foreground">Mila J.</div>
+              </div>
+            </div>
+            <p className="font-body text-sm text-muted-foreground blur-[2px] select-none">
+              This is a placeholder text for another post. The community feed will be fully activated in Phase 2 of the Brickhouse application rollout. Keep building.
+            </p>
+            <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent z-10"></div>
+          </div>
+        </div>
       </div>
 
-      <button
-        onClick={handleSignOut}
-        className="font-body text-xs text-muted-foreground hover:text-foreground transition-colors underline underline-offset-4"
-      >
-        Sign out
-      </button>
+      {/* Quick Stats Banner & Sign out */}
+      <div className="w-full max-w-lg mt-auto flex flex-col items-center">
+        <div className="flex gap-4 mb-8 w-full">
+          <div className="bg-accent/5 border border-accent/20 rounded-xl px-4 py-3 text-center flex-1">
+            <div className="font-display text-xl text-accent">{streak}</div>
+            <div className="font-body text-[9px] text-muted-foreground uppercase tracking-wider">Day Streak</div>
+          </div>
+          <div className="bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 text-center flex-1">
+            <div className="font-display text-xl text-primary">{completedLessons.length}</div>
+            <div className="font-body text-[9px] text-muted-foreground uppercase tracking-wider">Bricks Laid</div>
+          </div>
+        </div>
+
+        <button
+          onClick={handleSignOut}
+          className="font-body text-xs text-muted-foreground hover:text-foreground transition-colors underline underline-offset-4 pb-8"
+        >
+          Sign out
+        </button>
+      </div>
+
+      <AnimatePresence>
+        {showWelcomeOverlay && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8, ease: "easeInOut" }}
+            className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/95 backdrop-blur-md"
+          >
+            <motion.h1 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.8 }}
+              className="font-display text-4xl sm:text-5xl text-foreground mb-4 tracking-wider"
+            >
+              You're all set.
+            </motion.h1>
+            <motion.p 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.6, duration: 0.8 }}
+              className="font-body text-xl text-primary tracking-widest uppercase"
+            >
+              Your space is ready.
+            </motion.p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

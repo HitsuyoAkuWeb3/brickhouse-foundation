@@ -2,7 +2,7 @@ import React from "react";
 import { useProfile, type SubscriptionTier } from "@/hooks/useProfile";
 import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { createShopifyCheckout } from "@/lib/shopify";
+import { useNavigate } from "react-router-dom";
 
 interface TierGateProps {
   requiredTier: SubscriptionTier;
@@ -19,6 +19,7 @@ const TIER_WEIGHTS: Record<SubscriptionTier, number> = {
 };
 
 export const TierGate: React.FC<TierGateProps> = ({ requiredTier, children, fallback }) => {
+  const navigate = useNavigate();
   const { data: profile, isLoading } = useProfile();
 
   if (isLoading) {
@@ -50,7 +51,7 @@ export const TierGate: React.FC<TierGateProps> = ({ requiredTier, children, fall
         Upgrade your access to unlock this feature and continue your transformation.
       </p>
       <Button 
-        onClick={() => createShopifyCheckout(requiredTier)}
+        onClick={() => navigate(`/checkout?tier=${requiredTier}`)}
         className="bg-primary text-primary-foreground hover:bg-primary/90"
       >
         Upgrade to {requiredTier.charAt(0).toUpperCase() + requiredTier.slice(1)}

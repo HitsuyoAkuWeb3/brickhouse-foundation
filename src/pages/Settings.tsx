@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { createShopifyCheckout } from "@/lib/shopify";
 import { useAuth } from "@/hooks/useAuth";
 import { CreditCard, Bell, User, Loader2, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -102,16 +101,7 @@ export default function Settings() {
   };
 
   const handleManageSubscription = () => {
-    // We would redirect to Stripe billing portal here.
-    // Since we don't have the backend implementation yet, we'll show a toast or create a checkout
-    if (profile?.subscription_tier === 'free') {
-      createShopifyCheckout('foundation');
-    } else {
-      toast({
-        title: "Billing Portal",
-        description: "Customer portal integration is coming soon.",
-      });
-    }
+    navigate('/checkout');
   };
 
   if (isLoading) {

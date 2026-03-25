@@ -1,7 +1,16 @@
+import { brick1Lessons } from './brick1Lessons';
+
 export interface Lesson {
   id: string;
+  number?: string;
   title: string;
   summary: string;
+  body?: string;
+  pullQuote?: string;
+  promptType?: string;
+  promptBox?: string;
+  discardedBelief?: string;
+  installedBelief?: string;
 }
 
 export interface Brick {
@@ -24,30 +33,21 @@ export const bricks: Brick[] = [
     subtitle: "Your Foundation",
     icon: "🌸",
     color: "330 100% 42%",
-    lessonCount: 19,
+    lessonCount: 17, // Spec specifies 17 lessons for Beta
     description:
       "Core foundation work. I AM affirmations, Brickhouse identity, learning to love who you are when no one is watching.",
-    lessons: [
-      { id: "1-1", title: "The Mirror Exercise", summary: "How do you speak to yourself when no one is listening?" },
-      { id: "1-2", title: "I AM Declarations", summary: "Writing your identity into existence, one statement at a time." },
-      { id: "1-3", title: "The Grace You Give Others", summary: "Why you deserve the same kindness you hand out freely." },
-      { id: "1-4", title: "Protecting Your Peace", summary: "Stop handing your peace away to whoever asks for it." },
-      { id: "1-5", title: "The Brickhouse Identity", summary: "Who is she? Defining the woman you're building into." },
-      { id: "1-6", title: "Joy as Self-Love", summary: "When was the last time you did something just because it felt good?" },
-      { id: "1-7", title: "Your Inner Dialogue", summary: "Rewiring the conversation you have with yourself every day." },
-      { id: "1-8", title: "The First Brick", summary: "Laying the foundation — self-love isn't selfish, it's structural." },
-      { id: "1-9", title: "Boundaries as Love", summary: "Saying no is an act of self-adoration." },
-      { id: "1-10", title: "The Woman in the Arena", summary: "Showing up for yourself when the world hasn't shown up for you." },
-      { id: "1-11", title: "Self-Forgiveness", summary: "Releasing the version of you that didn't know better." },
-      { id: "1-12", title: "Your Non-Negotiables", summary: "The things you will never compromise on again." },
-      { id: "1-13", title: "The Beauty of Being Alone", summary: "Solitude isn't loneliness — it's self-partnership." },
-      { id: "1-14", title: "Reclaiming Your Story", summary: "You are not what happened to you. You are what you chose after." },
-      { id: "1-15", title: "The Self-Love Audit", summary: "Honest assessment: where are you shortchanging yourself?" },
-      { id: "1-16", title: "Daily Devotion", summary: "Creating a morning practice that centers YOU first." },
-      { id: "1-17", title: "The Compliment Exercise", summary: "Learning to receive love without deflecting it." },
-      { id: "1-18", title: "Your Love Language — To Yourself", summary: "How do you need to be loved by YOU?" },
-      { id: "1-19", title: "Building the Foundation", summary: "The capstone — integrating everything into daily life." },
-    ],
+    lessons: brick1Lessons.map((l, index) => ({
+      id: `1-${index + 1}`,
+      number: l.number,
+      title: l.title,
+      summary: l.pullQuote || "Dive into this foundational lesson.",
+      body: l.body,
+      pullQuote: l.pullQuote,
+      promptType: l.promptType,
+      promptBox: l.promptBox,
+      discardedBelief: l.discardedBelief,
+      installedBelief: l.installedBelief
+    })),
   },
   {
     id: 2,

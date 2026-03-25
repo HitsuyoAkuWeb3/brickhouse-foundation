@@ -1,12 +1,12 @@
 import { create } from "zustand";
 
-export type OnboardingStep = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+export type OnboardingStep = 1 | 2 | 3 | 4 | 5 | 6;
 
 interface OnboardingStore {
   step: OnboardingStep;
   lifeAuditScores: Record<string, number>;
   birthDate: Date | undefined;
-  sunSign: string | undefined;
+  zodiacSign: string | undefined;
   goals: string[];
   reminderPreferences: {
     morning: string;
@@ -22,7 +22,7 @@ interface OnboardingStore {
   prevStep: () => void;
   setLifeAuditScore: (category: string, score: number) => void;
   setBirthDate: (date: Date | undefined) => void;
-  setSunSign: (sign: string) => void;
+  setZodiacSign: (sign: string) => void;
   toggleGoal: (goal: string) => void;
   setReminderPreference: (period: 'morning' | 'midday' | 'evening', time: string) => void;
   setPassionPickMedia: (url: string | undefined, skipped?: boolean) => void;
@@ -33,7 +33,7 @@ const initialState = {
   step: 1 as OnboardingStep,
   lifeAuditScores: {},
   birthDate: undefined,
-  sunSign: undefined,
+  zodiacSign: undefined,
   goals: [],
   reminderPreferences: {
     morning: '08:00',
@@ -48,7 +48,7 @@ export const useOnboardingStore = create<OnboardingStore>((set) => ({
   ...initialState,
   
   setStep: (step) => set({ step }),
-  nextStep: () => set((state) => ({ step: Math.min(state.step + 1, 8) as OnboardingStep })),
+  nextStep: () => set((state) => ({ step: Math.min(state.step + 1, 6) as OnboardingStep })),
   prevStep: () => set((state) => ({ step: Math.max(state.step - 1, 1) as OnboardingStep })),
   
   setLifeAuditScore: (category, score) => set((state) => ({
@@ -56,17 +56,12 @@ export const useOnboardingStore = create<OnboardingStore>((set) => ({
   })),
   
   setBirthDate: (birthDate) => set({ birthDate }),
-  setSunSign: (sunSign) => set({ sunSign }),
+  setZodiacSign: (zodiacSign) => set({ zodiacSign }),
   
   toggleGoal: (goal) => set((state) => {
-    const goals = [...state.goals];
-    const index = goals.indexOf(goal);
-    if (index > -1) {
-      goals.splice(index, 1);
-    } else if (goals.length < 3) { // Allow up to 3 goals, can be adjusted
-      goals.push(goal);
-    }
-    return { goals };
+    // If the exact goal is already selected, unselect it.
+    // Otherwise, select ONLY this new goal.
+    return { goals: state.goals.includes(goal) ? [] : [goal] };
   }),
   
   setReminderPreference: (period, time) => set((state) => ({

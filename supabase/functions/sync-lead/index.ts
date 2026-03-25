@@ -13,9 +13,7 @@ serve(async (req: Request) => {
 
   try {
     const supabaseClient = createClient(
-      // @ts-expect-error Deno globally available in Supabase Edge Runtime
       Deno.env.get('SUPABASE_URL') ?? '',
-      // @ts-expect-error Deno globally available in Supabase Edge Runtime
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 

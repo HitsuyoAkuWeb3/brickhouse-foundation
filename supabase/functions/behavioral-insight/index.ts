@@ -37,8 +37,9 @@ serve(async (req) => {
       JSON.stringify({ success: true, message: 'Behavioral insight processed' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error.message : 'Unknown error';
+    return new Response(JSON.stringify({ error: err }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
     })

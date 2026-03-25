@@ -31,13 +31,16 @@ export const useLessonProgress = () => {
       completed: boolean;
     }) => {
       if (completed) {
+        const nextUnlock = new Date();
+        nextUnlock.setDate(nextUnlock.getDate() + 7);
         const { error } = await supabase
           .from("user_lesson_progress")
           .insert({ 
             user_id: user!.id, 
             lesson_id: lessonId, 
             status: "completed", 
-            completed_at: new Date().toISOString() 
+            completed_at: new Date().toISOString(),
+            next_unlock_date: nextUnlock.toISOString(),
           });
         if (error) throw error;
       } else {
@@ -63,11 +66,42 @@ export const useLessonProgress = () => {
   };
 
   const getBrickProgress = (brickId: number, totalLessons: number) => {
-    // We assume lesson_id format "brickId-lessonNumber" mapping
     const prefix = `${brickId}-`;
-    const completed = completedLessons.filter((l) => l.lesson_id?.startsWith(prefix)).length;
+    const completed = completedLessons.filter((l: any) => l.lesson_id?.startsWith(prefix)).length;
     return { completed, total: totalLessons, percent: totalLessons > 0 ? Math.round((completed / totalLessons) * 100) : 0 };
   };
 
-  return { completedLessons, isLoading, toggleLesson, isLessonCompleted, getCompletedAt, getBrickProgress };
+  // ─── Lesson Drip Logic (§5.2 #16) ──────────────────────────────────────────
+  // next_unlock_date = completed_at + 7 days. Lessons after the current one
+  // are locked until that date passes.
+
+  const getNextUnlockDate = (lessonId: string): Date | null => {
+    const lesson = completedLessons.find((l) => l.lesson_id === lessonId);
+    if (!lesson?.completed_at) return null;
+    const unlock = new Date(lesson.completed_at);
+    unlock.setDate(unlock.getDate() + 7);
+    return unlock;
+  };
+
+  const isLessonLocked = (brickId: number, lessonIndex: number): boolean => {
+    if (lessonIndex === 0) return false; // First lesson always unlocked
+    // Previous lesson must be completed AND next_unlock_date must have passed
+    const prevLessonId = `${brickId}-${lessonIndex - 1}`;
+    if (!isLessonCompleted(prevLessonId)) return true;
+    const unlockDate = getNextUnlockDate(prevLessonId);
+    if (!unlockDate) return true;
+    return new Date() < unlockDate;
+  };
+
+  const getUnlockCountdown = (brickId: number, lessonIndex: number): string | null => {
+    if (lessonIndex === 0) return null;
+    const prevLessonId = `${brickId}-${lessonIndex - 1}`;
+    if (!isLessonCompleted(prevLessonId)) return "Complete previous lesson first";
+    const unlockDate = getNextUnlockDate(prevLessonId);
+    if (!unlockDate || new Date() >= unlockDate) return null;
+    const daysLeft = Math.ceil((unlockDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+    return `Unlocks in ${daysLeft} day${daysLeft !== 1 ? "s" : ""}`;
+  };
+
+  return { completedLessons, isLoading, toggleLesson, isLessonCompleted, getCompletedAt, getBrickProgress, isLessonLocked, getUnlockCountdown };
 };

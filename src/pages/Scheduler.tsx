@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, Plus, Bell, Trash2, Hammer, Heart, Sparkles, Target,
-  CheckCircle2, Circle, BookOpen, type LucideIcon
+  CheckCircle2, Circle, BookOpen, AlarmClock, FileText, type LucideIcon
 } from "lucide-react";
 import { useSchedulerTasks, type SchedulerTask } from "@/hooks/useSchedulerTasks";
 import { cn } from "@/lib/utils";
@@ -23,6 +23,12 @@ const TIMEFRAMES = [
   { value: "3_months", label: "3 Months" },
   { value: "6_months", label: "6 Months" },
   { value: "9_months", label: "9 Months" },
+] as const;
+
+const SNOOZE_OPTIONS = [
+  { value: "none", label: "Off" },
+  { value: "every_minute", label: "Every Min" },
+  { value: "every_hour", label: "Every Hour" },
 ] as const;
 
 // ─── Goal Templates (from Ché's Spin Brief) ─────────────────────────────────
@@ -190,6 +196,7 @@ const Scheduler = () => {
         title: title.trim(),
         category,
         timeframe,
+        task_type: "goal",
         reminder_type: "goal",
         is_active: true,
       },
@@ -492,18 +499,43 @@ const Scheduler = () => {
                           )}>
                             {task.title}
                           </p>
-                          {task.time_of_day && (
-                            <p className="font-body text-[9px] text-muted-foreground mt-0.5 flex items-center gap-1">
-                              <Bell className="w-2.5 h-2.5" />
-                              {formatTime(task.time_of_day)}
-                              {task.escalation_level && (
-                                <span className={cn("ml-1 uppercase text-[8px]",
-                                  task.escalation_level === 3 ? "text-destructive" :
-                                  task.escalation_level === 2 ? "text-accent" : "text-primary"
-                                )}>
-                                  Lvl {task.escalation_level}
-                                </span>
-                              )}
+                          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                            {task.time_of_day && (
+                              <span className="font-body text-[9px] text-muted-foreground flex items-center gap-1">
+                                <Bell className="w-2.5 h-2.5" />
+                                {formatTime(task.time_of_day)}
+                                {task.escalation_level && (
+                                  <span className={cn("ml-1 uppercase text-[8px]",
+                                    task.escalation_level === 3 ? "text-destructive" :
+                                    task.escalation_level === 2 ? "text-accent" : "text-primary"
+                                  )}>
+                                    Lvl {task.escalation_level}
+                                  </span>
+                                )}
+                              </span>
+                            )}
+                            {/* Snooze Interval Selector */}
+                            <select
+                              value={task.snooze_interval || "none"}
+                              onChange={(e) => updateTask.mutate({ id: task.id, snooze_interval: e.target.value })}
+                              className="font-body text-[9px] bg-transparent border border-border rounded px-1.5 py-0.5 text-muted-foreground hover:border-accent/40 focus:outline-none focus:border-accent transition-colors cursor-pointer"
+                              title="Snooze reminder interval"
+                            >
+                              {SNOOZE_OPTIONS.map((o) => (
+                                <option key={o.value} value={o.value}>{o.label === "Off" ? "🔕 Off" : `🔔 ${o.label}`}</option>
+                              ))}
+                            </select>
+                            {task.snooze_interval && task.snooze_interval !== "none" && (
+                              <span className="font-body text-[8px] text-accent uppercase flex items-center gap-0.5">
+                                <AlarmClock className="w-2.5 h-2.5" /> Persistent
+                              </span>
+                            )}
+                          </div>
+                          {/* Notes */}
+                          {task.notes && (
+                            <p className="font-body text-[9px] text-muted-foreground/70 mt-1 flex items-start gap-1">
+                              <FileText className="w-2.5 h-2.5 mt-0.5 shrink-0" />
+                              {task.notes}
                             </p>
                           )}
                         </div>

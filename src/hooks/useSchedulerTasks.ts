@@ -8,18 +8,27 @@ export interface SchedulerTask {
   profile_id: string;
   title: string;
   description?: string;
+  notes?: string;
   reminder_type?: string;     // 'daily', 'weekly', 'one_off'
-  category?: string;          // 'build_it', 'feed_it', 'live_it', 'ritual', etc.
+  task_type?: string;         // 'goal', 'affirmation', 'joy_moment', 'brick_task', 'custom'
+  category?: string;          // 'build_it', 'feed_it', 'live_it'
   time_of_day?: string;       // e.g., '09:00:00'
+  due_date?: string;
+  due_time?: string;
   days_of_week?: number[];
   is_active: boolean;
-  parent_goal_id?: string;    // If this is a subtask 
+  parent_goal_id?: string;
   timeframe?: string;         // '1_week', '1_month', '3_months'
   escalation_level?: number;  // 1, 2, 3
   is_completed?: boolean;
   scheduled_for?: string;
+  snooze_interval?: string;   // 'none', 'every_minute', 'every_hour'
+  reminder_count?: number;
+  last_reminded_at?: string;
+  brick_id?: string;
+  affirmation_id?: string;
+  goal_template?: string;
   created_at: string;
-  updated_at?: string;
 }
 
 type TaskInsert = Omit<SchedulerTask, "id" | "created_at" | "updated_at" | "profile_id">;

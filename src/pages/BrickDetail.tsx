@@ -184,8 +184,9 @@ const BrickDetail = () => {
             <p className="font-body text-xs text-muted-foreground leading-relaxed max-w-sm mx-auto mb-4">
               Join the Brickhouse Collective to access all 12 Bricks, daily rituals, and your complete Lifestyle Architecture tools.
             </p>
+            {/* TODO: Replace with real Collective URL from Shayna */}
             <a
-              href="https://example.com/brickhouse-collective"
+              href={import.meta.env.VITE_COLLECTIVE_URL || "#"}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block bg-gradient-pink text-foreground font-body font-bold text-xs tracking-wider uppercase px-6 py-2.5 rounded-lg hover:opacity-90 transition-opacity"

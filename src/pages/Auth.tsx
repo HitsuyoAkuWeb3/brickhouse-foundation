@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { z } from "zod";
 import logo from "@/assets/brickhouse-logo.png";
 import { toast } from "sonner";
+import { CheckCircle2, Clock } from "lucide-react";
 
 import { B2BWaitlist } from "@/components/B2BWaitlist";
 
@@ -25,6 +26,7 @@ const Auth = () => {
   const [name, setName] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [emailSent, setEmailSent] = useState(false);
 
   useEffect(() => {
     const bridgeToken = searchParams.get("bridge");
@@ -73,7 +75,7 @@ const Auth = () => {
           },
         });
         if (error) throw error;
-        toast.success("Check your email to verify your account!");
+        setEmailSent(true);
       } else if (mode === "login") {
         const { error } = await supabase.auth.signInWithPassword({
           email: email.trim(),
@@ -106,6 +108,50 @@ const Auth = () => {
   };
 
   if (loading) return null;
+
+  // Email confirmation screen — replaces toast with persistent on-screen message
+  if (emailSent) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 py-12">
+        <div
+          className="fixed top-0 left-1/2 -translate-x-1/2 w-[80%] h-[40%] pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(ellipse at 50% 0%, hsl(330 100% 42% / 0.12) 0%, transparent 70%)",
+          }}
+        />
+        <div className="relative z-10 w-full max-w-[400px] text-center">
+          <img
+            src={logo}
+            alt="Brickhouse Mindset"
+            className="w-48 mx-auto mb-8 drop-shadow-[0_0_30px_hsl(330_100%_42%/0.4)]"
+          />
+          <div className="bg-gradient-card border border-primary/30 rounded-2xl p-8 mb-6">
+            <div className="w-14 h-14 rounded-full bg-primary/15 flex items-center justify-center mx-auto mb-4">
+              <CheckCircle2 className="w-7 h-7 text-primary" />
+            </div>
+            <h2 className="font-display text-2xl tracking-wider mb-3">Check Your Email</h2>
+            <p className="font-body text-sm text-muted-foreground leading-relaxed mb-4">
+              We sent a verification link to <span className="text-accent font-medium">{email}</span>.
+              Click the link in your email to activate your Brickhouse.
+            </p>
+            <div className="flex items-center gap-2 justify-center bg-accent/10 border border-accent/20 rounded-xl px-4 py-3">
+              <Clock className="w-4 h-4 text-accent shrink-0" />
+              <p className="font-body text-xs text-accent">
+                Profile setup takes 5–10 minutes — grab a cup of tea ☕
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => { setEmailSent(false); setMode("login"); }}
+            className="text-sm text-accent hover:underline font-body"
+          >
+            ← Back to sign in
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 py-12">

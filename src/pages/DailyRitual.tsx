@@ -1,19 +1,30 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Sun, Clock, Moon, Sparkles, Heart, Flame, Play } from "lucide-react";
+import { ArrowLeft, Sun, Clock, Moon, Sparkles, Heart, Flame, Play, CalendarClock, ChevronDown } from "lucide-react";
 import { useDailyRitual } from "@/hooks/useDailyRitual";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { RitualPlayer, RitualType } from "@/components/RitualPlayer";
 import { useAnalytics } from "@/hooks/useAnalytics";
 
+const JOY_ACTIVITIES = [
+  "🎶 Dance to my favorite song",
+  "☕ Enjoy a quiet cup of tea",
+  "🚶‍♀️ Take a walk outside",
+  "📞 Call someone I love",
+  "🎨 Do something creative",
+  "📚 Read a chapter",
+  "🧘‍♀️ 10 min meditation",
+  "🛒 Treat myself to something small",
+];
+
 const ritualItems = [
   {
     key: "morning_affirmation" as RitualType,
     dbKey: "morning_completed" as const,
     icon: Sun,
-    title: "Morning Affirmation",
+    title: "Wake Up Affirmation",
     subtitle: "Start your day centered",
     prompt: "Look in the mirror. Say your I AM declarations out loud. Mean every word.",
     time: "Morning",
@@ -41,7 +52,10 @@ const ritualItems = [
 const DailyRitual = () => {
   const { ritual, isLoading, upsertRitual, streak } = useDailyRitual();
   const [joyMoment, setJoyMoment] = useState("");
+  const [joyTime, setJoyTime] = useState("");
+  const [showJoyPicker, setShowJoyPicker] = useState(false);
   const [gratitude, setGratitude] = useState("");
+  const [showGratitudeHistory, setShowGratitudeHistory] = useState(false);
   const [activeRitual, setActiveRitual] = useState<RitualType | null>(null);
   const { trackEvent } = useAnalytics();
 
@@ -68,11 +82,16 @@ const DailyRitual = () => {
     toast.success("Brick laid 🧱");
   };
 
-  const handleSaveJoy = () => {
-    if (!joyMoment.trim()) return;
-    upsertRitual.mutate({ ritual_data: { joy_moment: joyMoment.trim() } });
-    toast.success("Joy moment captured ✨");
+  const handleSaveJoy = (activity?: string) => {
+    const text = activity || joyMoment.trim();
+    if (!text) return;
+    const joyData: Record<string, string> = { joy_moment: text };
+    if (joyTime) joyData.joy_scheduled_time = joyTime;
+    upsertRitual.mutate({ ritual_data: joyData });
+    toast.success(joyTime ? `Joy moment scheduled for ${joyTime} ✨` : "Joy moment captured ✨");
     setJoyMoment("");
+    setJoyTime("");
+    setShowJoyPicker(false);
   };
 
   const handleSaveGratitude = () => {
@@ -86,7 +105,10 @@ const DailyRitual = () => {
 
   // Retrieve joy and gratitude from ritual_data to display
   const savedJoy = ritual?.ritual_data?.joy_moment;
+  const savedJoyTime = ritual?.ritual_data?.joy_scheduled_time;
   const savedGratitude = ritual?.ritual_data?.gratitude_note;
+  // Gratitude history from ritual_data (array of past entries)
+  const gratitudeHistory: string[] = ritual?.ritual_data?.gratitude_history || [];
 
   return (
     <>
@@ -197,37 +219,81 @@ const DailyRitual = () => {
             })}
           </div>
 
-          {/* Joy Moment */}
+          {/* Joy Moment — Schedulable with Activity Picker */}
           <div className="bg-gradient-card border border-border rounded-xl p-5 mb-3">
             <div className="flex items-center gap-3 mb-3">
               <Sparkles className="w-5 h-5 text-accent" />
-              <div>
+              <div className="flex-1">
                 <h3 className="font-display text-sm tracking-wider">Joy Moment</h3>
                 <p className="font-body text-[10px] text-muted-foreground">Schedule one joyful thing today</p>
               </div>
+              {!savedJoy && (
+                <button
+                  onClick={() => setShowJoyPicker(!showJoyPicker)}
+                  className="flex items-center gap-1 text-[10px] text-accent font-body uppercase tracking-wider hover:text-primary transition-colors"
+                >
+                  <CalendarClock className="w-3.5 h-3.5" />
+                  Pick
+                </button>
+              )}
             </div>
             {savedJoy ? (
               <div className="font-body text-sm text-foreground/80 bg-foreground/[0.04] rounded-lg p-3 border border-border/50">
                 ✨ {savedJoy}
+                {savedJoyTime && (
+                  <span className="text-[10px] text-accent ml-2">@ {savedJoyTime}</span>
+                )}
               </div>
             ) : (
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="e.g. Dance to my favorite song at lunch"
-                  value={joyMoment}
-                  onChange={(e) => setJoyMoment(e.target.value)}
-                  maxLength={200}
-                  className="flex-1 bg-input border border-border rounded-lg px-3 py-2.5 font-body text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
-                />
-                <button
-                  onClick={handleSaveJoy}
-                  disabled={!joyMoment.trim()}
-                  className="bg-gradient-pink text-foreground font-body font-bold text-[10px] uppercase tracking-wider px-4 py-2.5 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40"
-                >
-                  Save
-                </button>
-              </div>
+              <>
+                {/* Activity Picker */}
+                <AnimatePresence>
+                  {showJoyPicker && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden mb-3"
+                    >
+                      <div className="grid grid-cols-2 gap-2 mb-3">
+                        {JOY_ACTIVITIES.map((activity) => (
+                          <button
+                            key={activity}
+                            onClick={() => handleSaveJoy(activity)}
+                            className="text-left bg-foreground/[0.03] border border-border/50 rounded-lg px-3 py-2 font-body text-xs text-foreground/80 hover:border-accent/40 hover:bg-accent/5 transition-all"
+                          >
+                            {activity}
+                          </button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Or type your own joy moment..."
+                    value={joyMoment}
+                    onChange={(e) => setJoyMoment(e.target.value)}
+                    maxLength={200}
+                    className="flex-1 bg-input border border-border rounded-lg px-3 py-2.5 font-body text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
+                  />
+                  <input
+                    type="time"
+                    value={joyTime}
+                    onChange={(e) => setJoyTime(e.target.value)}
+                    className="w-24 bg-input border border-border rounded-lg px-2 py-2.5 font-body text-xs text-foreground focus:outline-none focus:border-primary transition-colors"
+                  />
+                  <button
+                    onClick={() => handleSaveJoy()}
+                    disabled={!joyMoment.trim()}
+                    className="bg-gradient-pink text-foreground font-body font-bold text-[10px] uppercase tracking-wider px-4 py-2.5 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40"
+                  >
+                    Save
+                  </button>
+                </div>
+              </>
             )}
           </div>
 
@@ -235,10 +301,19 @@ const DailyRitual = () => {
           <div className="bg-gradient-card border border-border rounded-xl p-5">
             <div className="flex items-center gap-3 mb-3">
               <Heart className="w-5 h-5 text-primary" />
-              <div>
+              <div className="flex-1">
                 <h3 className="font-display text-sm tracking-wider">Gratitude Note</h3>
                 <p className="font-body text-[10px] text-muted-foreground">One thing you're grateful for today</p>
               </div>
+              {gratitudeHistory.length > 0 && (
+                <button
+                  onClick={() => setShowGratitudeHistory(!showGratitudeHistory)}
+                  className="flex items-center gap-1 text-[10px] text-primary font-body uppercase tracking-wider hover:text-accent transition-colors"
+                >
+                  History
+                  <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", showGratitudeHistory && "rotate-180")} />
+                </button>
+              )}
             </div>
             {savedGratitude ? (
               <div className="font-body text-sm text-foreground/80 bg-foreground/[0.04] rounded-lg p-3 border border-border/50">
@@ -263,6 +338,27 @@ const DailyRitual = () => {
                 </button>
               </div>
             )}
+
+            {/* Gratitude History */}
+            <AnimatePresence>
+              {showGratitudeHistory && gratitudeHistory.length > 0 && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="mt-4 pt-3 border-t border-border/50 space-y-2">
+                    <div className="font-body text-[10px] text-muted-foreground uppercase tracking-wider mb-2">Past Gratitude</div>
+                    {gratitudeHistory.slice(0, 7).map((note, i) => (
+                      <div key={i} className="font-body text-xs text-foreground/60 bg-foreground/[0.02] rounded-lg px-3 py-2 border border-border/30">
+                        💛 {note}
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>

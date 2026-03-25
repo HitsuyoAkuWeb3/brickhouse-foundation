@@ -56,7 +56,7 @@ export default function Profile() {
                     )}
                   </div>
                   <div>
-                    <h2 className="text-2xl font-semibold">{profile?.name || "Queen"}</h2>
+                    <h2 className="text-2xl font-semibold">{profile?.name || "Brick House"}</h2>
                     <p className="text-muted-foreground">{profile?.email}</p>
                   </div>
                 </div>

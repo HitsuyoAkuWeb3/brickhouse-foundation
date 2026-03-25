@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
-import { analytics } from "@/lib/analytics";
+import { trackEvent } from "@/lib/analytics";
 import {
   Dialog,
   DialogContent,
@@ -99,7 +99,7 @@ const LeadCaptureModal = ({
     }
 
     setSubmitted(true);
-    analytics.leadCaptured(variant);
+    trackEvent('cta_clicked', { variant, type: 'lead_captured' });
 
     if (variant === "audit") {
       setTimeout(() => {

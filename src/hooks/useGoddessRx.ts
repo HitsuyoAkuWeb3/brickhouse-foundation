@@ -22,7 +22,7 @@ export interface SpiritualTool {
 
 export interface GoddessPrescription {
   id: string;
-  user_id: string;
+  profile_id: string;
   zodiac_sign: string;
   element: string | null;
   ruling_planet: string | null;
@@ -31,7 +31,24 @@ export interface GoddessPrescription {
   spiritual_tools: SpiritualTool[];
   mantra: string | null;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
+}
+
+// Helper to extract prescription fields from prescription_data Json
+function parsePrescription(row: any): GoddessPrescription {
+  const pd = row.prescription_data ?? {};
+  return {
+    id: row.id,
+    profile_id: row.profile_id,
+    zodiac_sign: pd.zodiac_sign ?? "",
+    element: pd.element ?? null,
+    ruling_planet: pd.ruling_planet ?? null,
+    crystals: (pd.crystals ?? []) as Crystal[],
+    colors: (pd.colors ?? []) as PowerColor[],
+    spiritual_tools: (pd.spiritual_tools ?? []) as SpiritualTool[],
+    mantra: pd.mantra ?? null,
+    created_at: row.created_at,
+  };
 }
 
 export const useGoddessRx = () => {
@@ -45,27 +62,21 @@ export const useGoddessRx = () => {
       const { data, error } = await supabase
         .from("goddess_prescriptions")
         .select("*")
-        .eq("user_id", user!.id)
+        .eq("profile_id", user!.id)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
       if (error) throw error;
       if (!data) return null;
-      return {
-        ...data,
-        crystals: (data.crystals as unknown) as Crystal[],
-        colors: (data.colors as unknown) as PowerColor[],
-        spiritual_tools: (data.spiritual_tools as unknown) as SpiritualTool[],
-      } as GoddessPrescription;
+      return parsePrescription(data);
     },
   });
 
   const generate = useMutation({
     mutationFn: async () => {
-      // Fetch profile
       const { data: profile } = await supabase
         .from("profiles")
-        .select("birth_date, transformation_choice, goals, name")
+        .select("birth_date, transformation_choice, goals, full_name")
         .eq("id", user!.id)
         .single();
 
@@ -78,25 +89,27 @@ export const useGoddessRx = () => {
           birth_date: profile.birth_date,
           transformation_choice: profile.transformation_choice,
           goals: profile.goals,
-          name: profile.name,
+          name: profile.full_name,
         },
       });
 
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      // Save to DB
+      // Save to DB — store everything in prescription_data Json
       const { error: saveError } = await supabase
         .from("goddess_prescriptions")
         .insert({
-          user_id: user!.id,
-          zodiac_sign: data.zodiac_sign,
-          element: data.element,
-          ruling_planet: data.ruling_planet,
-          crystals: data.crystals,
-          colors: data.colors,
-          spiritual_tools: data.spiritual_tools,
-          mantra: data.mantra,
+          profile_id: user!.id,
+          prescription_data: {
+            zodiac_sign: data.zodiac_sign,
+            element: data.element,
+            ruling_planet: data.ruling_planet,
+            crystals: data.crystals,
+            colors: data.colors,
+            spiritual_tools: data.spiritual_tools,
+            mantra: data.mantra,
+          },
         });
       if (saveError) throw saveError;
 

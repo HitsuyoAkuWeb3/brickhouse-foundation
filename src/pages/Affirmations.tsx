@@ -36,10 +36,9 @@ const Affirmations = () => {
     setGenerating(true);
     setAiResults([]);
     try {
-      // Fetch profile for context
       const { data: profile } = await supabase
         .from("profiles")
-        .select("transformation_choice, goals, name")
+        .select("transformation_choice, goals, full_name")
         .eq("id", user.id)
         .single();
 
@@ -47,7 +46,7 @@ const Affirmations = () => {
         body: {
           transformation_choice: profile?.transformation_choice,
           goals: profile?.goals,
-          name: profile?.name,
+          name: profile?.full_name,
         },
       });
 
@@ -76,8 +75,10 @@ const Affirmations = () => {
   // Group brick affirmations by brick_id
   const groupedByBrick = brickAffirmations.reduce((acc, a) => {
     const key = a.brick_id;
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(a);
+    if (key == null) return acc;
+    const numKey = Number(key);
+    if (!acc[numKey]) acc[numKey] = [];
+    acc[numKey].push(a);
     return acc;
   }, {} as Record<number, typeof brickAffirmations>);
 
@@ -117,10 +118,10 @@ const Affirmations = () => {
               Today's Affirmation
             </div>
             <p className="font-display text-xl leading-relaxed tracking-wide">
-              "{dailyAffirmation.affirmation}"
+              "{dailyAffirmation.text}"
             </p>
             <div className="mt-3 text-[10px] text-muted-foreground uppercase tracking-wider">
-              {bricks.find((b) => b.id === dailyAffirmation.brick_id)?.name}
+              {bricks.find((b) => String(b.id) === dailyAffirmation.brick_id)?.name}
             </div>
           </motion.div>
         )}
@@ -296,7 +297,7 @@ const Affirmations = () => {
                       <div className="px-4 pb-4 space-y-2">
                         {affirmations.map((a) => (
                           <div key={a.id} className="font-body text-sm text-muted-foreground leading-relaxed pl-8">
-                            💎 "{a.affirmation}"
+                            💎 "{a.text}"
                           </div>
                         ))}
                       </div>

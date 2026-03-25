@@ -69,7 +69,7 @@ export const bricks: Brick[] = [
         "Breaking the Scarcity Loop", "The Compound Effect", "Vision Board Mastery", "Acting As If",
         "The Faith Factor", "Mindset Capstone"
       ][i],
-      summary: "Lesson content coming soon.",
+      summary: "Lessons available in Phase 2",
     })),
   },
   {
@@ -89,7 +89,7 @@ export const bricks: Brick[] = [
         "The Repeat Principle", "Goal Roadmapping", "Breaking It Down", "Accountability Architecture",
         "The 90-Day Sprint", "Celebrating Milestones", "Course Correction", "Goal Achievement Capstone"
       ][i],
-      summary: "Lesson content coming soon.",
+      summary: "Lessons available in Phase 2",
     })),
   },
   {
@@ -109,7 +109,7 @@ export const bricks: Brick[] = [
         "Tracking What Matters", "Your Accountability Partner", "Breaking the Cycle", "The 1% Rule",
         "When You Fall Off", "The Power of Consistency", "Building Streaks", "Accountability Capstone"
       ][i],
-      summary: "Lesson content coming soon.",
+      summary: "Lessons available in Phase 2",
     })),
   },
   {
@@ -130,7 +130,7 @@ export const bricks: Brick[] = [
         "Letting Go Rituals", "Therapy & Self-Work", "Trauma-Informed Self-Care", "The Healing Spiral",
         "Post-Traumatic Growth", "Healing Capstone"
       ][i],
-      summary: "Lesson content coming soon.",
+      summary: "Lessons available in Phase 2",
     })),
   },
   {
@@ -150,7 +150,7 @@ export const bricks: Brick[] = [
         "The Mirror Reframe", "Rest as Productivity", "Body Image Healing", "Strength Over Aesthetics",
         "Your Body's Wisdom", "The Temple Mindset", "Body & Health Capstone"
       ][i],
-      summary: "Lesson content coming soon.",
+      summary: "Lessons available in Phase 2",
     })),
   },
   {
@@ -171,7 +171,7 @@ export const bricks: Brick[] = [
         "Communication Mastery", "Conflict Resolution", "Giving Without Depleting", "The Reciprocity Test",
         "Cutting Ties With Love", "Building Your Tribe", "Relationships Capstone"
       ][i],
-      summary: "Lesson content coming soon.",
+      summary: "Lessons available in Phase 2",
     })),
   },
   {
@@ -193,7 +193,7 @@ export const bricks: Brick[] = [
         "Your Non-Negotiable List", "First Date Energy", "Vulnerability in Dating", "The Right One vs. Right Now",
         "Building Together", "Dating Capstone"
       ][i],
-      summary: "Lesson content coming soon.",
+      summary: "Lessons available in Phase 2",
     })),
   },
   {
@@ -213,7 +213,7 @@ export const bricks: Brick[] = [
         "Breaking Free Safely", "No Contact Protocol", "Rebuilding After Narcissistic Abuse", "Trust After Betrayal",
         "Your Red Flag Radar", "The Gray Rock Method", "Healing the Wound", "Protection Capstone"
       ][i],
-      summary: "Lesson content coming soon.",
+      summary: "Lessons available in Phase 2",
     })),
   },
   {
@@ -233,7 +233,7 @@ export const bricks: Brick[] = [
         "Love Languages in Marriage", "Keeping the Fire", "Financial Partnership", "Growing Together",
         "When to Fight For It", "Partnership Capstone"
       ][i],
-      summary: "Lesson content coming soon.",
+      summary: "Lessons available in Phase 2",
     })),
   },
   {
@@ -253,7 +253,7 @@ export const bricks: Brick[] = [
         "Letting Go of Control", "The Art of Doing Nothing", "Gratitude Practice", "Minimalist Living",
         "Digital Detox", "Nature as Medicine", "The Wisdom of Waiting", "Wisdom Capstone"
       ][i],
-      summary: "Lesson content coming soon.",
+      summary: "Lessons available in Phase 2",
     })),
   },
   {
@@ -272,7 +272,7 @@ export const bricks: Brick[] = [
         "Universal Laws", "Divine Feminine Activation", "Laying Bricks Teachings", "Spiritual Self-Care",
         "Meditation & Stillness", "Trusting the Universe", "Spiritual Capstone"
       ][i],
-      summary: "Lesson content coming soon.",
+      summary: "Lessons available in Phase 2",
     })),
   },
 ];

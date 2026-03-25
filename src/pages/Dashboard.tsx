@@ -6,8 +6,8 @@ import { useLessonProgress } from "@/hooks/useLessonProgress";
 import { useDailyRitual } from "@/hooks/useDailyRitual";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Blocks, Sunrise, Diamond, Flame, CalendarClock, Sparkles,
-  Sun, Clock, Moon, Play, CheckCircle2, MessageSquare, Heart, ArrowRight, type LucideIcon
+  Blocks, Sunrise, Diamond, CalendarClock, Sparkles,
+  Sun, Clock, Moon, Play, CheckCircle2, MessageSquare, Heart, ArrowRight, Flame, Video, Users, type LucideIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/brickhouse-logo.png";
@@ -38,9 +38,9 @@ const GREETINGS: Record<TimeWindow, string> = {
 };
 
 const RITUAL_META: Record<TimeWindow, { icon: LucideIcon; label: string; prompt: string; dbKey: string }> = {
-  morning: { icon: Sun, label: "Morning Affirmation", prompt: "Start your day centered — gratitude, intention, joy.", dbKey: "morning_completed" },
+  morning: { icon: Sun, label: "Wake Up Affirmation", prompt: "Start your day centered — gratitude, intention, joy.", dbKey: "morning_completed" },
   midday: { icon: Clock, label: "Midday Check-In", prompt: "Pause. Breathe. Realign with your goals.", dbKey: "midday_completed" },
-  evening: { icon: Moon, label: "Evening Reflection", prompt: "Honor your brick. Release. Set tomorrow's intention.", dbKey: "evening_completed" },
+  evening: { icon: Moon, label: "Evening Reflection", prompt: "Honor your brick. Release. Set tomorrow’s intention.", dbKey: "evening_completed" },
 };
 
 // Extracted from brick1Lessons for variety
@@ -54,7 +54,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [checkingProfile, setCheckingProfile] = useState(true);
-  const [firstName, setFirstName] = useState("Queen");
+  const [firstName, setFirstName] = useState("Brick House");
   const [primaryGoal, setPrimaryGoal] = useState("");
   const { completedLessons } = useLessonProgress();
   const { ritual, streak } = useDailyRitual();
@@ -141,12 +141,14 @@ const Dashboard = () => {
     { icon: Blocks, label: "My Bricks", link: "/bricks", subtitle: "Explore →", accent: "text-primary", iconBg: "bg-primary/15" },
     { icon: Sunrise, label: "Daily Ritual", link: "/daily-ritual", subtitle: todayComplete === 3 ? "Done ✓" : "Start →", accent: "text-accent", iconBg: "bg-accent/15" },
     { icon: Diamond, label: "Affirmations", link: "/affirmations", subtitle: "Explore →", accent: "text-primary", iconBg: "bg-primary/15" },
-    { icon: Flame, label: "Passion Pick", link: "/passion-pick", subtitle: "Explore →", accent: "text-destructive", iconBg: "bg-destructive/10" },
     { icon: CalendarClock, label: "Scheduler", link: "/scheduler", subtitle: "Manage →", accent: "text-accent", iconBg: "bg-accent/10" },
     { icon: Sparkles, label: "Goddess Rx", link: "/goddess-rx", subtitle: "Explore →", accent: "text-secondary", iconBg: "bg-secondary/15" },
   ];
 
   const FeaturedIcon = featuredRitual.icon;
+
+  const calendlyUrl = import.meta.env.VITE_CALENDLY_URL || "#";
+  const collectiveUrl = import.meta.env.VITE_COLLECTIVE_URL || "#";
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center px-4 sm:px-6 pt-8 pb-20 overflow-x-hidden">
@@ -165,23 +167,6 @@ const Dashboard = () => {
           "{dailyAffirmation}"
         </p>
       </div>
-
-      {/* Goal Anchor */}
-      {primaryGoal && (
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-lg bg-card/40 border border-primary/20 rounded-2xl p-4 mb-8 flex items-start gap-4 shadow-[0_0_20px_hsl(330_100%_42%/0.08)]"
-        >
-          <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
-            <Flame className="w-5 h-5 text-primary" />
-          </div>
-          <div className="text-left">
-            <div className="font-body text-[10px] uppercase tracking-widest text-muted-foreground mb-1">What I Am Building</div>
-            <div className="font-display tracking-widest text-foreground leading-snug">{primaryGoal}</div>
-          </div>
-        </motion.div>
-      )}
 
       {/* Pulsing Lesson 1 Card */}
       <motion.div
@@ -218,6 +203,76 @@ const Dashboard = () => {
         </Link>
       </motion.div>
 
+      {/* Passion Pick */}
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className="w-full max-w-lg mb-6"
+      >
+        <Link
+          to="/passion-pick"
+          className="w-full rounded-2xl border border-destructive/30 bg-gradient-to-br from-destructive/10 to-card/60 backdrop-blur-md p-5 flex items-center gap-4 hover:border-destructive/50 transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_20px_hsl(var(--destructive)/0.15)]"
+        >
+          <div className="w-12 h-12 rounded-xl bg-destructive/15 flex items-center justify-center shrink-0">
+            <Flame className="w-6 h-6 text-destructive" />
+          </div>
+          <div className="flex-1 text-left">
+            <h3 className="font-display text-base tracking-wider">Passion Pick</h3>
+            <p className="font-body text-[11px] text-muted-foreground mt-0.5">Discover what lights your fire today</p>
+          </div>
+          <ArrowRight className="w-4 h-4 text-muted-foreground" />
+        </Link>
+      </motion.div>
+
+      {/* Coaching Block */}
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.25 }}
+        className="w-full max-w-lg mb-6"
+      >
+        <a
+          href={calendlyUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full rounded-2xl border border-accent/30 bg-gradient-to-br from-accent/10 to-card/60 backdrop-blur-md p-5 flex items-center gap-4 hover:border-accent/50 transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_20px_hsl(var(--accent)/0.15)]"
+        >
+          <div className="w-12 h-12 rounded-xl bg-accent/15 flex items-center justify-center shrink-0">
+            <Video className="w-6 h-6 text-accent" />
+          </div>
+          <div className="flex-1 text-left">
+            <h3 className="font-display text-base tracking-wider">Book a Coaching Call</h3>
+            <p className="font-body text-[11px] text-muted-foreground mt-0.5">1:1 with Che' — your Lifestyle Architect</p>
+          </div>
+          <ArrowRight className="w-4 h-4 text-muted-foreground" />
+        </a>
+      </motion.div>
+
+      {/* Join the Collective */}
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.3 }}
+        className="w-full max-w-lg mb-8"
+      >
+        <a
+          href={collectiveUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 to-card/60 backdrop-blur-md p-5 flex items-center gap-4 hover:border-primary/50 transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_20px_hsl(var(--primary)/0.15)]"
+        >
+          <div className="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+            <Users className="w-6 h-6 text-primary" />
+          </div>
+          <div className="flex-1 text-left">
+            <h3 className="font-display text-base tracking-wider">Join the Collective</h3>
+            <p className="font-body text-[11px] text-muted-foreground mt-0.5">Connect with your Brickhouse sisters</p>
+          </div>
+          <ArrowRight className="w-4 h-4 text-muted-foreground" />
+        </a>
+      </motion.div>
+
       {/* Daily Ritual */}
       <div className="w-full max-w-lg mb-8">
         <h3 className="font-display tracking-widest text-lg mb-3 text-left w-full pl-2">Daily Ritual</h3>
@@ -249,7 +304,7 @@ const Dashboard = () => {
               </h3>
               <p className="font-body text-[11px] text-muted-foreground mt-0.5">
                 {allDone
-                  ? "You laid every brick today. Rest well, Queen."
+                  ? "You laid every brick today. Rest well, Brick House."
                   : isFeaturedDone
                   ? "Done ✓ — Next ritual awaits"
                   : featuredRitual.prompt}
@@ -286,7 +341,7 @@ const Dashboard = () => {
         </Link>
       </div>
 
-      {/* Toolbox Grid */}
+      {/* Toolbox Grid — 5 tiles (Passion Pick promoted above) */}
       <div className="w-full max-w-lg mb-10">
         <h3 className="font-display tracking-widest text-lg mb-3 text-left w-full pl-2">Your Toolbox</h3>
         <div className="grid grid-cols-3 gap-3">
@@ -306,7 +361,41 @@ const Dashboard = () => {
             );
           })}
         </div>
+        <div className="grid grid-cols-2 gap-3 mt-3">
+          {tiles.slice(3).map((tile) => {
+            const Icon = tile.icon;
+            return (
+              <Link
+                key={tile.label}
+                to={tile.link!}
+                className="bg-gradient-card border border-border rounded-xl p-4 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-all hover:-translate-y-1 hover:shadow-[0_4px_15px_hsl(var(--primary)/0.1)]"
+              >
+                <div className={`w-10 h-10 rounded-xl ${tile.iconBg} flex items-center justify-center mb-2`}>
+                  <Icon className={`w-5 h-5 ${tile.accent}`} />
+                </div>
+                <div className="font-display text-xs tracking-wider leading-tight">{tile.label}</div>
+              </Link>
+            );
+          })}
+        </div>
       </div>
+
+      {/* Goal Anchor — moved below the fold per Prompt 2 */}
+      {primaryGoal && (
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-lg bg-card/40 border border-primary/20 rounded-2xl p-4 mb-8 flex items-start gap-4 shadow-[0_0_20px_hsl(330_100%_42%/0.08)]"
+        >
+          <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+            <Flame className="w-5 h-5 text-primary" />
+          </div>
+          <div className="text-left">
+            <div className="font-body text-[10px] uppercase tracking-widest text-muted-foreground mb-1">What I Am Building</div>
+            <div className="font-display tracking-widest text-foreground leading-snug">{primaryGoal}</div>
+          </div>
+        </motion.div>
+      )}
 
       {/* MVP Static Community Feed Preview */}
       <div className="w-full max-w-lg mb-12">

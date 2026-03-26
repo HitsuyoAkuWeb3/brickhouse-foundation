@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { RitualPlayer, RitualType } from "@/components/RitualPlayer";
 import { useAnalytics } from "@/hooks/useAnalytics";
+import { useSchedulerTasks } from "@/hooks/useSchedulerTasks";
 
 const JOY_ACTIVITIES = [
   "🎶 Dance to my favorite song",
@@ -58,6 +59,7 @@ const DailyRitual = () => {
   const [showGratitudeHistory, setShowGratitudeHistory] = useState(false);
   const [activeRitual, setActiveRitual] = useState<RitualType | null>(null);
   const { trackEvent } = useAnalytics();
+  const { addTask } = useSchedulerTasks();
 
   const completedCount = [
     ritual?.morning_completed,
@@ -88,6 +90,20 @@ const DailyRitual = () => {
     const joyData: Record<string, string> = { joy_moment: text };
     if (joyTime) joyData.joy_scheduled_time = joyTime;
     upsertRitual.mutate({ ritual_data: joyData });
+    
+    // Convert to schedulable item in Scheduler if time is provided
+    if (joyTime) {
+      addTask.mutate({
+        title: `Joy: ${text}`,
+        category: "live_it",
+        task_type: "joy_moment",
+        time_of_day: `${joyTime}:00`,
+        reminder_type: "daily",
+        snooze_interval: "none",
+        is_active: true,
+      });
+    }
+    
     toast.success(joyTime ? `Joy moment scheduled for ${joyTime} ✨` : "Joy moment captured ✨");
     setJoyMoment("");
     setJoyTime("");

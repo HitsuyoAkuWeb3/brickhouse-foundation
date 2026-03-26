@@ -146,6 +146,7 @@ const Scheduler = () => {
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState<string>("build_it");
   const [timeframe, setTimeframe] = useState<string>("1_week");
+  const [snoozeInterval, setSnoozeInterval] = useState<string>("none");
   const [selectedTemplate, setSelectedTemplate] = useState<GoalTemplate | null>(null);
 
   // Filter tasks
@@ -158,6 +159,7 @@ const Scheduler = () => {
     setTitle("");
     setCategory("build_it");
     setTimeframe("1_week");
+    setSnoozeInterval("none");
     setSelectedTemplate(null);
     setShowGoalForm(false);
   };
@@ -208,6 +210,7 @@ const Scheduler = () => {
               category,
               time_of_day: sub.time_of_day,
               escalation_level: sub.escalation_level,
+              snooze_interval: snoozeInterval,
               parent_goal_id: newGoal.id,
               reminder_type: "daily",
               days_of_week: [1, 2, 3, 4, 5],
@@ -386,6 +389,32 @@ const Scheduler = () => {
                       </button>
                     ))}
                   </div>
+                </div>
+
+                {/* Snooze Interval */}
+                <div>
+                  <label className="font-body text-[10px] text-muted-foreground uppercase tracking-wider block mb-1.5">
+                    Snooze / Reminder Persistence
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {SNOOZE_OPTIONS.map((s) => (
+                      <button
+                        key={s.value}
+                        onClick={() => setSnoozeInterval(s.value)}
+                        className={cn(
+                          "py-2 px-3 rounded-lg font-body text-[10px] tracking-wider border transition-all",
+                          snoozeInterval === s.value
+                            ? "bg-primary/20 border-primary/40 text-primary"
+                            : "bg-foreground/[0.03] border-border text-muted-foreground hover:border-primary/20"
+                        )}
+                      >
+                        {s.label}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="font-body text-[10px] text-muted-foreground mt-2 opacity-80">
+                    If set, the app will continuously ping you at this interval until marked done. Accountability.
+                  </p>
                 </div>
 
                 {/* Generate Button */}

@@ -36,6 +36,12 @@ CREATE TABLE IF NOT EXISTS public.prescription_library (
 -- RLS: Public read, service-role write
 ALTER TABLE public.prescription_library ENABLE ROW LEVEL SECURITY;
 
+DO $$ BEGIN
+    DROP POLICY IF EXISTS "Anyone can read prescriptions" ON public.prescription_library;
+EXCEPTION
+    WHEN undefined_object THEN null;
+END $$;
+
 CREATE POLICY "Anyone can read prescriptions"
   ON public.prescription_library FOR SELECT
   USING (true);

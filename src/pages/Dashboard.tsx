@@ -5,14 +5,16 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLessonProgress } from "@/hooks/useLessonProgress";
 import { useDailyRitual } from "@/hooks/useDailyRitual";
 import { useSchedulerTasks } from "@/hooks/useSchedulerTasks";
+import { useAnalytics } from "@/hooks/useAnalytics";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Blocks, Sunrise, Diamond, CalendarClock, Sparkles,
-  Sun, Clock, Moon, Play, CheckCircle2, MessageSquare, Heart, ArrowRight, Flame, Video, Users, type LucideIcon
+  Sun, Clock, Moon, Play, CheckCircle2, MessageSquare, Heart, ArrowRight, Flame, Video, Users, Trophy, type LucideIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/brickhouse-logo.png";
 import { brick1Lessons } from "@/data/brick1Lessons";
+import { useLeveling } from "@/hooks/useLeveling";
 
 type TimeWindow = "morning" | "midday" | "evening";
 
@@ -60,6 +62,8 @@ const Dashboard = () => {
   const { completedLessons } = useLessonProgress();
   const { ritual, streak } = useDailyRitual();
   const { tasks: schedulerTasks } = useSchedulerTasks();
+  const { trackEvent } = useAnalytics();
+  const { score, title } = useLeveling();
 
   const [showWelcomeOverlay, setShowWelcomeOverlay] = useState(false);
 
@@ -184,112 +188,7 @@ const Dashboard = () => {
         </p>
       </div>
 
-      {/* Pulsing Lesson 1 Card */}
-      <motion.div
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.1 }}
-        className="w-full max-w-lg mb-8 relative group"
-      >
-        <div className="absolute -inset-1 rounded-[2rem] bg-gradient-to-r from-primary to-accent opacity-30 blur-lg group-hover:opacity-60 transition duration-500 animate-pulse"></div>
-        <Link 
-          to="/bricks/self-love/lesson/1" 
-          className="relative flex flex-col items-start bg-card/60 backdrop-blur-md border border-primary/30 rounded-3xl p-6 sm:p-8 overflow-hidden hover:bg-card/80 transition-all"
-        >
-          <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-            <Blocks className="w-40 h-40 transform rotate-12 translate-x-10 -translate-y-10" />
-          </div>
-          
-          <div className="font-body text-xs font-bold uppercase tracking-widest text-primary mb-2 bg-primary/10 px-3 py-1.5 rounded-full inline-block">
-            Your Owner's Manual
-          </div>
-          
-          <h2 className="font-display text-2xl sm:text-3xl text-foreground mb-3 text-left">
-            Brick 1: <br />
-            <span className="text-accent">Self-Love & Identity</span>
-          </h2>
-          
-          <p className="font-body text-sm text-foreground/70 text-left mb-6 max-w-[280px]">
-            The foundation of everything you will build. This is where we start.
-          </p>
-
-          <div className="flex items-center gap-2 font-display tracking-widest text-primary">
-            TAP TO BEGIN <ArrowRight className="w-5 h-5" />
-          </div>
-        </Link>
-      </motion.div>
-
-      {/* Passion Pick */}
-      <motion.div
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-        className="w-full max-w-lg mb-6"
-      >
-        <Link
-          to="/passion-pick"
-          className="w-full rounded-2xl border border-destructive/30 bg-gradient-to-br from-destructive/10 to-card/60 backdrop-blur-md p-5 flex items-center gap-4 hover:border-destructive/50 transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_20px_hsl(var(--destructive)/0.15)]"
-        >
-          <div className="w-12 h-12 rounded-xl bg-destructive/15 flex items-center justify-center shrink-0">
-            <Flame className="w-6 h-6 text-destructive" />
-          </div>
-          <div className="flex-1 text-left">
-            <h3 className="font-display text-base tracking-wider">Passion Pick</h3>
-            <p className="font-body text-[11px] text-muted-foreground mt-0.5">Discover what lights your fire today</p>
-          </div>
-          <ArrowRight className="w-4 h-4 text-muted-foreground" />
-        </Link>
-      </motion.div>
-
-      {/* Coaching Block */}
-      <motion.div
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.25 }}
-        className="w-full max-w-lg mb-6"
-      >
-        <a
-          href={calendlyUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="w-full rounded-2xl border border-accent/30 bg-gradient-to-br from-accent/10 to-card/60 backdrop-blur-md p-5 flex items-center gap-4 hover:border-accent/50 transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_20px_hsl(var(--accent)/0.15)]"
-        >
-          <div className="w-12 h-12 rounded-xl bg-accent/15 flex items-center justify-center shrink-0">
-            <Video className="w-6 h-6 text-accent" />
-          </div>
-          <div className="flex-1 text-left">
-            <h3 className="font-display text-base tracking-wider">Book a Coaching Call</h3>
-            <p className="font-body text-[11px] text-muted-foreground mt-0.5">1:1 with Che' — your Lifestyle Architect</p>
-          </div>
-          <ArrowRight className="w-4 h-4 text-muted-foreground" />
-        </a>
-      </motion.div>
-
-      {/* Join the Collective */}
-      <motion.div
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
-        className="w-full max-w-lg mb-8"
-      >
-        <a
-          href={collectiveUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="w-full rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 to-card/60 backdrop-blur-md p-5 flex items-center gap-4 hover:border-primary/50 transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_20px_hsl(var(--primary)/0.15)]"
-        >
-          <div className="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
-            <Users className="w-6 h-6 text-primary" />
-          </div>
-          <div className="flex-1 text-left">
-            <h3 className="font-display text-base tracking-wider">Join the Collective</h3>
-            <p className="font-body text-[11px] text-muted-foreground mt-0.5">Connect with your Brickhouse sisters</p>
-          </div>
-          <ArrowRight className="w-4 h-4 text-muted-foreground" />
-        </a>
-      </motion.div>
-
-      {/* Daily Ritual */}
+      {/* Daily Ritual — §G.2 Position 1 */}
       <div className="w-full max-w-lg mb-8">
         <h3 className="font-display tracking-widest text-lg mb-3 text-left w-full pl-2">Daily Ritual</h3>
         <Link
@@ -362,6 +261,79 @@ const Dashboard = () => {
         </Link>
       </div>
 
+      {/* Passion Pick — §G.2 Position 2 */}
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className="w-full max-w-lg mb-6"
+      >
+        <Link
+          to="/passion-pick"
+          onClick={() => trackEvent("feature_click", { feature: "passion_pick" })}
+          className="w-full rounded-2xl border border-destructive/30 bg-gradient-to-br from-destructive/10 to-card/60 backdrop-blur-md p-5 flex items-center gap-4 hover:border-destructive/50 transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_20px_hsl(var(--destructive)/0.15)]"
+        >
+          <div className="w-12 h-12 rounded-xl bg-destructive/15 flex items-center justify-center shrink-0">
+            <Flame className="w-6 h-6 text-destructive" />
+          </div>
+          <div className="flex-1 text-left">
+            <h3 className="font-display text-base tracking-wider">Passion Pick</h3>
+            <p className="font-body text-[11px] text-muted-foreground mt-0.5">Discover what lights your fire today</p>
+          </div>
+          <ArrowRight className="w-4 h-4 text-muted-foreground" />
+        </Link>
+      </motion.div>
+
+      {/* Coaching Block — §G.2 Position 3 */}
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.25 }}
+        className="w-full max-w-lg mb-6"
+      >
+        <a
+          href={calendlyUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => trackEvent("feature_click", { feature: "coaching" })}
+          className="w-full rounded-2xl border border-accent/30 bg-gradient-to-br from-accent/10 to-card/60 backdrop-blur-md p-5 flex items-center gap-4 hover:border-accent/50 transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_20px_hsl(var(--accent)/0.15)]"
+        >
+          <div className="w-12 h-12 rounded-xl bg-accent/15 flex items-center justify-center shrink-0">
+            <Video className="w-6 h-6 text-accent" />
+          </div>
+          <div className="flex-1 text-left">
+            <h3 className="font-display text-base tracking-wider">Book a Coaching Call</h3>
+            <p className="font-body text-[11px] text-muted-foreground mt-0.5">1:1 with Che' — your Lifestyle Architect</p>
+          </div>
+          <ArrowRight className="w-4 h-4 text-muted-foreground" />
+        </a>
+      </motion.div>
+
+      {/* Join the Collective — §G.2 Position 4 */}
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.3 }}
+        className="w-full max-w-lg mb-8"
+      >
+        <a
+          href={collectiveUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => trackEvent("feature_click", { feature: "collective" })}
+          className="w-full rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 to-card/60 backdrop-blur-md p-5 flex items-center gap-4 hover:border-primary/50 transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_20px_hsl(var(--primary)/0.15)]"
+        >
+          <div className="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+            <Users className="w-6 h-6 text-primary" />
+          </div>
+          <div className="flex-1 text-left">
+            <h3 className="font-display text-base tracking-wider">Join the Collective</h3>
+            <p className="font-body text-[11px] text-muted-foreground mt-0.5">Connect with your Brickhouse sisters</p>
+          </div>
+          <ArrowRight className="w-4 h-4 text-muted-foreground" />
+        </a>
+      </motion.div>
+
       {/* Toolbox Grid — 5 tiles (Passion Pick promoted above) */}
       <div className="w-full max-w-lg mb-10">
         <h3 className="font-display tracking-widest text-lg mb-3 text-left w-full pl-2">Your Toolbox</h3>
@@ -372,6 +344,7 @@ const Dashboard = () => {
               <Link
                 key={tile.label}
                 to={tile.link!}
+                onClick={() => trackEvent("feature_click", { feature: tile.label })}
                 className="bg-gradient-card border border-border rounded-xl p-4 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-all hover:-translate-y-1 hover:shadow-[0_4px_15px_hsl(var(--primary)/0.1)] aspect-square"
               >
                 <div className={`w-10 h-10 rounded-xl ${tile.iconBg} flex items-center justify-center mb-2`}>
@@ -389,6 +362,7 @@ const Dashboard = () => {
               <Link
                 key={tile.label}
                 to={tile.link!}
+                onClick={() => trackEvent("feature_click", { feature: tile.label })}
                 className="bg-gradient-card border border-border rounded-xl p-4 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-all hover:-translate-y-1 hover:shadow-[0_4px_15px_hsl(var(--primary)/0.1)]"
               >
                 <div className={`w-10 h-10 rounded-xl ${tile.iconBg} flex items-center justify-center mb-2`}>
@@ -401,22 +375,40 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Goal Anchor — moved below the fold per Prompt 2 */}
-      {primaryGoal && (
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-lg bg-card/40 border border-primary/20 rounded-2xl p-4 mb-8 flex items-start gap-4 shadow-[0_0_20px_hsl(330_100%_42%/0.08)]"
+      {/* Pulsing Lesson 1 Card — §G.2 Position 7 (below fold) */}
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.1 }}
+        className="w-full max-w-lg mb-8 relative group"
+      >
+        <div className="absolute -inset-1 rounded-[2rem] bg-gradient-to-r from-primary to-accent opacity-30 blur-lg group-hover:opacity-60 transition duration-500 animate-pulse"></div>
+        <Link 
+          to="/bricks/self-love/lesson/1" 
+          className="relative flex flex-col items-start bg-card/60 backdrop-blur-md border border-primary/30 rounded-3xl p-6 sm:p-8 overflow-hidden hover:bg-card/80 transition-all"
         >
-          <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
-            <Flame className="w-5 h-5 text-primary" />
+          <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+            <Blocks className="w-40 h-40 transform rotate-12 translate-x-10 -translate-y-10" />
           </div>
-          <div className="text-left">
-            <div className="font-body text-[10px] uppercase tracking-widest text-muted-foreground mb-1">What I Am Building</div>
-            <div className="font-display tracking-widest text-foreground leading-snug">{primaryGoal}</div>
+          
+          <div className="font-body text-xs font-bold uppercase tracking-widest text-primary mb-2 bg-primary/10 px-3 py-1.5 rounded-full inline-block">
+            Your Owner's Manual
           </div>
-        </motion.div>
-      )}
+          
+          <h2 className="font-display text-2xl sm:text-3xl text-foreground mb-3 text-left">
+            Brick 1: <br />
+            <span className="text-accent">Self-Love & Identity</span>
+          </h2>
+          
+          <p className="font-body text-sm text-foreground/70 text-left mb-6 max-w-[280px]">
+            The foundation of everything you will build. This is where we start.
+          </p>
+
+          <div className="flex items-center gap-2 font-display tracking-widest text-primary">
+            TAP TO BEGIN <ArrowRight className="w-5 h-5" />
+          </div>
+        </Link>
+      </motion.div>
 
       {/* MVP Static Community Feed Preview */}
       <div className="w-full max-w-lg mb-12">
@@ -460,16 +452,39 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* Goal Anchor — moved below Community Feed per SW Action Plan #27 */}
+      {primaryGoal && (
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-lg bg-card/40 border border-primary/20 rounded-2xl p-4 mb-8 flex items-start gap-4 shadow-[0_0_20px_hsl(330_100%_42%/0.08)]"
+        >
+          <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+            <Flame className="w-5 h-5 text-primary" />
+          </div>
+          <div className="text-left">
+            <div className="font-body text-[10px] uppercase tracking-widest text-muted-foreground mb-1">What I Am Building</div>
+            <div className="font-display tracking-widest text-foreground leading-snug">{primaryGoal}</div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Quick Stats Banner & Sign out */}
       <div className="w-full max-w-lg mt-auto flex flex-col items-center">
-        <div className="flex gap-4 mb-8 w-full">
-          <div className="bg-accent/5 border border-accent/20 rounded-xl px-4 py-3 text-center flex-1">
+        <div className="flex gap-3 mb-8 w-full">
+          <div className="bg-accent/5 border border-accent/20 rounded-xl px-3 py-3 text-center flex-1">
             <div className="font-display text-xl text-accent">{streak}</div>
-            <div className="font-body text-[9px] text-muted-foreground uppercase tracking-wider">Day Streak</div>
+            <div className="font-body text-[8px] sm:text-[9px] text-muted-foreground uppercase tracking-wider">Day Streak</div>
           </div>
-          <div className="bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 text-center flex-1">
+          <div className="bg-primary/5 border border-primary/20 rounded-xl px-3 py-3 text-center flex-1">
             <div className="font-display text-xl text-primary">{completedLessons.length}</div>
-            <div className="font-body text-[9px] text-muted-foreground uppercase tracking-wider">Bricks Laid</div>
+            <div className="font-body text-[8px] sm:text-[9px] text-muted-foreground uppercase tracking-wider">Bricks Laid</div>
+          </div>
+          <div className="bg-secondary/5 border border-secondary/20 rounded-xl px-2 py-3 text-center flex-1 flex flex-col items-center justify-center">
+            <div className="font-display text-sm sm:text-base text-secondary flex items-center justify-center gap-1">
+              <Trophy className="w-3.5 h-3.5" /> {title}
+            </div>
+            <div className="font-body text-[8px] sm:text-[9px] text-muted-foreground uppercase tracking-wider">{score} XP</div>
           </div>
         </div>
 

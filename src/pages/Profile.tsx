@@ -4,7 +4,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogOut, Settings, User as UserIcon, Crown, Calendar, Target } from "lucide-react";
+import { LogOut, Settings, User as UserIcon, Crown, Calendar, Target, Sparkles, Trophy } from "lucide-react";
+import { useGoddessRx } from "@/hooks/useGoddessRx";
+import { useLeveling } from "@/hooks/useLeveling";
 
 const TIER_DISPLAY_NAMES: Record<string, string> = {
   free: "Free Tier",
@@ -18,6 +20,8 @@ export default function Profile() {
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const { data: profile, isLoading } = useProfile();
+  const { prescription } = useGoddessRx();
+  const { score, title, nextTierScore, progress } = useLeveling();
 
   const handleSignOut = async () => {
     await signOut();
@@ -59,6 +63,31 @@ export default function Profile() {
                     <h2 className="text-2xl font-semibold">{profile?.name || "Brick House"}</h2>
                     <p className="text-muted-foreground">{profile?.email}</p>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center justify-between text-lg">
+                  <div className="flex items-center">
+                    <Trophy className="w-5 h-5 mr-2 text-accent" />
+                    Builder Rank
+                  </div>
+                  <span className="text-primary font-display">{title}</span>
+                </CardTitle>
+                <CardDescription>Your Lifestyle Architecture Progress</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                  <span>{score} XP</span>
+                  <span>{score >= 500 ? "MAX" : `${nextTierScore} XP`}</span>
+                </div>
+                <div className="h-2 w-full bg-foreground/10 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-1000" 
+                    style={{ width: `${progress}%` }} 
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -136,13 +165,47 @@ export default function Profile() {
                     {profile?.birth_date ? new Date(profile.birth_date).toLocaleDateString() : "Not provided"}
                   </p>
                   
-                  <p className="text-sm font-medium">Sun Sign</p>
+                  <p className="text-sm font-medium">Zodiac Sign</p>
                   <p className="text-muted-foreground text-sm capitalize">
-                    {profile?.sun_sign || "Not provided"}
+                    {profile?.zodiac_sign || "Not provided"}
                   </p>
                 </CardContent>
               </Card>
             </div>
+
+            {prescription && (
+              <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center text-lg">
+                    <Sparkles className="w-4 h-4 mr-2 text-primary" />
+                    Latest Goddess Rx
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm font-medium mb-1">Mantra</p>
+                  <p className="text-muted-foreground text-sm italic mb-3">
+                    "{prescription.mantra}"
+                  </p>
+                  
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {prescription.crystals.slice(0, 2).map((c, i) => (
+                      <span key={i} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+                        {c.emoji || "💎"} {c.name}
+                      </span>
+                    ))}
+                    {prescription.colors.slice(0, 1).map((c, i) => (
+                      <span key={i} className="text-xs bg-accent/10 text-accent px-2 py-1 rounded-full flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: c.hex }} />
+                        {c.name}
+                      </span>
+                    ))}
+                  </div>
+                  <Button variant="link" className="mt-3 h-auto p-0 text-xs text-muted-foreground" onClick={() => navigate("/goddess-rx")}>
+                    View Full Prescription
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
 
             <Button 
               variant="destructive" 

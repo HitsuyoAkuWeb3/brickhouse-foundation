@@ -76,11 +76,19 @@
     @apply border-border;
   }
 
+  html, body {
+    overflow-x: hidden;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  input, textarea, select {
+    font-size: 16px !important; /* prevents iOS zoom on focus */
   }
 
   h1, h2, h3, h4, h5, h6 {

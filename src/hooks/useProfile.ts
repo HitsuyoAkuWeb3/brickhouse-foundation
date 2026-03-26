@@ -17,7 +17,7 @@ export interface Profile {
   transformation_choice: string | null;
   subscription_tier: SubscriptionTier;
   shopify_customer_id: string | null;
-  sun_sign?: string | null;
+  zodiac_sign?: string | null;
   reminder_preferences?: Record<string, unknown> | null;
   passion_pick_media?: string | null;
 }

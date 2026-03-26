@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { useAuth } from "@/hooks/useAuth";
+import { useAnalytics } from "@/hooks/useAnalytics";
 import { z } from "zod";
 import logo from "@/assets/brickhouse-logo.png";
 import { toast } from "sonner";
@@ -18,6 +19,7 @@ const nameSchema = z.string().trim().min(1, "Name is required").max(100);
 
 const Auth = () => {
   const { user, loading } = useAuth();
+  const { trackEvent } = useAnalytics();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [mode, setMode] = useState<Mode>("login");
@@ -75,6 +77,7 @@ const Auth = () => {
           },
         });
         if (error) throw error;
+        trackEvent("user_signup", { method: "email" });
         setEmailSent(true);
       } else if (mode === "login") {
         const { error } = await supabase.auth.signInWithPassword({
@@ -98,6 +101,7 @@ const Auth = () => {
   };
 
   const handleGoogle = async () => {
+    trackEvent("user_signup", { method: "google" });
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {

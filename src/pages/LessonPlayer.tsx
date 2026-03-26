@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { getBrickBySlug } from "@/data/bricksContent";
 import { useLessonProgress } from "@/hooks/useLessonProgress";
+import { useAnalytics } from "@/hooks/useAnalytics";
 import { cn } from "@/lib/utils";
 
 const LessonPlayer = () => {
@@ -11,6 +12,7 @@ const LessonPlayer = () => {
   const brick = slug ? getBrickBySlug(slug) : undefined;
   const lesson = brick?.lessons.find((l) => l.id === lessonId);
   const { isLessonCompleted, toggleLesson } = useLessonProgress();
+  const { trackEvent } = useAnalytics();
 
   if (!brick || !lesson) {
     return (
@@ -34,6 +36,7 @@ const LessonPlayer = () => {
         brickId: brick.id,
         completed: true,
       });
+      trackEvent("lesson_completed", { lesson_id: lesson.id }, brick.id.toString());
     }
     // Navigate back to the brick detail page after a short delay
     setTimeout(() => {

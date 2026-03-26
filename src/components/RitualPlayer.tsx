@@ -6,6 +6,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Slider } from "@/components/ui/slider";
 import { useAudioAnalyzer } from "@/hooks/useAudioAnalyzer";
+import { AffirmationTeleprompter } from "@/components/AffirmationTeleprompter";
+import { VoiceRecorder } from "@/components/VoiceRecorder";
 
 export type RitualType = "morning_affirmation" | "midday_checkin" | "evening_reflection";
 
@@ -13,7 +15,7 @@ interface Step {
   id: string;
   title: string;
   prompt: string;
-  type: "input" | "timer" | "slider" | "passion_timer";
+  type: "input" | "timer" | "slider" | "passion_timer" | "teleprompter" | "voice_recording";
   duration?: number; // for timer
   key?: string; // for data saving
 }
@@ -22,7 +24,8 @@ const RITUAL_CONFIGS: Record<RitualType, Step[]> = {
   morning_affirmation: [
     { id: "gratitude", title: "Gratitude", prompt: "What are you grateful for today?", type: "input", key: "gratitude_note" },
     { id: "intention", title: "Intention", prompt: "What is your intention for today?", type: "input", key: "morning_intention" },
-    { id: "affirmation", title: "Affirmation", prompt: "Look in the mirror. Say your I AM declarations out loud. Mean every word.", type: "timer", duration: 15 },
+    { id: "affirmation", title: "Affirmation", prompt: "Listen to Ché, then repeat each declaration with conviction.", type: "teleprompter" },
+    { id: "voice_affirmation", title: "Your Voice", prompt: "Now record your own 'I AM' declaration.", type: "voice_recording", key: "voice_affirmation" },
     { id: "joy", title: "Joy Claim", prompt: "Schedule one joyful thing today.", type: "input", key: "joy_moment" },
   ],
   midday_checkin: [
@@ -113,7 +116,7 @@ export const RitualPlayer = ({ type, onClose, onComplete }: RitualPlayerProps) =
 
   const isNextDisabled = () => {
     if (!audioStarted) return true; // prevent advancing before audio starts
-    if (currentStep.type === "input") {
+    if (currentStep.type === "input" || currentStep.type === "voice_recording") {
       const val = data[currentStep.key as string];
       return !val || String(val).trim() === "";
     }
@@ -152,6 +155,17 @@ export const RitualPlayer = ({ type, onClose, onComplete }: RitualPlayerProps) =
               onValueChange={(vals) => handleInput(vals[0])}
             />
           </div>
+        );
+      case "teleprompter":
+        return (
+          <AffirmationTeleprompter
+            count={4}
+            onComplete={handleNext}
+          />
+        );
+      case "voice_recording":
+        return (
+          <VoiceRecorder onRecordingComplete={(url) => handleInput(url)} />
         );
       case "passion_timer":
       case "timer": {

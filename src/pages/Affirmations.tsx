@@ -2,12 +2,15 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAffirmations } from "@/hooks/useAffirmations";
+import { useSchedulerTasks } from "@/hooks/useSchedulerTasks";
 import { bricks } from "@/data/bricksContent";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Plus, Trash2, Sparkles, ChevronDown, ArrowLeft, Lock } from "lucide-react";
+import { Heart, Plus, Trash2, Sparkles, ChevronDown, ArrowLeft, Lock, Headphones, X, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { AudioPlayer } from "@/components/ui/AudioPlayer";
+import { AffirmationTeleprompter } from "@/components/AffirmationTeleprompter";
 
 const Affirmations = () => {
   const { user } = useAuth();
@@ -15,6 +18,10 @@ const Affirmations = () => {
   const [newAffirmation, setNewAffirmation] = useState("");
   const [showBuilder, setShowBuilder] = useState(false);
   const [expandedBrick, setExpandedBrick] = useState<number | null>(null);
+  const [practiceMode, setPracticeMode] = useState(false);
+  const [schedulingId, setSchedulingId] = useState<string | null>(null);
+  const [scheduleTime, setScheduleTime] = useState("09:00");
+  const { addTask: addSchedulerTask } = useSchedulerTasks();
 
   const { brickAffirmations, userAffirmations, dailyAffirmation, addAffirmation, toggleFavorite, deleteAffirmation, isLoading } = useAffirmations(selectedBrick);
 
@@ -89,6 +96,41 @@ const Affirmations = () => {
         )}
 
         {/* I AM Builder */}
+        {/* Practice Mode */}
+        <button
+          onClick={() => setPracticeMode(true)}
+          className="w-full flex items-center justify-center gap-3 bg-gradient-pink text-foreground font-display text-sm tracking-wider uppercase py-4 rounded-xl hover:opacity-90 transition-opacity mb-8 shadow-[0_0_20px_hsl(var(--primary)/0.2)]"
+        >
+          <Headphones className="w-5 h-5" />
+          Practice Mode — Speak With Ché
+        </button>
+
+        <AnimatePresence>
+          {practiceMode && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-background/95 backdrop-blur-md flex flex-col items-center justify-center px-6"
+            >
+              <button
+                onClick={() => setPracticeMode(false)}
+                className="absolute top-6 right-6 p-2 rounded-full hover:bg-muted/40 transition-colors"
+              >
+                <X className="w-5 h-5 text-muted-foreground" />
+              </button>
+              <h2 className="font-display text-2xl tracking-wider mb-2">Practice Mode</h2>
+              <p className="font-body text-sm text-muted-foreground mb-10">Listen to Ché speak, then repeat with conviction.</p>
+              <AffirmationTeleprompter
+                count={5}
+                onComplete={() => {
+                  setPracticeMode(false);
+                  toast.success("Practice complete 💎");
+                }}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
         <div className="mb-8">
           <button
             onClick={() => setShowBuilder(!showBuilder)}
@@ -216,9 +258,62 @@ const Affirmations = () => {
                       <div className="px-4 pb-4 space-y-2">
                         {affirmations.map((a) => (
                           <div key={a.id} className="bg-gradient-card border border-border/40 rounded-xl p-4 mb-2">
-                            <div className="font-body text-sm text-foreground leading-relaxed pl-1">
-                              💎 "{a.text.replace('Audio Affirmation: ', '')}"
+                            <div className="flex items-start gap-2">
+                              <div className="flex-1 font-body text-sm text-foreground leading-relaxed pl-1">
+                                💎 "{a.text.replace('Audio Affirmation: ', '')}"
+                              </div>
+                              <button
+                                onClick={() => setSchedulingId(schedulingId === a.id ? null : a.id)}
+                                className={cn(
+                                  "shrink-0 p-2 rounded-lg transition-colors",
+                                  schedulingId === a.id
+                                    ? "bg-accent/20 text-accent"
+                                    : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                                )}
+                                title="Schedule this affirmation"
+                              >
+                                <Clock className="w-4 h-4" />
+                              </button>
                             </div>
+                            {/* Inline Time Picker */}
+                            <AnimatePresence>
+                              {schedulingId === a.id && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: "auto", opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  className="overflow-hidden"
+                                >
+                                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/30">
+                                    <input
+                                      type="time"
+                                      value={scheduleTime}
+                                      onChange={(e) => setScheduleTime(e.target.value)}
+                                      className="flex-1 bg-input border border-border rounded-lg px-3 py-2 font-body text-xs text-foreground focus:outline-none focus:border-primary transition-colors"
+                                    />
+                                    <button
+                                      onClick={() => {
+                                        addSchedulerTask.mutate({
+                                          title: a.text.replace('Audio Affirmation: ', ''),
+                                          task_type: 'affirmation',
+                                          affirmation_id: a.id,
+                                          time_of_day: scheduleTime + ':00',
+                                          reminder_type: 'daily',
+                                          days_of_week: [1, 2, 3, 4, 5, 6, 7],
+                                          snooze_interval: 'every_hour',
+                                          is_active: true,
+                                        });
+                                        toast.success(`Affirmation scheduled for ${scheduleTime} ⏰`);
+                                        setSchedulingId(null);
+                                      }}
+                                      className="bg-gradient-pink text-foreground font-body font-bold text-[10px] uppercase tracking-wider px-4 py-2 rounded-lg hover:opacity-90 transition-opacity"
+                                    >
+                                      Schedule
+                                    </button>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
                             {a.audio_url && (
                               <AudioPlayer src={a.audio_url} />
                             )}

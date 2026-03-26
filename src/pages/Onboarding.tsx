@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Upload, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useAnalytics } from "@/hooks/useAnalytics";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/brickhouse-logo.png";
 import { toast } from "sonner";
@@ -52,6 +53,7 @@ const stepVariants = {
 
 const Onboarding = () => {
   const { user } = useAuth();
+  const { trackEvent } = useAnalytics();
   const navigate = useNavigate();
   const {
     step,
@@ -150,6 +152,7 @@ const Onboarding = () => {
         .eq("id", user.id);
 
       if (error) throw error;
+      trackEvent("profile_setup_completed", { goals, zodiac_sign: zodiacSign });
       navigate("/dashboard", { replace: true, state: { justFinishedOnboarding: true } });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Something went wrong";

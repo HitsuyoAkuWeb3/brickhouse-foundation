@@ -19,6 +19,7 @@ export default function Settings() {
   
   const [name, setName] = useState("");
   const [birthDate, setBirthDate] = useState("");
+  const [zodiacSign, setZodiacSign] = useState("");
   const [remindersEnabled, setRemindersEnabled] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -26,6 +27,7 @@ export default function Settings() {
     if (profile) {
       setName(profile.name || "");
       setBirthDate(profile.birth_date || "");
+      setZodiacSign(profile.zodiac_sign || "");
       
       try {
         const prefs = profile.reminder_preferences as Record<string, unknown>;
@@ -44,6 +46,7 @@ export default function Settings() {
       const updates = {
         name,
         birth_date: birthDate || null,
+        zodiac_sign: zodiacSign || null,
       };
 
       const { error } = await supabase
@@ -150,6 +153,29 @@ export default function Settings() {
                   value={birthDate} 
                   onChange={(e) => setBirthDate(e.target.value)} 
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="zodiacSign">Zodiac Sign</Label>
+                <select 
+                  id="zodiacSign" 
+                  className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  value={zodiacSign} 
+                  onChange={(e) => setZodiacSign(e.target.value)}
+                >
+                  <option value="">Select your sign</option>
+                  <option value="aries">Aries</option>
+                  <option value="taurus">Taurus</option>
+                  <option value="gemini">Gemini</option>
+                  <option value="cancer">Cancer</option>
+                  <option value="leo">Leo</option>
+                  <option value="virgo">Virgo</option>
+                  <option value="libra">Libra</option>
+                  <option value="scorpio">Scorpio</option>
+                  <option value="sagittarius">Sagittarius</option>
+                  <option value="capricorn">Capricorn</option>
+                  <option value="aquarius">Aquarius</option>
+                  <option value="pisces">Pisces</option>
+                </select>
               </div>
               <Button 
                 onClick={handleSaveProfile} 

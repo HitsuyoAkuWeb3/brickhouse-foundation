@@ -3,13 +3,15 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Lock, Check } from "lucide-react";
 import { getBrickBySlug } from "@/data/bricksContent";
 import { useLessonProgress } from "@/hooks/useLessonProgress";
+import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { addDays, isBefore, formatDistanceToNow } from "date-fns";
 
 const BrickDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const brick = slug ? getBrickBySlug(slug) : undefined;
-  const { isLessonCompleted, toggleLesson, getBrickProgress, getCompletedAt } = useLessonProgress();
+  const { isLessonCompleted, toggleLesson, getBrickProgress } = useLessonProgress();
+  const { user } = useAuth();
 
   if (!brick) {
     return (
@@ -85,13 +87,13 @@ const BrickDetail = () => {
             let unlockDate: Date | null = null;
             
             if (!locked && i > 0) {
-              const prevLessonId = brick.lessons[i - 1].id;
-              const prevCompletedAt = getCompletedAt(prevLessonId);
-              
-              if (!prevCompletedAt) {
+              // Always lock if the preceding lesson isn't completed
+              const prevCompleted = isLessonCompleted(brick.lessons[i - 1].id);
+              if (!prevCompleted) {
                 locked = true;
-              } else {
-                unlockDate = addDays(prevCompletedAt, 7);
+              } else if (user) {
+                const createdAt = new Date(user.created_at);
+                unlockDate = addDays(createdAt, i * 7);
                 if (isBefore(new Date(), unlockDate)) {
                   locked = true;
                 } else {

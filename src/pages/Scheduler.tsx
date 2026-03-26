@@ -55,7 +55,7 @@ const GOAL_TEMPLATES: GoalTemplate[] = [
     truth: "You don't chase love. You become the frequency it can't resist.",
     phases: [
       { label: "This Week", timeframe: "1_week", tasks: ["Complete Life Audit — Relationships score", "Write your Non-Negotiables list (10 items)", "Delete or archive 3 dead-end connections"] },
-      { label: "This Month", timeframe: "1_month", tasks: ["Read or listen to 1 attachment theory resource", "Start morning affirmation: 'I am magnetic to aligned love'", "Journal: 'What patterns do I repeat in relationships?'"] },
+      { label: "This Month", timeframe: "1_month", tasks: ["Read or listen to 1 attachment theory resource", "Start wake up affirmation: 'I am magnetic to aligned love'", "Journal: 'What patterns do I repeat in relationships?'"] },
       { label: "3 Months", timeframe: "3_months", tasks: ["Attend 1 social event outside your comfort zone", "Practice boundary-setting in 3 real conversations", "Create your Goddess Rx self-care ritual"] },
       { label: "6 Months", timeframe: "6_months", tasks: ["Evaluate new connections against your Non-Negotiables", "Book a solo trip or experience to celebrate your growth", "Write a letter to your future partner"] },
     ],
@@ -403,7 +403,7 @@ const Scheduler = () => {
         </AnimatePresence>
 
         {/* Goals List */}
-        <div className="space-y-8">
+        <div className="space-y-8 pb-10">
           {goals.length === 0 && !showGoalForm ? (
             <div className="text-center py-16 bg-gradient-card border border-border rounded-xl">
               <Target className="w-12 h-12 mx-auto text-muted-foreground/30 mb-4" />
@@ -413,148 +413,167 @@ const Scheduler = () => {
               </p>
             </div>
           ) : (
-            goals.map((goal) => {
-              const Icon = getCategoryIcon(goal.category);
-              const goalSubtasks = subtasks.filter((s) => s.parent_goal_id === goal.id);
-              const completedCount = goalSubtasks.filter((s) => s.is_completed).length;
-              const progressPercent = goalSubtasks.length > 0 ? Math.round((completedCount / goalSubtasks.length) * 100) : 0;
+            CATEGORIES.map((categoryInfo) => {
+              const categoryGoals = goals.filter((g) => g.category === categoryInfo.value);
+              if (categoryGoals.length === 0) return null;
+              
+              const CategoryIcon = categoryInfo.icon;
 
               return (
-                <div key={goal.id} className="space-y-4 group">
-                  {/* Goal Header */}
-                  <div className="flex items-center gap-4 bg-muted/40 p-4 rounded-xl border border-border relative overflow-hidden transition-all hover:bg-muted/60">
-                    <div className="absolute top-0 left-0 w-1 h-full bg-gradient-pink" />
-
-                    <div className="w-10 h-10 rounded-xl bg-background flex items-center justify-center shrink-0 border border-border shadow-sm">
-                      <Icon className="w-5 h-5 text-primary" />
+                <div key={categoryInfo.value} className="mb-10 animate-in fade-in slide-in-from-bottom-2">
+                  <div className="flex items-center gap-3 mb-5 border-b border-border/40 pb-3">
+                    <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
+                      <CategoryIcon className="w-4 h-4 text-primary" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-start mb-1">
-                        <h2 className="font-display text-lg tracking-wider truncate text-foreground pr-4">
-                          {goal.title}
-                        </h2>
-                        <button
-                          onClick={() => handleDelete(goal.id, true)}
-                          className="pt-1 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="font-body text-[10px] tracking-wider uppercase text-muted-foreground">
-                          {CATEGORIES.find((c) => c.value === goal.category)?.label || goal.category}
-                        </span>
-                        <span className="w-1 h-1 rounded-full bg-border" />
-                        <span className="font-body text-[10px] tracking-wider uppercase text-accent">
-                          {TIMEFRAMES.find((t) => t.value === goal.timeframe)?.label || goal.timeframe}
-                        </span>
-                        {goalSubtasks.length > 0 && (
-                          <>
-                            <span className="w-1 h-1 rounded-full bg-border" />
-                            <span className="font-body text-[10px] tracking-wider uppercase text-primary">
-                              {progressPercent}%
-                            </span>
-                          </>
-                        )}
-                      </div>
-                      {/* Progress bar */}
-                      {goalSubtasks.length > 0 && (
-                        <div className="w-full h-1 bg-border/50 rounded-full mt-2 overflow-hidden">
-                          <div
-                            className="h-full bg-gradient-pink rounded-full transition-all duration-500"
-                            style={{ width: `${progressPercent}%` }}
-                          />
-                        </div>
-                      )}
-                    </div>
+                    <h3 className="font-display text-xl tracking-wider text-foreground">
+                      {categoryInfo.label}
+                    </h3>
+                    <span className="font-body text-[10px] uppercase text-muted-foreground font-normal tracking-wide bg-foreground/5 px-2 py-0.5 rounded ml-2">
+                      {categoryInfo.desc}
+                    </span>
                   </div>
+                  
+                  <div className="space-y-6">
+                    {categoryGoals.map((goal) => {
+                      const Icon = getCategoryIcon(goal.category);
+                      const goalSubtasks = subtasks.filter((s) => s.parent_goal_id === goal.id);
+                      const completedCount = goalSubtasks.filter((s) => s.is_completed).length;
+                      const progressPercent = goalSubtasks.length > 0 ? Math.round((completedCount / goalSubtasks.length) * 100) : 0;
 
-                  {/* Subtasks */}
-                  <div className="space-y-2 pl-4 border-l-2 border-border/50 ml-6">
-                    {goalSubtasks.length === 0 && (
-                      <p className="font-body text-xs text-muted-foreground py-2">No subtasks generated yet.</p>
-                    )}
-                    {goalSubtasks.map((task) => (
-                      <div
-                        key={task.id}
-                        className={cn(
-                          "flex items-center gap-3 p-3 rounded-lg border bg-background transition-all group/task",
-                          task.is_completed ? "border-primary/30 bg-primary/5" : "border-border hover:border-primary/20"
-                        )}
-                      >
-                        <button
-                          onClick={() => toggleTaskCompletion(task)}
-                          className={cn(
-                            "w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition-colors",
-                            task.is_completed ? "text-primary" : "text-border hover:text-primary/50"
-                          )}
-                        >
-                          {task.is_completed ? <CheckCircle2 className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
-                        </button>
+                      return (
+                        <div key={goal.id} className="space-y-4 group">
+                          {/* Goal Header */}
+                          <div className="flex items-center gap-4 bg-muted/40 p-4 rounded-xl border border-border relative overflow-hidden transition-all hover:bg-muted/60">
+                            <div className="absolute top-0 left-0 w-1 h-full bg-gradient-pink" />
 
-                        <div className="flex-1 min-w-0">
-                          <p className={cn(
-                            "font-body text-xs transition-colors",
-                            task.is_completed ? "text-muted-foreground line-through" : "text-foreground"
-                          )}>
-                            {task.title}
-                          </p>
-                          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                            {task.time_of_day && (
-                              <span className="font-body text-[9px] text-muted-foreground flex items-center gap-1">
-                                <Bell className="w-2.5 h-2.5" />
-                                {formatTime(task.time_of_day)}
-                                {task.escalation_level && (
-                                  <span className={cn("ml-1 uppercase text-[8px]",
-                                    task.escalation_level === 3 ? "text-destructive" :
-                                    task.escalation_level === 2 ? "text-accent" : "text-primary"
-                                  )}>
-                                    Lvl {task.escalation_level}
-                                  </span>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex justify-between items-start mb-1">
+                                <h2 className="font-display text-lg tracking-wider truncate text-foreground pr-4">
+                                  {goal.title}
+                                </h2>
+                                <button
+                                  onClick={() => handleDelete(goal.id, true)}
+                                  className="pt-1 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <span className="font-body text-[10px] tracking-wider uppercase text-accent">
+                                  {TIMEFRAMES.find((t) => t.value === goal.timeframe)?.label || goal.timeframe}
+                                </span>
+                                {goalSubtasks.length > 0 && (
+                                  <>
+                                    <span className="w-1 h-1 rounded-full bg-border" />
+                                    <span className="font-body text-[10px] tracking-wider uppercase text-primary">
+                                      {progressPercent}% Complete
+                                    </span>
+                                  </>
                                 )}
-                              </span>
-                            )}
-                            {/* Snooze Interval Selector */}
-                            <select
-                              value={task.snooze_interval || "none"}
-                              onChange={(e) => updateTask.mutate({ id: task.id, snooze_interval: e.target.value })}
-                              className="font-body text-[9px] bg-transparent border border-border rounded px-1.5 py-0.5 text-muted-foreground hover:border-accent/40 focus:outline-none focus:border-accent transition-colors cursor-pointer"
-                              title="Snooze reminder interval"
-                            >
-                              {SNOOZE_OPTIONS.map((o) => (
-                                <option key={o.value} value={o.value}>{o.label === "Off" ? "🔕 Off" : `🔔 ${o.label}`}</option>
-                              ))}
-                            </select>
-                            {task.snooze_interval && task.snooze_interval !== "none" && (
-                              <span className="font-body text-[8px] text-accent uppercase flex items-center gap-0.5">
-                                <AlarmClock className="w-2.5 h-2.5" /> Persistent
-                              </span>
-                            )}
+                              </div>
+                              {/* Progress bar */}
+                              {goalSubtasks.length > 0 && (
+                                <div className="w-full h-1.5 bg-border/50 rounded-full mt-3 overflow-hidden">
+                                  <div
+                                    className="h-full bg-gradient-pink rounded-full transition-all duration-500"
+                                    style={{ width: `${progressPercent}%` }}
+                                  />
+                                </div>
+                              )}
+                            </div>
                           </div>
-                          {/* Notes */}
-                          {task.notes && (
-                            <p className="font-body text-[9px] text-muted-foreground/70 mt-1 flex items-start gap-1">
-                              <FileText className="w-2.5 h-2.5 mt-0.5 shrink-0" />
-                              {task.notes}
-                            </p>
-                          )}
-                        </div>
 
-                        <button
-                          onClick={() => handleDelete(task.id, false)}
-                          className="opacity-0 group-hover/task:opacity-100 p-2 text-muted-foreground hover:text-destructive transition-all"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ))}
+                          {/* Subtasks */}
+                          <div className="space-y-2 pl-4 border-l-2 border-border/50 ml-6">
+                            {goalSubtasks.length === 0 && (
+                              <p className="font-body text-xs text-muted-foreground py-2">No subtasks generated yet.</p>
+                            )}
+                            {goalSubtasks.map((task) => (
+                              <div
+                                key={task.id}
+                                className={cn(
+                                  "flex items-center gap-3 p-3 rounded-lg border bg-background transition-all group/task",
+                                  task.is_completed ? "border-primary/30 bg-primary/5" : "border-border hover:border-primary/20"
+                                )}
+                              >
+                                <button
+                                  onClick={() => toggleTaskCompletion(task)}
+                                  className={cn(
+                                    "w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition-colors",
+                                    task.is_completed ? "text-primary" : "text-border hover:text-primary/50"
+                                  )}
+                                >
+                                  {task.is_completed ? <CheckCircle2 className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
+                                </button>
+
+                                <div className="flex-1 min-w-0">
+                                  <p className={cn(
+                                    "font-body text-xs transition-colors",
+                                    task.is_completed ? "text-muted-foreground line-through" : "text-foreground"
+                                  )}>
+                                    {task.title}
+                                  </p>
+                                  <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                                    {task.time_of_day && (
+                                      <span className="font-body text-[9px] text-muted-foreground flex items-center gap-1 bg-foreground/[0.03] px-1.5 py-0.5 rounded">
+                                        <Bell className="w-2.5 h-2.5" />
+                                        {formatTime(task.time_of_day)}
+                                        {task.escalation_level && (
+                                          <span className={cn("ml-1 uppercase text-[8px]",
+                                            task.escalation_level === 3 ? "text-destructive" :
+                                            task.escalation_level === 2 ? "text-accent" : "text-primary"
+                                          )}>
+                                            Lvl {task.escalation_level}
+                                          </span>
+                                        )}
+                                      </span>
+                                    )}
+                                    {/* Snooze Interval Selector */}
+                                    <div className="flex items-center gap-1 bg-foreground/[0.03] px-1.5 py-0.5 rounded border border-transparent hover:border-border transition-colors">
+                                      <select
+                                        value={task.snooze_interval || "none"}
+                                        onChange={(e) => updateTask.mutate({ id: task.id, snooze_interval: e.target.value })}
+                                        className="font-body text-[9px] bg-transparent text-muted-foreground focus:outline-none cursor-pointer"
+                                        title="Snooze reminder interval"
+                                      >
+                                        {SNOOZE_OPTIONS.map((o) => (
+                                          <option key={o.value} value={o.value}>{o.label === "Off" ? "🔕 Snooze Off" : `🔔 ${o.label}`}</option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                    {task.snooze_interval && task.snooze_interval !== "none" && (
+                                      <span className="font-body text-[8px] text-accent font-medium uppercase flex items-center gap-0.5 bg-accent/10 px-1.5 py-0.5 rounded">
+                                        <AlarmClock className="w-2 h-2" /> Persistent
+                                      </span>
+                                    )}
+                                  </div>
+                                  {/* Notes */}
+                                  {task.notes && (
+                                    <p className="font-body text-[9px] text-muted-foreground/70 mt-1.5 flex items-start gap-1 p-2 bg-muted/30 rounded-md border border-border/50">
+                                      <FileText className="w-2.5 h-2.5 mt-0.5 shrink-0" />
+                                      {task.notes}
+                                    </p>
+                                  )}
+                                </div>
+
+                                <button
+                                  onClick={() => handleDelete(task.id, false)}
+                                  className="opacity-0 group-hover/task:opacity-100 p-2 text-muted-foreground hover:text-destructive transition-all"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               );
             })
           )}
         </div>
-
       </div>
     </div>
   );

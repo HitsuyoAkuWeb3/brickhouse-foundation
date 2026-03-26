@@ -12,9 +12,857 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.4"
   }
-  public: {
+  graphql_public: {
     Tables: {
       [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+  public: {
+    Tables: {
+      affirmations: {
+        Row: {
+          affirmation_type: string | null
+          astrological_tag: string | null
+          audio_url: string | null
+          brick_id: string | null
+          category: string | null
+          created_at: string | null
+          id: string
+          text: string
+          tier_required: string | null
+        }
+        Insert: {
+          affirmation_type?: string | null
+          astrological_tag?: string | null
+          audio_url?: string | null
+          brick_id?: string | null
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          text: string
+          tier_required?: string | null
+        }
+        Update: {
+          affirmation_type?: string | null
+          astrological_tag?: string | null
+          audio_url?: string | null
+          brick_id?: string | null
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          text?: string
+          tier_required?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affirmations_brick_id_fkey"
+            columns: ["brick_id"]
+            isOneToOne: false
+            referencedRelation: "bricks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      analytics_events: {
+        Row: {
+          brick_id: string | null
+          created_at: string | null
+          event_data: Json | null
+          event_type: string
+          id: string
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          brick_id?: string | null
+          created_at?: string | null
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          brick_id?: string | null
+          created_at?: string | null
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_events_brick_id_fkey"
+            columns: ["brick_id"]
+            isOneToOne: false
+            referencedRelation: "bricks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analytics_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_results: {
+        Row: {
+          created_at: string
+          id: string
+          lead_id: string | null
+          scores: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          scores: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          scores?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_results_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      b2b_waitlist: {
+        Row: {
+          company_name: string
+          company_size: string | null
+          contact_name: string | null
+          created_at: string | null
+          email: string
+          id: string
+          role: string | null
+        }
+        Insert: {
+          company_name: string
+          company_size?: string | null
+          contact_name?: string | null
+          created_at?: string | null
+          email: string
+          id?: string
+          role?: string | null
+        }
+        Update: {
+          company_name?: string
+          company_size?: string | null
+          contact_name?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          role?: string | null
+        }
+        Relationships: []
+      }
+      bricks: {
+        Row: {
+          brick_number: number | null
+          created_at: string | null
+          description: string | null
+          icon_url: string | null
+          id: string
+          lesson_count: number | null
+          order_index: number
+          slug: string
+          title: string
+        }
+        Insert: {
+          brick_number?: number | null
+          created_at?: string | null
+          description?: string | null
+          icon_url?: string | null
+          id?: string
+          lesson_count?: number | null
+          order_index: number
+          slug: string
+          title: string
+        }
+        Update: {
+          brick_number?: number | null
+          created_at?: string | null
+          description?: string | null
+          icon_url?: string | null
+          id?: string
+          lesson_count?: number | null
+          order_index?: number
+          slug?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      daily_rituals: {
+        Row: {
+          completed_habits: Json | null
+          created_at: string | null
+          date: string
+          evening_completed: boolean | null
+          id: string
+          joy_completed: boolean | null
+          joy_scheduled: string | null
+          midday_completed: boolean | null
+          mood_score: number | null
+          morning_affirmation_id: string | null
+          morning_completed: boolean | null
+          profile_id: string | null
+          reflection_text: string | null
+          ritual_data: Json | null
+          streak_count: number | null
+        }
+        Insert: {
+          completed_habits?: Json | null
+          created_at?: string | null
+          date?: string
+          evening_completed?: boolean | null
+          id?: string
+          joy_completed?: boolean | null
+          joy_scheduled?: string | null
+          midday_completed?: boolean | null
+          mood_score?: number | null
+          morning_affirmation_id?: string | null
+          morning_completed?: boolean | null
+          profile_id?: string | null
+          reflection_text?: string | null
+          ritual_data?: Json | null
+          streak_count?: number | null
+        }
+        Update: {
+          completed_habits?: Json | null
+          created_at?: string | null
+          date?: string
+          evening_completed?: boolean | null
+          id?: string
+          joy_completed?: boolean | null
+          joy_scheduled?: string | null
+          midday_completed?: boolean | null
+          mood_score?: number | null
+          morning_affirmation_id?: string | null
+          morning_completed?: boolean | null
+          profile_id?: string | null
+          reflection_text?: string | null
+          ritual_data?: Json | null
+          streak_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_rituals_morning_affirmation_id_fkey"
+            columns: ["morning_affirmation_id"]
+            isOneToOne: false
+            referencedRelation: "affirmations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_rituals_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      goal_templates: {
+        Row: {
+          created_at: string | null
+          goal_category: string
+          id: string
+          linked_brick_id: number | null
+          phase: string | null
+          sort_order: number | null
+          step_description: string | null
+          step_title: string
+          truth_statement: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          goal_category: string
+          id?: string
+          linked_brick_id?: number | null
+          phase?: string | null
+          sort_order?: number | null
+          step_description?: string | null
+          step_title: string
+          truth_statement?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          goal_category?: string
+          id?: string
+          linked_brick_id?: number | null
+          phase?: string | null
+          sort_order?: number | null
+          step_description?: string | null
+          step_title?: string
+          truth_statement?: string | null
+        }
+        Relationships: []
+      }
+      goddess_prescriptions: {
+        Row: {
+          created_at: string | null
+          generated_at: string | null
+          id: string
+          prescription_data: Json
+          profile_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          generated_at?: string | null
+          id?: string
+          prescription_data: Json
+          profile_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          generated_at?: string | null
+          id?: string
+          prescription_data?: Json
+          profile_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goddess_prescriptions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_captures: {
+        Row: {
+          audit_scores: Json | null
+          converted_to_user: boolean | null
+          created_at: string | null
+          email: string
+          entry_point: string | null
+          id: string
+          name: string | null
+          phone: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          audit_scores?: Json | null
+          converted_to_user?: boolean | null
+          created_at?: string | null
+          email: string
+          entry_point?: string | null
+          id?: string
+          name?: string | null
+          phone?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          audit_scores?: Json | null
+          converted_to_user?: boolean | null
+          created_at?: string | null
+          email?: string
+          entry_point?: string | null
+          id?: string
+          name?: string | null
+          phone?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: []
+      }
+      lead_transfers: {
+        Row: {
+          audit_scores: Json
+          claimed_at: string | null
+          created_at: string
+          transfer_token: string
+        }
+        Insert: {
+          audit_scores: Json
+          claimed_at?: string | null
+          created_at?: string
+          transfer_token?: string
+        }
+        Update: {
+          audit_scores?: Json
+          claimed_at?: string | null
+          created_at?: string
+          transfer_token?: string
+        }
+        Relationships: []
+      }
+      leads: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string
+          phone: string | null
+          variant: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          phone?: string | null
+          variant: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          variant?: string
+        }
+        Relationships: []
+      }
+      lessons: {
+        Row: {
+          brick_id: string | null
+          content: string | null
+          content_body: string | null
+          content_type: Database["public"]["Enums"]["content_type_enum"] | null
+          content_url: string | null
+          created_at: string | null
+          id: string
+          is_premium: boolean | null
+          order_index: number
+          sign_tags: string[] | null
+          sort_order: number | null
+          summary: string | null
+          tier_required: string | null
+          title: string
+          video_url: string | null
+        }
+        Insert: {
+          brick_id?: string | null
+          content?: string | null
+          content_body?: string | null
+          content_type?: Database["public"]["Enums"]["content_type_enum"] | null
+          content_url?: string | null
+          created_at?: string | null
+          id?: string
+          is_premium?: boolean | null
+          order_index: number
+          sign_tags?: string[] | null
+          sort_order?: number | null
+          summary?: string | null
+          tier_required?: string | null
+          title: string
+          video_url?: string | null
+        }
+        Update: {
+          brick_id?: string | null
+          content?: string | null
+          content_body?: string | null
+          content_type?: Database["public"]["Enums"]["content_type_enum"] | null
+          content_url?: string | null
+          created_at?: string | null
+          id?: string
+          is_premium?: boolean | null
+          order_index?: number
+          sign_tags?: string[] | null
+          sort_order?: number | null
+          summary?: string | null
+          tier_required?: string | null
+          title?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lessons_brick_id_fkey"
+            columns: ["brick_id"]
+            isOneToOne: false
+            referencedRelation: "bricks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      passion_picks: {
+        Row: {
+          affirmation_text: string | null
+          created_at: string | null
+          id: string
+          image_url: string | null
+          song_url: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          affirmation_text?: string | null
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          song_url?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          affirmation_text?: string | null
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          song_url?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      prescription_library: {
+        Row: {
+          brick_number: number
+          created_at: string | null
+          crystal: string | null
+          id: string
+          power_color: string | null
+          prescription_text: string
+          zodiac_sign: string
+        }
+        Insert: {
+          brick_number: number
+          created_at?: string | null
+          crystal?: string | null
+          id?: string
+          power_color?: string | null
+          prescription_text: string
+          zodiac_sign: string
+        }
+        Update: {
+          brick_number?: number
+          created_at?: string | null
+          crystal?: string | null
+          id?: string
+          power_color?: string | null
+          prescription_text?: string
+          zodiac_sign?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          audit_scores: Json | null
+          avatar_url: string | null
+          birth_date: string | null
+          created_at: string | null
+          email: string
+          full_name: string | null
+          goals: string[] | null
+          id: string
+          life_goals: Json | null
+          onboarding_complete: boolean | null
+          onboarding_completed: boolean | null
+          onboarding_step: number | null
+          passion_pick_media: string | null
+          phone: string | null
+          reminder_preferences: Json | null
+          shopify_customer_id: string | null
+          stripe_customer_id: string | null
+          subscription_tier:
+            | Database["public"]["Enums"]["user_subscription_tier"]
+            | null
+          sun_sign: string | null
+          transformation_choice:
+            | Database["public"]["Enums"]["transformation_track"]
+            | null
+          transformation_track:
+            | Database["public"]["Enums"]["transformation_track_enum"]
+            | null
+          updated_at: string | null
+          zodiac_sign: string | null
+        }
+        Insert: {
+          audit_scores?: Json | null
+          avatar_url?: string | null
+          birth_date?: string | null
+          created_at?: string | null
+          email: string
+          full_name?: string | null
+          goals?: string[] | null
+          id: string
+          life_goals?: Json | null
+          onboarding_complete?: boolean | null
+          onboarding_completed?: boolean | null
+          onboarding_step?: number | null
+          passion_pick_media?: string | null
+          phone?: string | null
+          reminder_preferences?: Json | null
+          shopify_customer_id?: string | null
+          stripe_customer_id?: string | null
+          subscription_tier?:
+            | Database["public"]["Enums"]["user_subscription_tier"]
+            | null
+          sun_sign?: string | null
+          transformation_choice?:
+            | Database["public"]["Enums"]["transformation_track"]
+            | null
+          transformation_track?:
+            | Database["public"]["Enums"]["transformation_track_enum"]
+            | null
+          updated_at?: string | null
+          zodiac_sign?: string | null
+        }
+        Update: {
+          audit_scores?: Json | null
+          avatar_url?: string | null
+          birth_date?: string | null
+          created_at?: string | null
+          email?: string
+          full_name?: string | null
+          goals?: string[] | null
+          id?: string
+          life_goals?: Json | null
+          onboarding_complete?: boolean | null
+          onboarding_completed?: boolean | null
+          onboarding_step?: number | null
+          passion_pick_media?: string | null
+          phone?: string | null
+          reminder_preferences?: Json | null
+          shopify_customer_id?: string | null
+          stripe_customer_id?: string | null
+          subscription_tier?:
+            | Database["public"]["Enums"]["user_subscription_tier"]
+            | null
+          sun_sign?: string | null
+          transformation_choice?:
+            | Database["public"]["Enums"]["transformation_track"]
+            | null
+          transformation_track?:
+            | Database["public"]["Enums"]["transformation_track_enum"]
+            | null
+          updated_at?: string | null
+          zodiac_sign?: string | null
+        }
+        Relationships: []
+      }
+      scheduler_tasks: {
+        Row: {
+          affirmation_id: string | null
+          brick_id: string | null
+          category: string | null
+          created_at: string | null
+          days_of_week: number[] | null
+          description: string | null
+          due_date: string | null
+          due_time: string | null
+          escalation_level: number | null
+          goal_template: string | null
+          id: string
+          is_active: boolean | null
+          is_completed: boolean | null
+          last_reminded_at: string | null
+          notes: string | null
+          parent_goal_id: string | null
+          phase: string | null
+          profile_id: string | null
+          reminder_count: number | null
+          reminder_type: string | null
+          scheduled_for: string | null
+          snooze_interval: string | null
+          task_type: string | null
+          time_of_day: string | null
+          timeframe: string | null
+          title: string
+        }
+        Insert: {
+          affirmation_id?: string | null
+          brick_id?: string | null
+          category?: string | null
+          created_at?: string | null
+          days_of_week?: number[] | null
+          description?: string | null
+          due_date?: string | null
+          due_time?: string | null
+          escalation_level?: number | null
+          goal_template?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_completed?: boolean | null
+          last_reminded_at?: string | null
+          notes?: string | null
+          parent_goal_id?: string | null
+          phase?: string | null
+          profile_id?: string | null
+          reminder_count?: number | null
+          reminder_type?: string | null
+          scheduled_for?: string | null
+          snooze_interval?: string | null
+          task_type?: string | null
+          time_of_day?: string | null
+          timeframe?: string | null
+          title: string
+        }
+        Update: {
+          affirmation_id?: string | null
+          brick_id?: string | null
+          category?: string | null
+          created_at?: string | null
+          days_of_week?: number[] | null
+          description?: string | null
+          due_date?: string | null
+          due_time?: string | null
+          escalation_level?: number | null
+          goal_template?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_completed?: boolean | null
+          last_reminded_at?: string | null
+          notes?: string | null
+          parent_goal_id?: string | null
+          phase?: string | null
+          profile_id?: string | null
+          reminder_count?: number | null
+          reminder_type?: string | null
+          scheduled_for?: string | null
+          snooze_interval?: string | null
+          task_type?: string | null
+          time_of_day?: string | null
+          timeframe?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduler_tasks_parent_goal_id_fkey"
+            columns: ["parent_goal_id"]
+            isOneToOne: false
+            referencedRelation: "scheduler_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduler_tasks_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_brick_progress: {
+        Row: {
+          brick_id: string | null
+          completed_at: string | null
+          id: string
+          is_active: boolean | null
+          is_unlocked: boolean | null
+          lessons_completed: number | null
+          started_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          brick_id?: string | null
+          completed_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_unlocked?: boolean | null
+          lessons_completed?: number | null
+          started_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          brick_id?: string | null
+          completed_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_unlocked?: boolean | null
+          lessons_completed?: number | null
+          started_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_brick_progress_brick_id_fkey"
+            columns: ["brick_id"]
+            isOneToOne: false
+            referencedRelation: "bricks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_brick_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_lesson_progress: {
+        Row: {
+          completed_at: string | null
+          homework_response: Json | null
+          id: string
+          lesson_id: string | null
+          next_unlock_date: string | null
+          status: Database["public"]["Enums"]["lesson_status_enum"] | null
+          user_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          homework_response?: Json | null
+          id?: string
+          lesson_id?: string | null
+          next_unlock_date?: string | null
+          status?: Database["public"]["Enums"]["lesson_status_enum"] | null
+          user_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          homework_response?: Json | null
+          id?: string
+          lesson_id?: string | null
+          next_unlock_date?: string | null
+          status?: Database["public"]["Enums"]["lesson_status_enum"] | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_lesson_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_lesson_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +871,33 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      category_enum: "build_it" | "feed_it" | "live_it"
+      content_type: "audio_lesson" | "video_course" | "meditation" | "workbook"
+      content_type_enum: "text" | "video" | "audio" | "exercise" | "homework"
+      lesson_status_enum: "not_started" | "in_progress" | "completed"
+      phase_enum:
+        | "tomorrow"
+        | "this_week"
+        | "this_month"
+        | "3_months"
+        | "6_months"
+        | "9_months"
+      tier_enum: "free" | "foundation" | "brickhouse" | "goddess" | "coaching"
+      transformation_track:
+        | "spiritual"
+        | "business"
+        | "wellness"
+        | "relationships"
+      transformation_track_enum:
+        | "badbody_to_brickhouse"
+        | "drowning_to_building"
+        | "crumbs_to_adoration"
+      user_subscription_tier:
+        | "free"
+        | "foundation"
+        | "brickhouse"
+        | "goddess"
+        | "coaching"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -149,7 +1023,42 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  public: {
+  graphql_public: {
     Enums: {},
+  },
+  public: {
+    Enums: {
+      category_enum: ["build_it", "feed_it", "live_it"],
+      content_type: ["audio_lesson", "video_course", "meditation", "workbook"],
+      content_type_enum: ["text", "video", "audio", "exercise", "homework"],
+      lesson_status_enum: ["not_started", "in_progress", "completed"],
+      phase_enum: [
+        "tomorrow",
+        "this_week",
+        "this_month",
+        "3_months",
+        "6_months",
+        "9_months",
+      ],
+      tier_enum: ["free", "foundation", "brickhouse", "goddess", "coaching"],
+      transformation_track: [
+        "spiritual",
+        "business",
+        "wellness",
+        "relationships",
+      ],
+      transformation_track_enum: [
+        "badbody_to_brickhouse",
+        "drowning_to_building",
+        "crumbs_to_adoration",
+      ],
+      user_subscription_tier: [
+        "free",
+        "foundation",
+        "brickhouse",
+        "goddess",
+        "coaching",
+      ],
+    },
   },
 } as const

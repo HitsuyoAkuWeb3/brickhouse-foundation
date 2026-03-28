@@ -1,703 +1,468 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useAnimation, type PanInfo } from "framer-motion";
 import {
-  ArrowLeft, Plus, Bell, Trash2, Hammer, Heart, Sparkles, Target,
-  CheckCircle2, Circle, BookOpen, AlarmClock, FileText, type LucideIcon
+  ChevronLeft, Sparkles, Pin, Paperclip, Home, Trees,
+  Edit2, Trash2, Bug, Hourglass, Share, CheckCircle2, Circle,
+  MousePointer, Plus, X
 } from "lucide-react";
 import { useSchedulerTasks, type SchedulerTask } from "@/hooks/useSchedulerTasks";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { format, addMinutes } from "date-fns";
 
-// ─── Constants ───────────────────────────────────────────────────────────────
-
-const CATEGORIES = [
-  { value: "build_it", label: "Build It", icon: Hammer, desc: "Business & Skills" },
-  { value: "feed_it", label: "Feed It", icon: Heart, desc: "Health & Mindset" },
-  { value: "live_it", label: "Live It", icon: Sparkles, desc: "Lifestyle & Joy" },
-] as const;
-
-const TIMEFRAMES = [
-  { value: "1_week", label: "This Week" },
-  { value: "1_month", label: "1 Month" },
-  { value: "3_months", label: "3 Months" },
-  { value: "6_months", label: "6 Months" },
-  { value: "9_months", label: "9 Months" },
-] as const;
-
-const SNOOZE_OPTIONS = [
-  { value: "none", label: "Off" },
-  { value: "every_minute", label: "Every Min" },
-  { value: "every_hour", label: "Every Hour" },
-] as const;
-
-// ─── Goal Templates (from Ché's Spin Brief) ─────────────────────────────────
-
-interface GoalTemplate {
-  id: string;
-  title: string;
-  category: "build_it" | "feed_it" | "live_it";
-  icon: LucideIcon;
-  truth: string; // Brickhouse truth statement
-  phases: {
-    label: string;
-    timeframe: string;
-    tasks: string[];
-  }[];
-}
-
-const GOAL_TEMPLATES: GoalTemplate[] = [
-  {
-    id: "attract_love",
-    title: "Attract Love",
-    category: "live_it",
-    icon: Heart,
-    truth: "You don't chase love. You become the frequency it can't resist.",
-    phases: [
-      { label: "This Week", timeframe: "1_week", tasks: ["Complete Life Audit — Relationships score", "Write your Non-Negotiables list (10 items)", "Delete or archive 3 dead-end connections"] },
-      { label: "This Month", timeframe: "1_month", tasks: ["Read or listen to 1 attachment theory resource", "Start wake up affirmation: 'I am magnetic to aligned love'", "Journal: 'What patterns do I repeat in relationships?'"] },
-      { label: "3 Months", timeframe: "3_months", tasks: ["Attend 1 social event outside your comfort zone", "Practice boundary-setting in 3 real conversations", "Create your Goddess Rx self-care ritual"] },
-      { label: "6 Months", timeframe: "6_months", tasks: ["Evaluate new connections against your Non-Negotiables", "Book a solo trip or experience to celebrate your growth", "Write a letter to your future partner"] },
-    ],
-  },
-  {
-    id: "body_transformation",
-    title: "Body Transformation",
-    category: "feed_it",
-    icon: Heart,
-    truth: "Your body is the first brick. Every discipline builds the next one.",
-    phases: [
-      { label: "This Week", timeframe: "1_week", tasks: ["Complete Life Audit — Body & Health score", "Log 3 days of meals (no judgment, just data)", "Walk 20 minutes every morning before screens"] },
-      { label: "This Month", timeframe: "1_month", tasks: ["Establish a consistent sleep schedule (±30 min)", "Replace 1 unhealthy meal habit per week", "Start body movement routine (yoga, weights, or dance)"] },
-      { label: "3 Months", timeframe: "3_months", tasks: ["Take progress photos (front, side, back)", "Complete 30-day consistency streak on any exercise", "Research supplementation for your body type"] },
-      { label: "6 Months", timeframe: "6_months", tasks: ["Hit at least 1 measurable fitness milestone", "Overhaul pantry/kitchen to reflect new standards", "Write your Body Manifesto — what your body means to you"] },
-    ],
-  },
-  {
-    id: "publish_book",
-    title: "Publish a Book",
-    category: "build_it",
-    icon: BookOpen,
-    truth: "A book is a brick. It proves you can build something that outlives the conversation.",
-    phases: [
-      { label: "This Week", timeframe: "1_week", tasks: ["Define your book's core thesis in 1 sentence", "List 10-15 chapter topics from your lived experience", "Set a daily writing block (minimum 25 minutes)"] },
-      { label: "This Month", timeframe: "1_month", tasks: ["Write 10,000+ words of raw content", "Research 3 self-publishing platforms (KDP, Lulu, IngramSpark)", "Create working title + subtitle options"] },
-      { label: "3 Months", timeframe: "3_months", tasks: ["Complete first draft (minimum 30,000 words)", "Get 2 trusted readers for honest feedback", "Design the book cover (or commission it)"] },
-      { label: "6 Months", timeframe: "6_months", tasks: ["Complete final edit and formatting", "Set up pre-order campaign", "Launch book + host a virtual release event"] },
-    ],
-  },
-  {
-    id: "build_business",
-    title: "Build / Relaunch Business",
-    category: "build_it",
-    icon: Hammer,
-    truth: "A business without architecture is just an expensive hobby. Build the infra first.",
-    phases: [
-      { label: "This Week", timeframe: "1_week", tasks: ["Define your 1-sentence value proposition", "Identify your ICP (Ideal Client Profile) in detail", "Audit your current digital presence (website, socials)"] },
-      { label: "This Month", timeframe: "1_month", tasks: ["Build or update your core landing page", "Set up your offer stack (free → mid → high-ticket)", "Launch 1 lead magnet or diagnostic tool"] },
-      { label: "3 Months", timeframe: "3_months", tasks: ["Reach first 10 paying clients or customers", "Automate onboarding and fulfillment workflows", "Build a content engine (weekly output cadence)"] },
-      { label: "6 Months", timeframe: "6_months", tasks: ["Hit revenue target of $5K/mo recurring", "Hire or contract 1 support role", "Create a 90-day scaling roadmap for next phase"] },
-    ],
-  },
-  {
-    id: "rebuild_finances",
-    title: "Rebuild Finances",
-    category: "build_it",
-    icon: Target,
-    truth: "Financial sovereignty starts with visibility. You can't manage what you refuse to measure.",
-    phases: [
-      { label: "This Week", timeframe: "1_week", tasks: ["Complete Life Audit — Business & Wealth score", "List ALL debts with balances and interest rates", "Set up a budget tracker or spreadsheet"] },
-      { label: "This Month", timeframe: "1_month", tasks: ["Cut 3 unnecessary subscriptions or expenses", "Open a dedicated savings account (even if starting at $25)", "Research 1 new income stream aligned with your skills"] },
-      { label: "3 Months", timeframe: "3_months", tasks: ["Build emergency fund to $500+", "Pay off or negotiate 1 debt balance", "Start investing in financial education (1 book or course)"] },
-      { label: "6 Months", timeframe: "6_months", tasks: ["Achieve consistent positive cash flow for 2+ months", "Create a 12-month financial roadmap", "Automate savings (pay yourself first)"] },
-    ],
-  },
-  {
-    id: "heal_rebuild",
-    title: "Heal and Rebuild",
-    category: "feed_it",
-    icon: Sparkles,
-    truth: "Healing isn't soft. It's the most aggressive renovation project you'll ever run.",
-    phases: [
-      { label: "This Week", timeframe: "1_week", tasks: ["Complete Life Audit — Spirit & Purpose score", "Identify 1 specific wound or pattern to address", "Begin a daily journaling practice (5 min minimum)"] },
-      { label: "This Month", timeframe: "1_month", tasks: ["Start a morning ritual (meditation, prayer, or breathwork)", "Read or listen to 1 healing-focused resource", "Have 1 honest conversation you've been avoiding"] },
-      { label: "3 Months", timeframe: "3_months", tasks: ["Establish consistent therapy, coaching, or support group", "Forgive or release 1 person/situation through a ritual", "Notice and document 3 behavioral pattern shifts"] },
-      { label: "6 Months", timeframe: "6_months", tasks: ["Write a letter of closure (sent or unsent)", "Create a 'new foundation' vision board for your next chapter", "Celebrate progress — host a small ceremony for yourself"] },
-    ],
-  },
-];
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-const formatTime = (t?: string) => {
-  if (!t) return "";
-  const [h, m] = t.split(":");
-  const hour = parseInt(h);
-  const ampm = hour >= 12 ? "PM" : "AM";
-  const display = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-  return `${display}:${m} ${ampm}`;
+// --- Theme Colors ---
+const THEME = {
+  header: "bg-[#009EDB]",       // Screen top header
+  background: "bg-[#9CBCCC]",   // Screen main body
+  card: "bg-white",             // Unused mostly, but cards are grayish
+  pickerBox: "bg-[#5A5A5A]",    // Dark grey quick pickers
 };
 
-// ─── Component ───────────────────────────────────────────────────────────────
+// --- Icons ---
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const ICON_MAP: Record<string, React.FC<any>> = {
+  finger: MousePointer,
+  sparkles: Sparkles,
+  pin: Pin,
+  paperclip: Paperclip,
+  home: Home,
+  forest: Trees,
+};
+
+const BUG_ME_OPTIONS = [
+  { label: "None", value: "none" },
+  { label: "1 Minute", value: "every_minute" },
+  { label: "1 Hour", value: "every_hour" },
+];
+
+const TIME_QUICK_PICKERS = [5, 10, 15, 30, 45, 60];
+
+// --- Swipeable Reminder Card ---
+const ReminderCard = ({
+  task,
+  onToggle,
+  onDelete,
+  onBugMeClick,
+}: {
+  task: SchedulerTask;
+  onToggle: (t: SchedulerTask) => void;
+  onDelete: (id: string) => void;
+  onBugMeClick: (t: SchedulerTask) => void;
+}) => {
+  const controls = useAnimation();
+  const Icon = ICON_MAP[task.category || "finger"] || ICON_MAP.finger;
+
+  const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    // If swiped far enough left, snap to -200px (reveal actions), else snap back
+    if (info.offset.x < -100) {
+      controls.start({ x: -180 });
+    } else {
+      controls.start({ x: 0 });
+    }
+  };
+
+  const formattedDate = task.scheduled_for
+    ? format(new Date(task.scheduled_for), "EEE, MMM d, yyyy 'at' h:mm a")
+    : format(new Date(task.created_at), "EEE, MMM d, yyyy 'at' h:mm a");
+
+  return (
+    <div className="relative mb-3 overflow-hidden rounded-xl bg-black">
+      {/* Background Actions (Revealed via Swipe) */}
+      <div className="absolute right-0 top-0 h-full flex items-center justify-end px-4 gap-4 bg-[#5A5A5A] text-white/50 w-full rounded-xl border border-blue-600">
+        <button className="hover:text-white transition-colors"><Edit2 className="w-5 h-5" /></button>
+        <button className="hover:text-white transition-colors" onClick={() => onBugMeClick(task)}><Bug className="w-5 h-5" /></button>
+        <button className="hover:text-white transition-colors"><Hourglass className="w-5 h-5" /></button>
+        <button className="hover:text-white transition-colors"><Share className="w-5 h-5" /></button>
+        <button className="hover:text-green-400 transition-colors" onClick={() => onToggle(task)}>
+          <CheckCircle2 className="w-5 h-5" />
+        </button>
+        <button className="hover:text-red-400 transition-colors ml-2" onClick={() => onDelete(task.id)}>
+          <Trash2 className="w-5 h-5" />
+        </button>
+      </div>
+
+      {/* Foreground Draggable Card */}
+      <motion.div
+        drag="x"
+        dragConstraints={{ left: -180, right: 0 }}
+        onDragEnd={handleDragEnd}
+        animate={controls}
+        className={cn(
+          "relative z-10 p-4 rounded-xl border-2 border-blue-600 bg-gray-300 flex items-start gap-4 transition-colors",
+          task.is_completed ? "opacity-50 grayscale" : ""
+        )}
+      >
+        <div className="pt-1">
+          <Icon className="w-8 h-8 text-black/40" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className={cn("text-[17px] font-bold text-black leading-tight break-words", task.is_completed && "line-through opacity-70")}>
+            {task.title}
+          </h3>
+          <div className="flex items-end justify-between mt-1">
+            <p className="text-[13px] text-black/70">
+              {formattedDate}
+            </p>
+            {task.snooze_interval && task.snooze_interval !== "none" && (
+              <span className="flex items-center gap-1 text-[11px] font-bold text-black/60 bg-black/10 px-1.5 py-0.5 rounded">
+                {task.snooze_interval === "every_minute" ? "1m" : "1h"} <Bug className="w-3 h-3" />
+              </span>
+            )}
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+// --- Time Scroller (Fallback) ---
+// Since building a native iOS spinner in React is complex, we use a structured layout
+// mimicking the design, combined with quick pickers.
 
 const Scheduler = () => {
   const { tasks, isLoading, addTask, updateTask, deleteTask } = useSchedulerTasks();
-  const [showGoalForm, setShowGoalForm] = useState(false);
-  const [title, setTitle] = useState("");
-  const [category, setCategory] = useState<string>("build_it");
-  const [timeframe, setTimeframe] = useState<string>("1_week");
-  const [snoozeInterval, setSnoozeInterval] = useState<string>("none");
-  const [selectedTemplate, setSelectedTemplate] = useState<GoalTemplate | null>(null);
+  const [view, setView] = useState<"list" | "step1" | "step2">("list");
+  
+  // Creation Form State
+  const [draftTitle, setDraftTitle] = useState("");
+  const [draftIcon, setDraftIcon] = useState("finger");
+  const [draftMinutes, setDraftMinutes] = useState<number>(5);
+  const [isDoneLoading, setIsDoneLoading] = useState(false);
 
-  // Filter tasks
-  const goals = tasks.filter((t) => !t.parent_goal_id && t.reminder_type === "goal");
-  const subtasks = tasks.filter((t) => t.parent_goal_id);
-  const standaloneTasks = tasks.filter((t) => !t.parent_goal_id && t.reminder_type !== "goal");
+  // Bug Me Sheet State
+  const [bugMeTask, setBugMeTask] = useState<SchedulerTask | null>(null);
 
-  const filteredTemplates = GOAL_TEMPLATES.filter((t) => t.category === category);
+  // Filter tasks into active RE.minders
+  const reminders = tasks.filter((t) => !t.parent_goal_id)
+    .sort((a, b) => new Date(a.scheduled_for || a.created_at).getTime() - new Date(b.scheduled_for || b.created_at).getTime());
 
-  const resetForm = () => {
-    setTitle("");
-    setCategory("build_it");
-    setTimeframe("1_week");
-    setSnoozeInterval("none");
-    setSelectedTemplate(null);
-    setShowGoalForm(false);
+  // Action Handlers
+  const handleToggle = (task: SchedulerTask) => {
+    updateTask.mutate({ id: task.id, is_completed: !task.is_completed });
+    if (!task.is_completed) toast.success("RE.minder completed!");
   };
 
-  const selectTemplate = (template: GoalTemplate) => {
-    setSelectedTemplate(template);
-    setTitle(template.title);
-    setCategory(template.category);
+  const handleDelete = (id: string) => {
+    deleteTask.mutate(id, { onSuccess: () => toast.success("RE.minder deleted") });
   };
 
-  const handleGenerateRoadmap = async () => {
-    if (!title.trim()) {
-      toast.error("Give your goal a name");
+  const handleCreate = async () => {
+    if (!draftTitle.trim()) {
+      toast.error("Please enter what to remind you about.");
       return;
     }
+    setIsDoneLoading(true);
 
-    // If a template is selected, generate time-phased subtasks from it.
-    // Otherwise, generate generic subtasks (backward compatible).
-    const phasedTasks = selectedTemplate
-      ? selectedTemplate.phases
-          .flatMap((phase) =>
-            phase.tasks.map((taskTitle, i) => ({
-              title: `[${phase.label}] ${taskTitle}`,
-              time_of_day: i === 0 ? "09:00:00" : i === 1 ? "13:00:00" : "18:00:00",
-              escalation_level: Math.min(i + 1, 3),
-            }))
-          )
-      : [
-          { title: "Research & Preparation", time_of_day: "09:00:00", escalation_level: 1 },
-          { title: "Execute Core Actions", time_of_day: "13:00:00", escalation_level: 2 },
-          { title: "Review & Refine", time_of_day: "18:00:00", escalation_level: 3 },
-        ];
+    const scheduledDate = addMinutes(new Date(), draftMinutes);
 
     addTask.mutate(
       {
-        title: title.trim(),
-        category,
-        timeframe,
-        task_type: "goal",
-        reminder_type: "goal",
+        title: draftTitle.trim(),
+        category: draftIcon,
+        reminder_type: "one_off",
+        task_type: "custom",
+        scheduled_for: scheduledDate.toISOString(),
         is_active: true,
       },
       {
-        onSuccess: (newGoal) => {
-          phasedTasks.forEach((sub) => {
-            addTask.mutate({
-              title: sub.title,
-              category,
-              time_of_day: sub.time_of_day,
-              escalation_level: sub.escalation_level,
-              snooze_interval: snoozeInterval,
-              parent_goal_id: newGoal.id,
-              reminder_type: "daily",
-              days_of_week: [1, 2, 3, 4, 5],
-              is_active: true,
-            });
-          });
-          toast.success("Goal & Roadmap Generated 🗺️");
-          resetForm();
+        onSuccess: () => {
+          toast.success("RE.minder created!");
+          setIsDoneLoading(false);
+          setDraftTitle("");
+          setDraftIcon("finger");
+          setDraftMinutes(5);
+          setView("list");
         },
+        onError: () => setIsDoneLoading(false)
       }
     );
   };
 
-  const toggleTaskCompletion = (t: SchedulerTask) => {
-    updateTask.mutate({ id: t.id, is_completed: !t.is_completed });
-    if (!t.is_completed) toast.success("Task completed! 🎯");
-  };
-
-  const handleDelete = (id: string, isGoal: boolean) => {
-    deleteTask.mutate(id, {
-      onSuccess: () => toast.success(isGoal ? "Goal deleted" : "Task removed"),
-    });
-  };
-
-  const getCategoryIcon = (cat?: string) => {
-    const found = CATEGORIES.find((c) => c.value === cat);
-    return found?.icon ?? Target;
+  const handleUpdateBugMe = (interval: string) => {
+    if (!bugMeTask) return;
+    updateTask.mutate(
+      { id: bugMeTask.id, snooze_interval: interval },
+      {
+        onSuccess: () => {
+          toast.success("Bug Me setting updated");
+          setBugMeTask(null);
+        }
+      }
+    );
   };
 
   if (isLoading) return null;
 
   return (
-    <div className="min-h-screen bg-background px-6 py-10 pb-24">
-      <div className="max-w-lg mx-auto">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-2">
-          <Link to="/dashboard" className="text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <h1 className="font-display text-3xl sm:text-4xl tracking-wider">
-            Life <span className="text-accent">Architecture</span>
-          </h1>
-        </div>
-        <p className="font-body text-sm text-muted-foreground mb-8 ml-8">
-          Design your roadmap to a Brickhouse life.
-        </p>
-
-        {/* Add Goal Button */}
-        <button
-          onClick={() => setShowGoalForm(!showGoalForm)}
-          className="w-full flex items-center justify-center gap-2 bg-gradient-pink text-foreground font-body font-bold text-xs tracking-wider uppercase px-5 py-3 rounded-xl mb-8 hover:opacity-90 transition-opacity"
-        >
-          <Plus className="w-4 h-4" />
-          {showGoalForm ? "Cancel" : "New Goal Sandbox"}
-        </button>
-
-        {/* New Goal Form */}
-        <AnimatePresence>
-          {showGoalForm && (
+    <div className={cn("min-h-screen font-sans", THEME.background)}>
+      <div className="max-w-md mx-auto h-screen flex flex-col relative bg-gradient-to-b from-[#9CBCCC] to-[#AECBD9]">
+        
+        {/* VIEW 1: LIST */}
+        <AnimatePresence mode="wait">
+          {view === "list" && (
             <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden mb-8"
+              key="list"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="flex-1 flex flex-col h-full absolute inset-0 pb-16"
             >
-              <div className="bg-gradient-card border border-border rounded-xl p-5 space-y-5">
-                {/* Category Selector */}
-                <div>
-                  <label className="font-body text-[10px] text-muted-foreground uppercase tracking-wider block mb-1.5">
-                    Architecture Category
-                  </label>
-                  <div className="flex flex-col gap-2">
-                    {CATEGORIES.map((c) => {
-                      const Icon = c.icon;
-                      const isActive = category === c.value;
-                      return (
-                        <button
-                          key={c.value}
-                          onClick={() => { setCategory(c.value); setSelectedTemplate(null); setTitle(""); }}
-                          className={cn(
-                            "flex items-center gap-3 p-3 rounded-xl border transition-all text-left",
-                            isActive
-                              ? "bg-primary/10 border-primary text-foreground"
-                              : "bg-foreground/[0.02] border-border text-muted-foreground hover:bg-foreground/[0.05]"
-                          )}
-                        >
-                          <div className={cn("p-2 rounded-lg", isActive ? "bg-primary/20" : "bg-foreground/[0.05]")}>
-                            <Icon className={cn("w-4 h-4", isActive && "text-primary")} />
-                          </div>
-                          <div>
-                            <div className="font-display text-sm tracking-wide">{c.label}</div>
-                            <div className="font-body text-[10px] opacity-70">{c.desc}</div>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+              {/* Header */}
+              <div className={cn("flex items-center justify-between px-4 py-4", THEME.header, "text-white shadow-xl relative z-20")}>
+                <Link to="/dashboard" className="text-white hover:opacity-80 transition-opacity">
+                  <ChevronLeft className="w-8 h-8" />
+                </Link>
+                <h1 className="text-xl font-bold tracking-wide absolute left-1/2 -translate-x-1/2">
+                  RE.minders
+                </h1>
+                <button onClick={() => setView("step1")} className="hover:opacity-80 transition-opacity">
+                  <Plus className="w-7 h-7 font-light" />
+                </button>
+              </div>
 
-                {/* Goal Templates for Selected Category */}
-                {filteredTemplates.length > 0 && (
-                  <div>
-                    <label className="font-body text-[10px] text-muted-foreground uppercase tracking-wider block mb-1.5">
-                      Brickhouse Templates
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {filteredTemplates.map((t) => {
-                        const Icon = t.icon;
-                        const isActive = selectedTemplate?.id === t.id;
-                        return (
+              {/* Ticker */}
+              <div className="bg-[#0A1A1A] py-1 text-center shadow-lg border-b border-black/20">
+                <p className="text-[#00FF00] font-sans text-[13px]">
+                  Next RE.minder in {reminders.length > 0 && reminders[0].scheduled_for ? 
+                    Math.max(0, Math.round((new Date(reminders[0].scheduled_for).getTime() - Date.now()) / 60000)) 
+                    : "0"} minutes
+                </p>
+              </div>
+
+              {/* List */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-1">
+                {reminders.length === 0 ? (
+                  <div className="text-center py-20 opacity-60">
+                    <MousePointer className="w-12 h-12 mx-auto mb-4 text-black/40" />
+                    <p className="text-black/60 font-medium">No active RE.minders</p>
+                  </div>
+                ) : (
+                  reminders.map((task) => (
+                    <ReminderCard
+                      key={task.id}
+                      task={task}
+                      onToggle={handleToggle}
+                      onDelete={handleDelete}
+                      onBugMeClick={setBugMeTask}
+                    />
+                  ))
+                )}
+              </div>
+
+              {/* Bug Me Action Sheet Context Menu */}
+              <AnimatePresence>
+                {bugMeTask && (
+                  <>
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="fixed inset-0 bg-black/40 z-40 max-w-md mx-auto"
+                      onClick={() => setBugMeTask(null)}
+                    />
+                    <motion.div
+                      initial={{ y: "100%" }}
+                      animate={{ y: 0 }}
+                      exit={{ y: "100%" }}
+                      transition={{ type: "spring", bounce: 0, duration: 0.3 }}
+                      className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-50 p-2 pb-6"
+                    >
+                      <div className="bg-white/90 backdrop-blur-md rounded-2xl overflow-hidden mb-2 shadow-2xl">
+                        <div className="py-3 text-center border-b border-black/10">
+                          <p className="text-[#8F8F8F] text-[13px] font-medium">Bug Me</p>
+                        </div>
+                        {BUG_ME_OPTIONS.map((opt) => (
                           <button
-                            key={t.id}
-                            onClick={() => selectTemplate(t)}
-                            className={cn(
-                              "p-3 rounded-xl border text-left transition-all",
-                              isActive
-                                ? "bg-accent/10 border-accent/40"
-                                : "bg-foreground/[0.02] border-border hover:border-accent/20"
-                            )}
+                            key={opt.value}
+                            onClick={() => handleUpdateBugMe(opt.value)}
+                            className="w-full py-4 text-center border-b border-black/10 text-xl text-[#007AFF] hover:bg-black/5 transition-colors"
                           >
-                            <Icon className={cn("w-4 h-4 mb-1", isActive ? "text-accent" : "text-muted-foreground")} />
-                            <div className="font-display text-xs tracking-wide">{t.title}</div>
+                            {opt.label}
                           </button>
-                        );
-                      })}
-                    </div>
-                  </div>
+                        ))}
+                      </div>
+                      <button
+                        onClick={() => setBugMeTask(null)}
+                        className="w-full py-4 text-center rounded-2xl bg-white text-xl font-bold text-[#007AFF] shadow-xl hover:bg-black/5 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </motion.div>
+                  </>
                 )}
+              </AnimatePresence>
+            </motion.div>
+          )}
 
-                {/* Truth Statement */}
-                {selectedTemplate && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-primary/5 border border-primary/20 rounded-xl p-4"
-                  >
-                    <p className="font-body text-xs text-primary/80 italic leading-relaxed">
-                      "{selectedTemplate.truth}"
-                    </p>
-                  </motion.div>
-                )}
+          {/* VIEW 2: CREATE STEP 1 */}
+          {view === "step1" && (
+            <motion.div
+              key="step1"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="flex-1 flex flex-col h-full absolute inset-0 z-30 bg-[#9CBCCC]"
+            >
+              {/* Header */}
+              <div className={cn("flex items-center justify-between px-4 py-4", THEME.header, "text-white")}>
+                <button onClick={() => setView("list")} className="text-[17px] hover:opacity-80 transition-opacity">
+                  Cancel
+                </button>
+                <h1 className="text-[17px] font-bold tracking-wide absolute left-1/2 -translate-x-1/2">
+                  New RE.minder
+                </h1>
+                <button 
+                  onClick={() => draftTitle.trim() && setView("step2")} 
+                  className={cn("text-[17px] font-medium transition-opacity", !draftTitle.trim() ? "opacity-50" : "hover:opacity-80")}
+                  disabled={!draftTitle.trim()}
+                >
+                  Next
+                </button>
+              </div>
 
-                {/* Title (pre-filled from template or custom) */}
-                <div>
-                  <label className="font-body text-[10px] text-muted-foreground uppercase tracking-wider block mb-1.5">
-                    Goal Name
-                  </label>
+              {/* Form Body */}
+              <div className="p-4 flex flex-col mt-4">
+                <label className="text-white font-bold text-lg mb-2 drop-shadow-sm">RE.mind me to:</label>
+                <div className="relative">
                   <input
                     type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder={selectedTemplate ? selectedTemplate.title : "e.g. Launch my agency"}
-                    maxLength={100}
-                    className="w-full bg-input border border-border rounded-lg px-3 py-2.5 font-body text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
+                    autoFocus
+                    value={draftTitle}
+                    onChange={(e) => setDraftTitle(e.target.value)}
+                    className="w-full bg-white text-black text-[17px] py-3 pl-4 pr-10 rounded-lg shadow-sm focus:outline-none"
+                    placeholder="App"
                   />
+                  {draftTitle && (
+                    <button
+                      onClick={() => setDraftTitle("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/20 rounded-full p-0.5"
+                    >
+                      <X className="w-4 h-4 text-white" />
+                    </button>
+                  )}
                 </div>
 
-                {/* Timeframe */}
-                <div>
-                  <label className="font-body text-[10px] text-muted-foreground uppercase tracking-wider block mb-1.5">
-                    Timeframe
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {TIMEFRAMES.map((t) => (
-                      <button
-                        key={t.value}
-                        onClick={() => setTimeframe(t.value)}
-                        className={cn(
-                          "py-2 px-3 rounded-lg font-body text-[10px] tracking-wider border transition-all",
-                          timeframe === t.value
-                            ? "bg-accent/20 border-accent/40 text-accent"
-                            : "bg-foreground/[0.03] border-border text-muted-foreground hover:border-accent/20"
-                        )}
-                      >
-                        {t.label}
-                      </button>
-                    ))}
-                  </div>
+                <label className="text-white font-bold text-sm mt-12 mb-3 drop-shadow-sm">Quick Pickers:</label>
+                <div className="flex flex-wrap gap-2.5">
+                  {Object.entries(ICON_MAP).map(([key, Icon]) => (
+                    <button
+                      key={key}
+                      onClick={() => setDraftIcon(key)}
+                      className={cn(
+                        THEME.pickerBox,
+                        "w-16 h-16 rounded-2xl flex items-center justify-center transition-all shadow-md relative overflow-hidden",
+                        draftIcon === key ? "ring-2 ring-white scale-105" : "hover:bg-opacity-80"
+                      )}
+                    >
+                      <Icon className={cn("w-9 h-9", draftIcon === key ? "text-white" : "text-black")} />
+                      
+                      {/* Fake mini-text line indicator from the screenshot */}
+                      <div className="absolute bottom-1.5 right-1.5 w-3.5 h-3.5 bg-black/20 rounded-full flex flex-col items-center justify-center gap-[1px] opacity-60">
+                         <span className="w-1.5 h-[1px] bg-black/60 rounded"></span>
+                         <span className="w-1.5 h-[1px] bg-black/60 rounded"></span>
+                         <span className="w-1.5 h-[1px] bg-black/60 rounded"></span>
+                      </div>
+                    </button>
+                  ))}
                 </div>
+              </div>
+            </motion.div>
+          )}
 
-                {/* Snooze Interval */}
-                <div>
-                  <label className="font-body text-[10px] text-muted-foreground uppercase tracking-wider block mb-1.5">
-                    Snooze / Reminder Persistence
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {SNOOZE_OPTIONS.map((s) => (
-                      <button
-                        key={s.value}
-                        onClick={() => setSnoozeInterval(s.value)}
-                        className={cn(
-                          "py-2 px-3 rounded-lg font-body text-[10px] tracking-wider border transition-all",
-                          snoozeInterval === s.value
-                            ? "bg-primary/20 border-primary/40 text-primary"
-                            : "bg-foreground/[0.03] border-border text-muted-foreground hover:border-primary/20"
-                        )}
-                      >
-                        {s.label}
-                      </button>
-                    ))}
-                  </div>
-                  <p className="font-body text-[10px] text-muted-foreground mt-2 opacity-80">
-                    If set, the app will continuously ping you at this interval until marked done. Accountability.
-                  </p>
-                </div>
-
-                {/* Generate Button */}
-                <button
-                  onClick={handleGenerateRoadmap}
-                  disabled={addTask.isPending}
-                  className="w-full bg-foreground text-background font-body font-bold text-xs tracking-wider uppercase px-5 py-3 rounded-xl hover:bg-foreground/90 transition-colors disabled:opacity-40 flex items-center justify-center gap-2 mt-2"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  {addTask.isPending ? "Generating..." : selectedTemplate ? "Generate Brickhouse Roadmap" : "Generate Roadmap"}
+          {/* VIEW 3: CREATE STEP 2 */}
+          {view === "step2" && (
+            <motion.div
+              key="step2"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              className="flex-1 flex flex-col h-full absolute inset-0 z-30 bg-[#9CBCCC]"
+            >
+              {/* Header */}
+              <div className={cn("flex items-center justify-between px-4 py-4 pt-12", THEME.header, "text-white")}>
+                <button onClick={() => setView("step1")} className="text-[17px] flex items-center hover:opacity-80 transition-opacity">
+                  <ChevronLeft className="w-6 h-6 mr-0.5" /> Back
                 </button>
+                <h1 className="text-[17px] font-bold tracking-wide absolute left-1/2 -translate-x-1/2">
+                  {draftTitle.substring(0, 15)}{draftTitle.length > 15 ? "..." : ""}
+                </h1>
+                <button 
+                  onClick={handleCreate}
+                  disabled={isDoneLoading}
+                  className="text-[17px] font-medium hover:opacity-80 transition-opacity disabled:opacity-50"
+                >
+                  {isDoneLoading ? "..." : "Done"}
+                </button>
+              </div>
+
+              {/* Form Body */}
+              <div className="p-4 flex flex-col mt-4">
+                <label className="text-white font-bold text-lg mb-2 drop-shadow-sm">RE.mind me in:</label>
+                <input
+                  type="text"
+                  readOnly
+                  value={`${draftMinutes} minutes`}
+                  className="w-full bg-white text-black text-[17px] py-3 px-4 rounded-lg shadow-sm focus:outline-none"
+                />
+
+                <label className="text-white font-bold text-sm mt-12 mb-3 drop-shadow-sm">Quick Pickers:</label>
+                <div className="flex flex-wrap gap-2.5">
+                  {TIME_QUICK_PICKERS.map((mins) => (
+                    <button
+                      key={mins}
+                      onClick={() => setDraftMinutes(mins)}
+                      className={cn(
+                        THEME.pickerBox,
+                        "w-16 h-16 rounded-xl flex flex-col items-center justify-center transition-all shadow-md text-white",
+                        draftMinutes === mins ? "ring-2 ring-white scale-105" : "hover:bg-opacity-80"
+                      )}
+                    >
+                      <span className="text-2xl font-bold leading-none">{mins}</span>
+                      <span className="text-[10px] font-medium opacity-80 mt-0.5">min</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Mock Date Picker Spinner Area (Visual mapping for screenshot fidelity) */}
+                <div className="flex-1 mt-12 relative flex items-center justify-center h-48 pointer-events-none opacity-40 mix-blend-multiply">
+                   <div className="absolute w-full h-8 bg-black/10 rounded-md top-1/2 -translate-y-1/2" />
+                   <div className="flex gap-8 text-black/60 font-medium text-xl items-center pb-2">
+                      <div className="text-right w-24 leading-loose">
+                        <div className="opacity-30">Tue Mar 24</div>
+                        <div className="opacity-60">Wed Mar 25</div>
+                        <div className="text-black text-2xl">Today</div>
+                        <div className="opacity-60">Fri Mar 27</div>
+                        <div className="opacity-30">Sat Mar 28</div>
+                      </div>
+                      <div className="text-center w-8 leading-loose">
+                        <div className="opacity-30">5</div>
+                        <div className="opacity-60">6</div>
+                        <div className="text-black text-2xl">7</div>
+                        <div className="opacity-60">8</div>
+                        <div className="opacity-30">9</div>
+                      </div>
+                      <div className="text-center w-8 leading-loose">
+                        <div className="opacity-30">05</div>
+                        <div className="opacity-60">06</div>
+                        <div className="text-black text-2xl">07</div>
+                        <div className="opacity-60">08</div>
+                        <div className="opacity-30">09</div>
+                      </div>
+                      <div className="text-left w-8 leading-loose">
+                        <div className="text-black text-2xl">AM</div>
+                        <div className="opacity-60">PM</div>
+                        <div className="opacity-0">PM</div>
+                        <div className="opacity-0">PM</div>
+                        <div className="opacity-0">PM</div>
+                      </div>
+                   </div>
+                </div>
+
               </div>
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Goals List */}
-        <div className="space-y-8 pb-10">
-          {standaloneTasks.length > 0 && (
-            <div className="mb-10 animate-in fade-in slide-in-from-bottom-2">
-              <div className="flex items-center gap-3 mb-5 border-b border-border/40 pb-3">
-                <div className="p-2 rounded-lg bg-accent/10 border border-accent/20">
-                  <Sparkles className="w-4 h-4 text-accent" />
-                </div>
-                <h3 className="font-display text-xl tracking-wider text-foreground">
-                  Daily Rituals & Habits
-                </h3>
-                <span className="font-body text-[10px] uppercase text-muted-foreground font-normal tracking-wide bg-foreground/5 px-2 py-0.5 rounded ml-2">
-                  Standalone Tasks
-                </span>
-              </div>
-              <div className="space-y-2">
-                {standaloneTasks.map((task) => (
-                  <div
-                    key={task.id}
-                    className={cn(
-                      "flex items-center gap-3 p-3 rounded-lg border bg-background transition-all group/task",
-                      task.is_completed ? "border-primary/30 bg-primary/5" : "border-border hover:border-primary/20"
-                    )}
-                  >
-                    <button
-                      onClick={() => toggleTaskCompletion(task)}
-                      className={cn(
-                        "w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition-colors",
-                        task.is_completed ? "text-primary" : "text-border hover:text-primary/50"
-                      )}
-                    >
-                      {task.is_completed ? <CheckCircle2 className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
-                    </button>
-
-                    <div className="flex-1 min-w-0">
-                      <p className={cn(
-                        "font-body text-xs transition-colors",
-                        task.is_completed ? "text-muted-foreground line-through" : "text-foreground"
-                      )}>
-                        {task.title}
-                      </p>
-                      <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-                        {task.time_of_day && (
-                          <span className="font-body text-[9px] text-muted-foreground flex items-center gap-1 bg-foreground/[0.03] px-1.5 py-0.5 rounded">
-                            <Bell className="w-2.5 h-2.5" />
-                            {formatTime(task.time_of_day)}
-                            {task.escalation_level && (
-                              <span className={cn("ml-1 uppercase text-[8px]",
-                                task.escalation_level === 3 ? "text-destructive" :
-                                task.escalation_level === 2 ? "text-accent" : "text-primary"
-                              )}>
-                                Lvl {task.escalation_level}
-                              </span>
-                            )}
-                          </span>
-                        )}
-                        {/* Snooze Interval Selector */}
-                        <div className="flex items-center gap-1 bg-foreground/[0.03] px-1.5 py-0.5 rounded border border-transparent hover:border-border transition-colors">
-                          <select
-                            value={task.snooze_interval || "none"}
-                            onChange={(e) => updateTask.mutate({ id: task.id, snooze_interval: e.target.value })}
-                            className="font-body text-[9px] bg-transparent text-muted-foreground focus:outline-none cursor-pointer"
-                            title="Snooze reminder interval"
-                          >
-                            {SNOOZE_OPTIONS.map((o) => (
-                              <option key={o.value} value={o.value}>{o.label === "Off" ? "🔕 Snooze Off" : `🔔 ${o.label}`}</option>
-                            ))}
-                          </select>
-                        </div>
-                        {task.snooze_interval && task.snooze_interval !== "none" && (
-                          <span className="font-body text-[8px] text-accent font-medium uppercase flex items-center gap-0.5 bg-accent/10 px-1.5 py-0.5 rounded">
-                            <AlarmClock className="w-2 h-2" /> Persistent
-                          </span>
-                        )}
-                      </div>
-                      {/* Notes */}
-                      {task.notes && (
-                        <p className="font-body text-[9px] text-muted-foreground/70 mt-1.5 flex items-start gap-1 p-2 bg-muted/30 rounded-md border border-border/50">
-                          <FileText className="w-2.5 h-2.5 mt-0.5 shrink-0" />
-                          {task.notes}
-                        </p>
-                      )}
-                    </div>
-
-                    <button
-                      onClick={() => handleDelete(task.id, false)}
-                      className="opacity-0 group-hover/task:opacity-100 p-2 text-muted-foreground hover:text-destructive transition-all"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {goals.length === 0 && standaloneTasks.length === 0 && !showGoalForm ? (
-            <div className="text-center py-16 bg-gradient-card border border-border rounded-xl">
-              <Target className="w-12 h-12 mx-auto text-muted-foreground/30 mb-4" />
-              <p className="font-body text-sm text-muted-foreground">No active goals or rituals.</p>
-              <p className="font-body text-xs text-muted-foreground/60 mt-1">
-                Start building your Life Architecture roadmap.
-              </p>
-            </div>
-          ) : (
-            CATEGORIES.map((categoryInfo) => {
-              const categoryGoals = goals.filter((g) => g.category === categoryInfo.value);
-              if (categoryGoals.length === 0) return null;
-              
-              const CategoryIcon = categoryInfo.icon;
-
-              return (
-                <div key={categoryInfo.value} className="mb-10 animate-in fade-in slide-in-from-bottom-2">
-                  <div className="flex items-center gap-3 mb-5 border-b border-border/40 pb-3">
-                    <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
-                      <CategoryIcon className="w-4 h-4 text-primary" />
-                    </div>
-                    <h3 className="font-display text-xl tracking-wider text-foreground">
-                      {categoryInfo.label}
-                    </h3>
-                    <span className="font-body text-[10px] uppercase text-muted-foreground font-normal tracking-wide bg-foreground/5 px-2 py-0.5 rounded ml-2">
-                      {categoryInfo.desc}
-                    </span>
-                  </div>
-                  
-                  <div className="space-y-6">
-                    {categoryGoals.map((goal) => {
-                      const Icon = getCategoryIcon(goal.category);
-                      const goalSubtasks = subtasks.filter((s) => s.parent_goal_id === goal.id);
-                      const completedCount = goalSubtasks.filter((s) => s.is_completed).length;
-                      const progressPercent = goalSubtasks.length > 0 ? Math.round((completedCount / goalSubtasks.length) * 100) : 0;
-
-                      return (
-                        <div key={goal.id} className="space-y-4 group">
-                          {/* Goal Header */}
-                          <div className="flex items-center gap-4 bg-muted/40 p-4 rounded-xl border border-border relative overflow-hidden transition-all hover:bg-muted/60">
-                            <div className="absolute top-0 left-0 w-1 h-full bg-gradient-pink" />
-
-                            <div className="flex-1 min-w-0">
-                              <div className="flex justify-between items-start mb-1">
-                                <h2 className="font-display text-lg tracking-wider truncate text-foreground pr-4">
-                                  {goal.title}
-                                </h2>
-                                <button
-                                  onClick={() => handleDelete(goal.id, true)}
-                                  className="pt-1 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
-                              <div className="flex items-center gap-3">
-                                <span className="font-body text-[10px] tracking-wider uppercase text-accent">
-                                  {TIMEFRAMES.find((t) => t.value === goal.timeframe)?.label || goal.timeframe}
-                                </span>
-                                {goalSubtasks.length > 0 && (
-                                  <>
-                                    <span className="w-1 h-1 rounded-full bg-border" />
-                                    <span className="font-body text-[10px] tracking-wider uppercase text-primary">
-                                      {progressPercent}% Complete
-                                    </span>
-                                  </>
-                                )}
-                              </div>
-                              {/* Progress bar */}
-                              {goalSubtasks.length > 0 && (
-                                <div className="w-full h-1.5 bg-border/50 rounded-full mt-3 overflow-hidden">
-                                  <div
-                                    className="h-full bg-gradient-pink rounded-full transition-all duration-500"
-                                    style={{ width: `${progressPercent}%` }}
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Subtasks */}
-                          <div className="space-y-2 pl-4 border-l-2 border-border/50 ml-6">
-                            {goalSubtasks.length === 0 && (
-                              <p className="font-body text-xs text-muted-foreground py-2">No subtasks generated yet.</p>
-                            )}
-                            {goalSubtasks.map((task) => (
-                              <div
-                                key={task.id}
-                                className={cn(
-                                  "flex items-center gap-3 p-3 rounded-lg border bg-background transition-all group/task",
-                                  task.is_completed ? "border-primary/30 bg-primary/5" : "border-border hover:border-primary/20"
-                                )}
-                              >
-                                <button
-                                  onClick={() => toggleTaskCompletion(task)}
-                                  className={cn(
-                                    "w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition-colors",
-                                    task.is_completed ? "text-primary" : "text-border hover:text-primary/50"
-                                  )}
-                                >
-                                  {task.is_completed ? <CheckCircle2 className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
-                                </button>
-
-                                <div className="flex-1 min-w-0">
-                                  <p className={cn(
-                                    "font-body text-xs transition-colors",
-                                    task.is_completed ? "text-muted-foreground line-through" : "text-foreground"
-                                  )}>
-                                    {task.title}
-                                  </p>
-                                  <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-                                    {task.time_of_day && (
-                                      <span className="font-body text-[9px] text-muted-foreground flex items-center gap-1 bg-foreground/[0.03] px-1.5 py-0.5 rounded">
-                                        <Bell className="w-2.5 h-2.5" />
-                                        {formatTime(task.time_of_day)}
-                                        {task.escalation_level && (
-                                          <span className={cn("ml-1 uppercase text-[8px]",
-                                            task.escalation_level === 3 ? "text-destructive" :
-                                            task.escalation_level === 2 ? "text-accent" : "text-primary"
-                                          )}>
-                                            Lvl {task.escalation_level}
-                                          </span>
-                                        )}
-                                      </span>
-                                    )}
-                                    {/* Snooze Interval Selector */}
-                                    <div className="flex items-center gap-1 bg-foreground/[0.03] px-1.5 py-0.5 rounded border border-transparent hover:border-border transition-colors">
-                                      <select
-                                        value={task.snooze_interval || "none"}
-                                        onChange={(e) => updateTask.mutate({ id: task.id, snooze_interval: e.target.value })}
-                                        className="font-body text-[9px] bg-transparent text-muted-foreground focus:outline-none cursor-pointer"
-                                        title="Snooze reminder interval"
-                                      >
-                                        {SNOOZE_OPTIONS.map((o) => (
-                                          <option key={o.value} value={o.value}>{o.label === "Off" ? "🔕 Snooze Off" : `🔔 ${o.label}`}</option>
-                                        ))}
-                                      </select>
-                                    </div>
-                                    {task.snooze_interval && task.snooze_interval !== "none" && (
-                                      <span className="font-body text-[8px] text-accent font-medium uppercase flex items-center gap-0.5 bg-accent/10 px-1.5 py-0.5 rounded">
-                                        <AlarmClock className="w-2 h-2" /> Persistent
-                                      </span>
-                                    )}
-                                  </div>
-                                  {/* Notes */}
-                                  {task.notes && (
-                                    <p className="font-body text-[9px] text-muted-foreground/70 mt-1.5 flex items-start gap-1 p-2 bg-muted/30 rounded-md border border-border/50">
-                                      <FileText className="w-2.5 h-2.5 mt-0.5 shrink-0" />
-                                      {task.notes}
-                                    </p>
-                                  )}
-                                </div>
-
-                                <button
-                                  onClick={() => handleDelete(task.id, false)}
-                                  className="opacity-0 group-hover/task:opacity-100 p-2 text-muted-foreground hover:text-destructive transition-all"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import logo from "@/assets/brickhouse-logo.png";
 import LandingFooter from "@/components/LandingFooter";
 import ScrollReveal from "@/components/ScrollReveal";
 import { trackEvent } from "@/lib/analytics";
+import { useNavigate } from "react-router-dom";
 
 const fadeUp = {
   initial: { opacity: 0, y: 30 },
@@ -10,6 +11,8 @@ const fadeUp = {
 };
 
 const Coaching = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       {/* Hero */}
@@ -181,20 +184,18 @@ const Coaching = () => {
                 serious about building, send the word and she'll reach back.
               </p>
 
-              <a
-                href="https://instagram.com/BrickhouseMindset"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() =>
+              <button
+                onClick={() => {
                   trackEvent("cta_clicked", {
-                    label: "Coaching DM CTA",
-                    url: "https://instagram.com/BrickhouseMindset"
-                  })
-                }
+                    label: "Coaching Intake CTA",
+                    url: "/coaching-intake"
+                  });
+                  navigate("/coaching-intake");
+                }}
                 className="inline-block bg-gradient-pink text-foreground font-body font-extrabold text-[13px] tracking-[2px] uppercase px-12 py-[18px] cursor-pointer [clip-path:polygon(8px_0%,100%_0%,calc(100%-8px)_100%,0%_100%)] hover:opacity-90 hover:-translate-y-0.5 transition-all mb-4"
               >
-                DM "ARCHITECT" on Instagram →
-              </a>
+                BEGIN YOUR ARCHITECTURE →
+              </button>
 
               <p className="font-body text-xs text-muted-foreground opacity-60">
                 @BrickhouseMindset · Limited spots available

@@ -8,6 +8,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import { Navigate } from "react-router-dom";
 import BreakthroughConfirmation from "./pages/BreakthroughConfirmation";
 import Coaching from "./pages/Coaching";
+import CoachingIntake from "./pages/CoachingIntake";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import Checkout from "./pages/Checkout";
@@ -61,6 +62,7 @@ const App = () => {
               <Route element={<PublicLayout />}>
                 <Route path="/" element={<Navigate to="/auth" replace />} />
                 <Route path="/coaching" element={<Coaching />} />
+                <Route path="/coaching-intake" element={<CoachingIntake />} />
                 <Route path="/breakthrough-confirmation" element={<BreakthroughConfirmation />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/reset-password" element={<ResetPassword />} />

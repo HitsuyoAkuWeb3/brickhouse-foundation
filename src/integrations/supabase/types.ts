@@ -223,6 +223,72 @@ export type Database = {
         }
         Relationships: []
       }
+      coaching_intakes: {
+        Row: {
+          id: string
+          created_at: string
+          full_name: string
+          email: string
+          phone: string | null
+          location: string | null
+          life_stage: string[] | null
+          obstacle: string | null
+          out_of_alignment: string[] | null
+          urgency: number | null
+          ideal_life: string | null
+          specific_results: string[] | null
+          prior_coaching: string | null
+          interested_experience: string | null
+          investment_comfort: string | null
+          readiness: string | null
+          discovery_source: string | null
+          additional_info: string | null
+          connect_preference: string | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          full_name: string
+          email: string
+          phone?: string | null
+          location?: string | null
+          life_stage?: string[] | null
+          obstacle?: string | null
+          out_of_alignment?: string[] | null
+          urgency?: number | null
+          ideal_life?: string | null
+          specific_results?: string[] | null
+          prior_coaching?: string | null
+          interested_experience?: string | null
+          investment_comfort?: string | null
+          readiness?: string | null
+          discovery_source?: string | null
+          additional_info?: string | null
+          connect_preference?: string | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          full_name?: string
+          email?: string
+          phone?: string | null
+          location?: string | null
+          life_stage?: string[] | null
+          obstacle?: string | null
+          out_of_alignment?: string[] | null
+          urgency?: number | null
+          ideal_life?: string | null
+          specific_results?: string[] | null
+          prior_coaching?: string | null
+          interested_experience?: string | null
+          investment_comfort?: string | null
+          readiness?: string | null
+          discovery_source?: string | null
+          additional_info?: string | null
+          connect_preference?: string | null
+        }
+        Relationships: []
+      }
       daily_rituals: {
         Row: {
           completed_habits: Json | null

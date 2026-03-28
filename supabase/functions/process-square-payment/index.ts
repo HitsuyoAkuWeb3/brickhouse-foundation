@@ -78,8 +78,13 @@ serve(async (req) => {
     }
 
     // Success
-    // If successfully charged, update their profile
-    const { error: profileError } = await supabase
+    // If successfully charged, update their profile securely using the service role key
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .update({ subscription_tier: tier })
       .eq('id', user.id);

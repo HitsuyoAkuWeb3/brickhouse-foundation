@@ -152,6 +152,7 @@ const Scheduler = () => {
   // Filter tasks
   const goals = tasks.filter((t) => !t.parent_goal_id && t.reminder_type === "goal");
   const subtasks = tasks.filter((t) => t.parent_goal_id);
+  const standaloneTasks = tasks.filter((t) => !t.parent_goal_id && t.reminder_type !== "goal");
 
   const filteredTemplates = GOAL_TEMPLATES.filter((t) => t.category === category);
 
@@ -433,10 +434,104 @@ const Scheduler = () => {
 
         {/* Goals List */}
         <div className="space-y-8 pb-10">
-          {goals.length === 0 && !showGoalForm ? (
+          {standaloneTasks.length > 0 && (
+            <div className="mb-10 animate-in fade-in slide-in-from-bottom-2">
+              <div className="flex items-center gap-3 mb-5 border-b border-border/40 pb-3">
+                <div className="p-2 rounded-lg bg-accent/10 border border-accent/20">
+                  <Sparkles className="w-4 h-4 text-accent" />
+                </div>
+                <h3 className="font-display text-xl tracking-wider text-foreground">
+                  Daily Rituals & Habits
+                </h3>
+                <span className="font-body text-[10px] uppercase text-muted-foreground font-normal tracking-wide bg-foreground/5 px-2 py-0.5 rounded ml-2">
+                  Standalone Tasks
+                </span>
+              </div>
+              <div className="space-y-2">
+                {standaloneTasks.map((task) => (
+                  <div
+                    key={task.id}
+                    className={cn(
+                      "flex items-center gap-3 p-3 rounded-lg border bg-background transition-all group/task",
+                      task.is_completed ? "border-primary/30 bg-primary/5" : "border-border hover:border-primary/20"
+                    )}
+                  >
+                    <button
+                      onClick={() => toggleTaskCompletion(task)}
+                      className={cn(
+                        "w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition-colors",
+                        task.is_completed ? "text-primary" : "text-border hover:text-primary/50"
+                      )}
+                    >
+                      {task.is_completed ? <CheckCircle2 className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
+                    </button>
+
+                    <div className="flex-1 min-w-0">
+                      <p className={cn(
+                        "font-body text-xs transition-colors",
+                        task.is_completed ? "text-muted-foreground line-through" : "text-foreground"
+                      )}>
+                        {task.title}
+                      </p>
+                      <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                        {task.time_of_day && (
+                          <span className="font-body text-[9px] text-muted-foreground flex items-center gap-1 bg-foreground/[0.03] px-1.5 py-0.5 rounded">
+                            <Bell className="w-2.5 h-2.5" />
+                            {formatTime(task.time_of_day)}
+                            {task.escalation_level && (
+                              <span className={cn("ml-1 uppercase text-[8px]",
+                                task.escalation_level === 3 ? "text-destructive" :
+                                task.escalation_level === 2 ? "text-accent" : "text-primary"
+                              )}>
+                                Lvl {task.escalation_level}
+                              </span>
+                            )}
+                          </span>
+                        )}
+                        {/* Snooze Interval Selector */}
+                        <div className="flex items-center gap-1 bg-foreground/[0.03] px-1.5 py-0.5 rounded border border-transparent hover:border-border transition-colors">
+                          <select
+                            value={task.snooze_interval || "none"}
+                            onChange={(e) => updateTask.mutate({ id: task.id, snooze_interval: e.target.value })}
+                            className="font-body text-[9px] bg-transparent text-muted-foreground focus:outline-none cursor-pointer"
+                            title="Snooze reminder interval"
+                          >
+                            {SNOOZE_OPTIONS.map((o) => (
+                              <option key={o.value} value={o.value}>{o.label === "Off" ? "🔕 Snooze Off" : `🔔 ${o.label}`}</option>
+                            ))}
+                          </select>
+                        </div>
+                        {task.snooze_interval && task.snooze_interval !== "none" && (
+                          <span className="font-body text-[8px] text-accent font-medium uppercase flex items-center gap-0.5 bg-accent/10 px-1.5 py-0.5 rounded">
+                            <AlarmClock className="w-2 h-2" /> Persistent
+                          </span>
+                        )}
+                      </div>
+                      {/* Notes */}
+                      {task.notes && (
+                        <p className="font-body text-[9px] text-muted-foreground/70 mt-1.5 flex items-start gap-1 p-2 bg-muted/30 rounded-md border border-border/50">
+                          <FileText className="w-2.5 h-2.5 mt-0.5 shrink-0" />
+                          {task.notes}
+                        </p>
+                      )}
+                    </div>
+
+                    <button
+                      onClick={() => handleDelete(task.id, false)}
+                      className="opacity-0 group-hover/task:opacity-100 p-2 text-muted-foreground hover:text-destructive transition-all"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {goals.length === 0 && standaloneTasks.length === 0 && !showGoalForm ? (
             <div className="text-center py-16 bg-gradient-card border border-border rounded-xl">
               <Target className="w-12 h-12 mx-auto text-muted-foreground/30 mb-4" />
-              <p className="font-body text-sm text-muted-foreground">No active goals.</p>
+              <p className="font-body text-sm text-muted-foreground">No active goals or rituals.</p>
               <p className="font-body text-xs text-muted-foreground/60 mt-1">
                 Start building your Life Architecture roadmap.
               </p>

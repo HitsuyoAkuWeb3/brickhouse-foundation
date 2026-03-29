@@ -4,9 +4,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogOut, Settings, User as UserIcon, Crown, Calendar, Target, Sparkles, Trophy } from "lucide-react";
+import { LogOut, Settings, User as UserIcon, Crown, Calendar, Target, Sparkles, Trophy, Heart } from "lucide-react";
 import { useGoddessRx } from "@/hooks/useGoddessRx";
 import { useLeveling } from "@/hooks/useLeveling";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
 
 const TIER_DISPLAY_NAMES: Record<string, string> = {
   free: "Free Tier",
@@ -22,6 +25,27 @@ export default function Profile() {
   const { data: profile, isLoading } = useProfile();
   const { prescription } = useGoddessRx();
   const { score, title, nextTierScore, progress } = useLeveling();
+
+  const { data: gratitudeHistory } = useQuery({
+    queryKey: ["gratitude-history", profile?.id],
+    enabled: !!profile?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("daily_rituals")
+        .select("date, ritual_data")
+        .eq("profile_id", profile!.id)
+        .order("date", { ascending: false })
+        .limit(30);
+      if (error) throw error;
+      return data
+        .filter((d: Record<string, unknown>) => d.ritual_data && (d.ritual_data as Record<string, unknown>).gratitude_note)
+        .map((d: Record<string, unknown>) => ({
+          // Fix timezone issue when parsing date strings
+          date: format(new Date((d.date as string) + "T00:00:00"), "MMM d, yyyy"),
+          note: (d.ritual_data as Record<string, unknown>).gratitude_note as string,
+        }));
+    },
+  });
 
   const handleSignOut = async () => {
     await signOut();
@@ -206,6 +230,31 @@ export default function Profile() {
                 </CardContent>
               </Card>
             )}
+
+            {/* Gratitude History Card */}
+            <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center text-lg">
+                  <Heart className="w-4 h-4 mr-2 text-primary" />
+                  Gratitude History
+                </CardTitle>
+                <CardDescription>Your moments of joy and appreciation</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {(!gratitudeHistory || gratitudeHistory.length === 0) ? (
+                  <p className="text-sm text-muted-foreground italic">No gratitude notes saved yet.</p>
+                ) : (
+                  <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                    {gratitudeHistory.map((item, i) => (
+                      <div key={i} className="bg-foreground/[0.03] border border-border/50 rounded-lg p-3 transition-colors hover:bg-foreground/[0.05]">
+                        <div className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wider">{item.date}</div>
+                        <p className="text-sm text-foreground/90 leading-relaxed">💛 {item.note}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
             <Button 
               variant="destructive" 

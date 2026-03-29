@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Play, Pause, Sparkles, Check } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -83,10 +84,12 @@ export const RitualPlayer = ({ type, onClose, onComplete }: RitualPlayerProps) =
     }
   }, [type, user]);
 
-  // Auto-play audio once started
   const handleStartAudio = () => {
     if (audioRef.current) {
-      audioRef.current.play().catch(console.error);
+      audioRef.current.play().catch((err) => {
+        console.error(err);
+        toast.error("Tap to play audio");
+      });
       setAudioStarted(true);
     }
   };
@@ -96,7 +99,10 @@ export const RitualPlayer = ({ type, onClose, onComplete }: RitualPlayerProps) =
     if (isPlaying) {
       audioRef.current.pause();
     } else {
-      audioRef.current.play().catch(console.error);
+      audioRef.current.play().catch((err) => {
+        console.error(err);
+        toast.error("Tap to play audio");
+      });
     }
   };
 

@@ -6,10 +6,12 @@ import { useLessonProgress } from "@/hooks/useLessonProgress";
 import { useDailyRitual } from "@/hooks/useDailyRitual";
 import { useSchedulerTasks } from "@/hooks/useSchedulerTasks";
 import { useAnalytics } from "@/hooks/useAnalytics";
+import { usePassionPick } from "@/hooks/usePassionPick";
 import { motion, AnimatePresence } from "framer-motion";
+import { CodeSwitchModal } from "@/components/CodeSwitchModal";
 import {
   Blocks, Sunrise, Diamond, CalendarClock, Sparkles,
-  Sun, Clock, Moon, Play, CheckCircle2, MessageSquare, Heart, ArrowRight, Flame, Video, Users, Trophy, type LucideIcon
+  Sun, Clock, Moon, Play, CheckCircle2, MessageSquare, Heart, ArrowRight, Flame, Video, Users, Trophy, Edit2, type LucideIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/brickhouse-logo.png";
@@ -64,8 +66,10 @@ const Dashboard = () => {
   const { tasks: schedulerTasks } = useSchedulerTasks();
   const { trackEvent } = useAnalytics();
   const { score, title } = useLeveling();
+  const { pick } = usePassionPick();
 
   const [showWelcomeOverlay, setShowWelcomeOverlay] = useState(false);
+  const [resetActive, setResetActive] = useState(false);
 
   useEffect(() => {
     if (location.state && (location.state as { justFinishedOnboarding?: boolean }).justFinishedOnboarding) {
@@ -172,6 +176,11 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center px-4 sm:px-6 pt-8 pb-20 overflow-x-hidden">
+      <AnimatePresence>
+        {resetActive && pick && (
+          <CodeSwitchModal pick={pick} onClose={() => setResetActive(false)} />
+        )}
+      </AnimatePresence>
       
       {/* Top Header */}
       <div className="w-full max-w-lg mb-8 text-center flex flex-col items-center">
@@ -262,25 +271,50 @@ const Dashboard = () => {
       </div>
 
       {/* Passion Pick — §G.2 Position 2 */}
+      {/* Passion Pick — §G.2 Position 2 */}
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
-        className="w-full max-w-lg mb-6"
+        className="w-full max-w-lg mb-6 relative group"
       >
-        <Link
-          to="/passion-pick"
-          onClick={() => trackEvent("feature_click", { feature: "passion_pick" })}
-          className="w-full rounded-2xl border border-destructive/30 bg-gradient-to-br from-destructive/10 to-card/60 backdrop-blur-md p-5 flex items-center gap-4 hover:border-destructive/50 transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_20px_hsl(var(--destructive)/0.15)]"
+        <button
+          onClick={() => {
+            trackEvent("feature_click", { feature: "passion_pick" });
+            if (pick && (pick.image_url || pick.song_url || pick.affirmation_text || pick.title)) {
+              setResetActive(true);
+              if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
+            } else {
+              navigate("/passion-pick");
+            }
+          }}
+          className="w-full relative overflow-hidden rounded-2xl border border-destructive/30 bg-gradient-to-br from-destructive/10 to-card/60 backdrop-blur-md p-5 flex items-center gap-4 hover:border-destructive/50 transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_20px_hsl(var(--destructive)/0.15)] text-left"
         >
-          <div className="w-12 h-12 rounded-xl bg-destructive/15 flex items-center justify-center shrink-0">
+          {pick?.image_url && (
+            <div className="absolute inset-0 z-0">
+              <img src={pick.image_url} alt="" className="w-full h-full object-cover opacity-20 blur-[2px]" />
+              <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent" />
+            </div>
+          )}
+          <div className="relative z-10 w-12 h-12 rounded-xl bg-destructive/15 flex items-center justify-center shrink-0">
             <Flame className="w-6 h-6 text-destructive" />
           </div>
-          <div className="flex-1 text-left">
+          <div className="relative z-10 flex-1 text-left pr-8">
             <h3 className="font-display text-base tracking-wider">Passion Pick</h3>
-            <p className="font-body text-[11px] text-muted-foreground mt-0.5">Discover what lights your fire today</p>
+            <p className="font-body text-[11px] text-muted-foreground mt-0.5">
+              {pick && (pick.image_url || pick.song_url || pick.affirmation_text || pick.title) 
+                ? "Tap to Code Switch" 
+                : "Discover what lights your fire today"}
+            </p>
           </div>
-          <ArrowRight className="w-4 h-4 text-muted-foreground" />
+        </button>
+        <Link 
+          to="/passion-pick" 
+          onClick={(e) => e.stopPropagation()}
+          title="Configure Passion Pick"
+          className="absolute top-1/2 -translate-y-1/2 right-4 z-20 w-8 h-8 rounded-full bg-background/50 hover:bg-background flex items-center justify-center text-muted-foreground hover:text-foreground transition-all border border-transparent hover:border-border"
+        >
+          {pick && (pick.image_url || pick.song_url || pick.affirmation_text || pick.title) ? <Edit2 className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
         </Link>
       </motion.div>
 

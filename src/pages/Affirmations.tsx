@@ -215,23 +215,8 @@ const Affirmations = () => {
         <h2 className="font-display text-lg tracking-wider mb-4">Browse by Brick</h2>
         <div className="space-y-2">
           {bricks.map((brick) => {
-            const isBrick1 = brick.id === 1;
             const affirmations = groupedByBrick[brick.id] || [];
             
-            // For non-Brick 1, show locked state
-            if (!isBrick1) {
-              return (
-                <div key={brick.id} className="border border-border/50 rounded-xl overflow-hidden opacity-50">
-                  <div className="w-full flex items-center gap-3 px-4 py-3 cursor-not-allowed">
-                    <span className="text-lg">{brick.icon}</span>
-                    <span className="flex-1 text-left font-display text-sm tracking-wider text-muted-foreground">{brick.name}</span>
-                    <Lock className="w-3.5 h-3.5 text-muted-foreground" />
-                    <span className="text-[10px] text-muted-foreground">Phase 2</span>
-                  </div>
-                </div>
-              );
-            }
-
             if (!affirmations.length) return null;
             const isOpen = expandedBrick === brick.id;
 

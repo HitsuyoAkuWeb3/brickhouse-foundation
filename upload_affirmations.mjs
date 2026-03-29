@@ -2,12 +2,12 @@ import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
 
-const SUPABASE_URL = "https://vtufpmuhtonoyerzmyqh.supabase.co";
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || "https://vtufpmuhtonoyerzmyqh.supabase.co";
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-const AUDIO_DIR = "/Users/ramajjohnson/Downloads/Brickhouse_Affirmations_Audio";
+const AUDIO_DIR = "/Users/ramajjohnson/Brickhouse Mindset/Brickhouse_Affirmations_Audio";
 
 const folderToSlug = {
   "Brick01_SelfLove": "self-love",

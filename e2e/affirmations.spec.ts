@@ -85,7 +85,7 @@ test.describe('Affirmations View and Builder', () => {
       await brickButton.click();
       
       // Look for the mock affirmation text
-      await expect(page.getByText('I am the architect of my life', { exact: true })).toBeVisible();
+      await expect(page.getByText('"I am the architect of my life"', { exact: true })).toBeVisible();
       
       // Click schedule
       await page.locator('button[title="Schedule this affirmation"]').click();

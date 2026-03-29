@@ -48,7 +48,7 @@ test.describe('Daily Ritual Flow', () => {
     await expect(nextBtn).not.toBeVisible(); // Next button is conditionally hidden until audio starts
     
     // Start the audio
-    await startAudioBtn.click();
+    await startAudioBtn.click({ force: true });
     
     // The "Next Step" button should be disabled because the text input is empty
     await expect(nextBtn).toBeDisabled();

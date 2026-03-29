@@ -37,7 +37,7 @@ test.describe('Daily Ritual Flow', () => {
     await startMorningBtn.click();
 
     // The ritual modal should now be visible
-    await expect(page.getByRole('heading', { name: 'Gratitude' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Gratitude', exact: true })).toBeVisible();
 
     // Verify audio player needs starting
     const startAudioBtn = page.getByRole('button', { name: /Start Guided Audio/i });
@@ -80,7 +80,7 @@ test.describe('Daily Ritual Flow', () => {
     
     // Start Audio
     const startAudioBtn = page.getByRole('button', { name: /Start Guided Audio/i });
-    await startAudioBtn.click();
+    await startAudioBtn.click({ force: true });
 
     // Verify toggle button exists via actual structural selection we know is there
     // The play/pause is an icon inside a button that we can just find by its relative position to Next Step

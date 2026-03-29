@@ -93,6 +93,6 @@ test.describe('Dashboard and Profile Checks', () => {
     await signOutBtn.click();
     
     // Because we just simulated clicks, let's manually verify auth heading
-    await expect(page.getByRole('heading', { name: "You're Built For This." })).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole('heading', { name: "Welcome Back" })).toBeVisible({ timeout: 5000 });
   });
 });

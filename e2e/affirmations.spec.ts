@@ -102,7 +102,7 @@ test.describe('Affirmations View and Builder', () => {
         }
       });
 
-      await page.getByRole('button', { name: 'Schedule' }).click();
+      await page.getByRole('button', { name: 'Schedule', exact: true }).click();
       await expect(page.getByText(/Affirmation scheduled for 08:00/)).toBeVisible();
     }
   });

@@ -48,7 +48,7 @@ test.describe('Daily Ritual Flow', () => {
     await expect(nextBtn).not.toBeVisible(); // Next button is conditionally hidden until audio starts
     
     // Start the audio
-    await startAudioBtn.click({ force: true });
+    await startAudioBtn.evaluate(node => (node as HTMLElement).click());
     
     // The "Next Step" button should be disabled because the text input is empty
     await expect(nextBtn).toBeDisabled();
@@ -80,7 +80,7 @@ test.describe('Daily Ritual Flow', () => {
     
     // Start Audio
     const startAudioBtn = page.getByRole('button', { name: /Start Guided Audio/i });
-    await startAudioBtn.click({ force: true });
+    await startAudioBtn.evaluate(node => (node as HTMLElement).click());
 
     // Verify toggle button exists via actual structural selection we know is there
     // The play/pause is an icon inside a button that we can just find by its relative position to Next Step

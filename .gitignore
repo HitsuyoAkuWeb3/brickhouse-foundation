@@ -30,3 +30,4 @@ public/welcome-video.mp4
 .env
 .env.local
 .env.*.local
+playwright-report/\ntest-results/\nplaywright/.cache/

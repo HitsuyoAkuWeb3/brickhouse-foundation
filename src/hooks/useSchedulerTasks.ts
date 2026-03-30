@@ -43,8 +43,8 @@ export function useSchedulerTasks() {
     queryKey: key,
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("scheduler_tasks" as any)
+      const { data, error } = await (supabase as any)
+        .from("scheduler_tasks")
         .select("*")
         .eq("profile_id", user!.id)
         .order("created_at", { ascending: false });

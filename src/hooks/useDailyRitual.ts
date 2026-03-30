@@ -24,7 +24,7 @@ export const useDailyRitual = (date?: Date) => {
     queryKey: ["daily-ritual", user?.id, today],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("daily_rituals")
         .select("*")
         .eq("profile_id", user!.id)

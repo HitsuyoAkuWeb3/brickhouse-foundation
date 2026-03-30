@@ -79,8 +79,8 @@ export function useSchedulerTasks() {
 
   const deleteTask = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("scheduler_tasks" as any)
+      const { error } = await (supabase as any)
+        .from("scheduler_tasks")
         .delete()
         .eq("id", id);
       if (error) throw error;

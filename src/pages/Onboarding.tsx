@@ -137,7 +137,7 @@ const Onboarding = () => {
         return 'spiritual';
       };
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("profiles")
         .update({
           zodiac_sign: zodiacSign || null,

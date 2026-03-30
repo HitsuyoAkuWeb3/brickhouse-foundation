@@ -80,10 +80,8 @@ export default function Settings() {
       const prefs = ((profile?.reminder_preferences as Record<string, unknown>) || {});
       const newPrefs = { ...prefs, enabled };
       
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("profiles")
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore - Supabase types haven't been updated for reminder_preferences yet
         .update({ reminder_preferences: newPrefs })
         .eq("id", user.id);
         

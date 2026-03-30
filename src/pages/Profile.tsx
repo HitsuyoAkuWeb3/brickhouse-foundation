@@ -30,7 +30,7 @@ export default function Profile() {
     queryKey: ["gratitude-history", profile?.id],
     enabled: !!profile?.id,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("daily_rituals")
         .select("date, ritual_data")
         .eq("profile_id", profile!.id)

@@ -8,8 +8,10 @@ describe('CodeSwitchModal Component', () => {
     id: "test-id",
     user_id: "user-1",
     created_at: "2024-01-01",
+    updated_at: "2024-01-01",
     image_url: "https://example.com/vision.jpg",
     song_url: "https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT",
+    song_title: null,
     title: "Launch Global Brand",
     affirmation_text: "I am unstoppable"
   };

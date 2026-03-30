@@ -171,7 +171,8 @@ const Dashboard = () => {
 
   const FeaturedIcon = featuredRitual.icon;
 
-  const calendlyUrl = import.meta.env.VITE_CALENDLY_URL || "#";
+  // Bypass import.meta.env entirely to prevent Lovable Vite parsing crash
+  const calendlyUrl = "http://calendly.com/che-brickhousemindset";
   const collectiveUrl = "/collective";
 
   return (

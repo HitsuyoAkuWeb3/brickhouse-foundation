@@ -68,9 +68,9 @@ export function useSchedulerTasks() {
 
   const updateTask = useMutation({
     mutationFn: async ({ id, ...updates }: TaskUpdate & { id: string }) => {
-      const { error } = await supabase
-        .from("scheduler_tasks" as any)
-        .update({ ...updates } as any)
+      const { error } = await (supabase as any)
+        .from("scheduler_tasks")
+        .update({ ...updates })
         .eq("id", id);
       if (error) throw error;
     },

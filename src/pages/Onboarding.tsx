@@ -93,7 +93,7 @@ const Onboarding = () => {
           return;
         }
 
-        const { data: profile } = await supabase
+        const { data: profile } = await (supabase as any)
           .from("profiles")
           .select("audit_scores")
           .eq("id", user.id)

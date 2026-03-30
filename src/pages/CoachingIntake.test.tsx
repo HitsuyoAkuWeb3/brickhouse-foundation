@@ -45,11 +45,12 @@ window.HTMLElement.prototype.releasePointerCapture = vi.fn();
 window.HTMLElement.prototype.hasPointerCapture = vi.fn();
 
 // Mock Supabase
+const mockInsert = vi.fn().mockResolvedValue({ error: null });
 vi.mock('@/integrations/supabase/client', () => {
   return {
     supabase: {
       from: vi.fn(() => ({
-        insert: vi.fn().mockResolvedValue({ error: null })
+        insert: mockInsert
       }))
     }
   };

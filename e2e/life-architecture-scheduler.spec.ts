@@ -32,44 +32,77 @@ test.describe('Scheduler / Life Architecture (Live DB)', () => {
     }
   });
 
-  test('Scheduler page loads with RE.minders heading', async ({ page }) => {
+  test('Scheduler page loads with Architecture heading', async ({ page }) => {
     await page.goto('/scheduler');
-    await expect(page.getByRole('heading', { name: /RE\.minders/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: /Scheduler/i })).toBeVisible({ timeout: 10000 });
   });
 
   test('Create a new RE.minder via 2-step flow', async ({ page }) => {
     await page.goto('/scheduler');
     await page.waitForLoadState('networkidle');
 
-    // Click the + button to start creation
-    const addBtn = page.locator('button').filter({ has: page.locator('svg.lucide-plus') });
+    // Click the "Add" button to start creation for General Reminders
+    const addBtn = page.getByRole('button', { name: /Add/i });
     await expect(addBtn).toBeVisible({ timeout: 5000 });
     await addBtn.click();
 
-    // Step 1: Enter title
+    // Step 1: Enter objective
     await expect(page.getByRole('heading', { name: /New RE\.minder/i })).toBeVisible();
-    const titleInput = page.locator('input[type="text"]').first();
-    await titleInput.fill('E2E Test Reminder');
+    const objectiveInput = page.getByPlaceholder('Enter objective...');
+    await objectiveInput.fill('E2E Test Reminder');
+
+    // Categorization
+    await page.getByText(/Build It/i).click();
 
     // Click Next to go to step 2
-    const nextBtn = page.getByRole('button', { name: 'Next' });
+    const nextBtn = page.getByRole('button', { name: /Next/i });
     await expect(nextBtn).toBeEnabled();
     await nextBtn.click();
 
-    // Step 2: Set time (default is 5 min)
-    await expect(page.getByText(/RE\.mind me in/i)).toBeVisible();
+    // Step 2: Set time
+    await expect(page.getByText(/Set Time/i)).toBeVisible();
 
-    // Select 15 min quick picker
-    await page.getByRole('button', { name: '15' }).click();
+    // Select 15 min quick picker (accessible name includes "Min")
+    await page.getByRole('button', { name: /15 Min/i }).click();
 
-    // Click Done to create
-    const doneBtn = page.getByRole('button', { name: 'Done' });
-    await doneBtn.click();
+    // Click Schedule to create
+    const scheduleBtn = page.getByRole('button', { name: 'Schedule', exact: true });
+    await scheduleBtn.click();
 
     // Should see success toast and return to list
-    await expect(page.getByText('RE.minder created!')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/RE\.minder scheduled/i)).toBeVisible({ timeout: 5000 });
 
     // Verify the new reminder appears in the list
     await expect(page.getByText('E2E Test Reminder')).toBeVisible({ timeout: 5000 });
+  });
+
+  test('Create a Goal Architecture roadmap', async ({ page }) => {
+    await page.goto('/scheduler');
+    await page.waitForLoadState('networkidle');
+
+    // Click "New Build" to initialize Goal Roadmap
+    let newBuildBtn = page.getByRole('button', { name: /Start a Build/i }).first();
+    const isVisible = await newBuildBtn.isVisible();
+    if (!isVisible) {
+      newBuildBtn = page.getByRole('button', { name: /New Build/i }).first();
+    }
+    
+    await newBuildBtn.click();
+
+    // Step: Select category
+    await expect(page.getByText(/building/i)).toBeVisible();
+    await page.getByText('Rebuild my relationship with my body').click();
+
+    // Wait for the goal structure to build
+    await expect(page.getByText('Goal Architecture Initiated')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('Rebuild my relationship with my body').first()).toBeVisible();
+
+    // Verify timeframes generated
+    await expect(page.getByText('Tomorrow', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('This Week').first()).toBeVisible();
+    await expect(page.getByText('This Month').first()).toBeVisible();
+    await expect(page.getByText('3 Months').first()).toBeVisible();
+    await expect(page.getByText('6 Months').first()).toBeVisible();
+    await expect(page.getByText('9 Months').first()).toBeVisible();
   });
 });

@@ -76,7 +76,7 @@ export const useDailyRitual = (date?: Date) => {
     queryKey: ["ritual-streak", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("daily_rituals")
         .select("date, morning_completed, midday_completed, evening_completed")
         .eq("profile_id", user!.id)

@@ -98,7 +98,7 @@ export const useGoddessRx = () => {
       if (data?.error) throw new Error(data.error);
 
       // Save to DB — store everything in prescription_data Json
-      const { error: saveError } = await supabase
+      const { error: saveError } = await (supabase as any)
         .from("goddess_prescriptions")
         .insert({
           profile_id: user!.id,

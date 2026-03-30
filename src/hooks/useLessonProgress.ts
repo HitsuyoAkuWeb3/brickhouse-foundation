@@ -44,7 +44,7 @@ export const useLessonProgress = () => {
           });
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from("user_lesson_progress")
           .delete()
           .eq("user_id", user!.id)

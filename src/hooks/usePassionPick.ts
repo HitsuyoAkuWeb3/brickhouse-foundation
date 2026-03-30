@@ -44,7 +44,7 @@ export const usePassionPick = () => {
           .eq("id", pick.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from("passion_picks")
           .insert({ user_id: user!.id, ...updates } as any);
         if (error) throw error;

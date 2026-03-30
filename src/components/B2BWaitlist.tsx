@@ -23,7 +23,7 @@ export const B2BWaitlist = () => {
 
     setIsLoading(true);
     try {
-      const { error } = await supabase.from('b2b_waitlist').insert({
+      const { error } = await (supabase as any).from('b2b_waitlist').insert({
         email,
         company_name: company,
         role,

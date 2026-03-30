@@ -89,11 +89,9 @@ describe('CoachingIntake Component', () => {
     // Verify Supabase insert was called
     await waitFor(() => {
       expect(supabase.from).toHaveBeenCalledWith('coaching_intakes');
-      // @ts-ignore
-      const insertMock = supabase.from('coaching_intakes').insert;
-      expect(insertMock).toHaveBeenCalled();
+      expect(mockInsert).toHaveBeenCalled();
       
-      const args = insertMock.mock.calls[0][0];
+      const args = mockInsert.mock.calls[0][0];
       expect(args.full_name).toBe('Test User');
       expect(args.email).toBe('test@example.com');
     });

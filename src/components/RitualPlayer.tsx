@@ -77,7 +77,7 @@ export const RitualPlayer = ({ type, onClose, onComplete }: RitualPlayerProps) =
   useEffect(() => {
     if (type === "midday_checkin" && user) {
       const fetchPassion = async () => {
-        const { data } = await supabase.from("passion_picks").select("image_url").eq("user_id", user.id).limit(1).maybeSingle();
+        const { data } = await (supabase as any).from("passion_picks").select("image_url").eq("user_id", user.id).limit(1).maybeSingle();
         if (data?.image_url) setPassionMedia(data.image_url);
       };
       fetchPassion();

@@ -41,7 +41,7 @@ export const useDailyRitual = (date?: Date) => {
 
   const upsertRitual = useMutation({
     mutationFn: async (updates: Partial<Omit<DailyRitual, "id" | "profile_id" | "date" | "created_at">>) => {
-      const { data: existing } = await supabase
+      const { data: existing } = await (supabase as any)
         .from("daily_rituals")
         .select("id, ritual_data")
         .eq("profile_id", user!.id)

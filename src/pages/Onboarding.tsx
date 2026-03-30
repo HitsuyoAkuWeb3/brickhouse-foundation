@@ -82,7 +82,7 @@ const Onboarding = () => {
 
     const importAuditScores = async () => {
       try {
-        const { data: transferRecord } = await supabase
+        const { data: transferRecord } = await (supabase as any)
           .from("lead_transfers")
           .select("audit_scores")
           .eq("transfer_token", bridgeToken)

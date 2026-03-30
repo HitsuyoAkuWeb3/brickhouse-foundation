@@ -100,7 +100,7 @@ const Onboarding = () => {
           .single();
 
         if (!profile?.audit_scores || Object.keys(profile.audit_scores as Record<string, unknown>).length === 0) {
-          await supabase
+          await (supabase as any)
             .from("profiles")
             .update({ 
               audit_scores: transferRecord.audit_scores, 

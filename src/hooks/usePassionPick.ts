@@ -38,7 +38,7 @@ export const usePassionPick = () => {
   const upsert = useMutation({
     mutationFn: async (updates: Partial<Omit<PassionPick, "id" | "user_id" | "created_at" | "updated_at">>) => {
       if (pick) {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from("passion_picks")
           .update({ ...updates, updated_at: new Date().toISOString() })
           .eq("id", pick.id);

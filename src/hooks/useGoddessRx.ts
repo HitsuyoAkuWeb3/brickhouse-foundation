@@ -74,11 +74,12 @@ export const useGoddessRx = () => {
 
   const generate = useMutation({
     mutationFn: async () => {
-      const { data: profile } = await supabase
+      const { data: profile } = await (supabase as any)
         .from("profiles")
         .select("birth_date, transformation_choice, goals, full_name")
         .eq("id", user!.id)
         .single();
+      if (!profile) throw new Error("Profile not found.");
 
       if (!profile?.birth_date) {
         throw new Error("Please set your birth date in onboarding first.");

@@ -4,7 +4,7 @@ import type { Database } from './types';
 
 // Bypass import.meta.env entirely for Lovable deployment
 const SUPABASE_URL = "https://vtufpmuhtonoyerzmyqh.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_E1XRUxHh0NOuboqkrOnjVQ_K3F0ZJd_";
+const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0dWZwbXVodG9ub3llcnpteXFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4Njk0MTYsImV4cCI6MjA4OTQ0NTQxNn0.LuIBfXDVSIycGepKxXdkZ0A2DIkLKRL_PLHJ5eJIVC8";
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";

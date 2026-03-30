@@ -23,7 +23,7 @@ export const usePassionPick = () => {
     queryKey: ["passion-pick", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("passion_picks")
         .select("*")
         .eq("user_id", user!.id)

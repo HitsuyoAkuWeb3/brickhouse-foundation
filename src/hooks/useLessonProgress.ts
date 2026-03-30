@@ -33,7 +33,7 @@ export const useLessonProgress = () => {
       if (completed) {
         const nextUnlock = new Date();
         nextUnlock.setDate(nextUnlock.getDate() + 7);
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from("user_lesson_progress")
           .insert({ 
             user_id: user!.id, 

@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { CodeSwitchModal } from "@/components/CodeSwitchModal";
 
 const PassionPick = () => {
-  const { pick, isLoading, upsert, uploadPhoto } = usePassionPick();
+  const { pick, isLoading, upsert, uploadMedia } = usePassionPick();
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [songUrl, setSongUrl] = useState("");
@@ -16,24 +16,26 @@ const PassionPick = () => {
   const [affirmation, setAffirmation] = useState("");
   const [resetActive, setResetActive] = useState(false);
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image must be under 5MB");
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error("Media must be under 50MB");
       return;
     }
     setUploading(true);
     try {
-      const url = await uploadPhoto(file);
+      const url = await uploadMedia(file);
       await upsert.mutateAsync({ image_url: url });
-      toast.success("Vision photo uploaded 📸");
+      toast.success("Vision media uploaded 📸");
     } catch (err) {
       toast.error("Upload failed — try again");
     } finally {
       setUploading(false);
     }
   };
+
+  const isVideo = pick?.image_url?.match(/\.(mp4|mov|webm)$/i);
 
   const handleSaveSong = () => {
     if (!songTitle.trim() && !songUrl.trim()) return;
@@ -94,10 +96,14 @@ const PassionPick = () => {
             className={`w-full relative overflow-hidden rounded-3xl p-8 mb-10 border border-primary/20 bg-gradient-to-br from-primary/10 to-transparent shadow-[0_0_30px_hsl(var(--primary)/0.15)] hover:border-primary/50 hover:shadow-[0_0_40px_hsl(var(--primary)/0.3)] transition-all`}
             whileTap={{ scale: 0.97 }}
           >
-            {/* Background photo */}
+            {/* Background media */}
             {pick?.image_url ? (
               <div className="absolute inset-0">
-                <img src={pick.image_url} alt="" className="w-full h-full object-cover opacity-20 blur-[2px]" />
+                {isVideo ? (
+                  <video src={pick.image_url} className="w-full h-full object-cover opacity-20 blur-[2px]" autoPlay muted loop playsInline />
+                ) : (
+                  <img src={pick.image_url} alt="" className="w-full h-full object-cover opacity-20 blur-[2px]" />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/60 to-background/40" />
               </div>
             ) : (
@@ -131,8 +137,12 @@ const PassionPick = () => {
             </div>
 
             {pick?.image_url ? (
-              <div className="relative rounded-xl overflow-hidden mb-3">
-                <img src={pick.image_url} alt="Passion pick" className="w-full h-48 object-cover" />
+              <div className="relative rounded-xl overflow-hidden mb-3 group">
+                {isVideo ? (
+                  <video src={pick.image_url} className="w-full h-48 object-cover" autoPlay muted loop playsInline />
+                ) : (
+                  <img src={pick.image_url} alt="Passion pick" className="w-full h-48 object-cover" />
+                )}
                 <button
                   onClick={() => fileRef.current?.click()}
                   className="absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm text-foreground font-body text-[10px] px-3 py-1.5 rounded-lg border border-border hover:border-primary/30 transition-colors"
@@ -148,11 +158,11 @@ const PassionPick = () => {
               >
                 <Camera className="w-8 h-8 text-muted-foreground" />
                 <span className="font-body text-xs text-muted-foreground">
-                  {uploading ? "Uploading..." : "Upload your vision photo"}
+                  {uploading ? "Uploading..." : "Upload your vision photo or video"}
                 </span>
               </button>
             )}
-            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+            <input ref={fileRef} type="file" accept="image/*,video/*" className="hidden" onChange={handleMediaUpload} />
           </div>
 
           {/* Theme Song */}

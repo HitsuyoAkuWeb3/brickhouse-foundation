@@ -53,7 +53,7 @@ export const usePassionPick = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["passion-pick", user?.id] }),
   });
 
-  const uploadPhoto = async (file: File): Promise<string> => {
+  const uploadMedia = async (file: File): Promise<string> => {
     const ext = file.name.split(".").pop();
     const path = `${user!.id}/passion-${Date.now()}.${ext}`;
     const { error } = await supabase.storage.from("passion-picks").upload(path, file, { upsert: true });
@@ -62,5 +62,5 @@ export const usePassionPick = () => {
     return data.publicUrl;
   };
 
-  return { pick, isLoading, upsert, uploadPhoto };
+  return { pick, isLoading, upsert, uploadMedia };
 };

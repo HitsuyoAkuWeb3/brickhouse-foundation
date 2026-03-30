@@ -271,7 +271,6 @@ const Dashboard = () => {
       </div>
 
       {/* Passion Pick — §G.2 Position 2 */}
-      {/* Passion Pick — §G.2 Position 2 */}
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
@@ -292,7 +291,11 @@ const Dashboard = () => {
         >
           {pick?.image_url && (
             <div className="absolute inset-0 z-0">
-              <img src={pick.image_url} alt="" className="w-full h-full object-cover opacity-20 blur-[2px]" />
+              {pick.image_url.match(/\.(mp4|mov|webm)$/i) ? (
+                <video src={pick.image_url} className="w-full h-full object-cover opacity-20 blur-[2px]" autoPlay muted loop playsInline />
+              ) : (
+                <img src={pick.image_url} alt="" className="w-full h-full object-cover opacity-20 blur-[2px]" />
+              )}
               <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent" />
             </div>
           )}

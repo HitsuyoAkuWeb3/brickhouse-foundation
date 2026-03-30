@@ -28,7 +28,11 @@ export const CodeSwitchModal = ({ pick, onClose }: { pick: PassionPickRow, onClo
     >
       {pick.image_url && (
         <div className="absolute inset-0 -z-10">
-          <img src={pick.image_url} className="w-full h-full object-cover opacity-20 blur-xl" alt="Vision" />
+          {pick.image_url.match(/\.(mp4|mov|webm)$/i) ? (
+            <video src={pick.image_url} className="w-full h-full object-cover opacity-20 blur-xl" autoPlay muted loop playsInline />
+          ) : (
+            <img src={pick.image_url} className="w-full h-full object-cover opacity-20 blur-xl" alt="Vision" />
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
         </div>
       )}
@@ -47,11 +51,19 @@ export const CodeSwitchModal = ({ pick, onClose }: { pick: PassionPickRow, onClo
         className="w-full max-w-sm space-y-8 relative z-10 py-10"
       >
         {pick.image_url && (
-          <img 
-            src={pick.image_url} 
-            className="w-56 h-56 mx-auto rounded-3xl object-cover border-4 border-primary shadow-[0_0_50px_hsl(var(--primary)/0.4)]" 
-            alt="My Anchor"
-          />
+          pick.image_url.match(/\.(mp4|mov|webm)$/i) ? (
+            <video 
+              src={pick.image_url} 
+              className="w-56 h-56 mx-auto rounded-3xl object-cover border-4 border-primary shadow-[0_0_50px_hsl(var(--primary)/0.4)]" 
+              autoPlay muted loop playsInline 
+            />
+          ) : (
+            <img 
+              src={pick.image_url} 
+              className="w-56 h-56 mx-auto rounded-3xl object-cover border-4 border-primary shadow-[0_0_50px_hsl(var(--primary)/0.4)]" 
+              alt="My Anchor"
+            />
+          )
         )}
         
         {pick.affirmation_text && (

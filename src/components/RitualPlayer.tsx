@@ -68,6 +68,7 @@ export const RitualPlayer = ({ type, onClose, onComplete }: RitualPlayerProps) =
   const audioRef = useRef<HTMLAudioElement>(null);
   const { isSilent, isPlaying } = useAudioAnalyzer(audioRef);
   const [audioStarted, setAudioStarted] = useState(false);
+  const [audioError, setAudioError] = useState(false);
   const [passionMedia, setPassionMedia] = useState<string | null>(null);
 
   const steps = RITUAL_CONFIGS[type];
@@ -77,6 +78,7 @@ export const RitualPlayer = ({ type, onClose, onComplete }: RitualPlayerProps) =
   useEffect(() => {
     if (type === "midday_checkin" && user) {
       const fetchPassion = async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data } = await (supabase as any).from("passion_picks").select("image_url").eq("user_id", user.id).limit(1).maybeSingle();
         if (data?.image_url) setPassionMedia(data.image_url);
       };
@@ -85,17 +87,21 @@ export const RitualPlayer = ({ type, onClose, onComplete }: RitualPlayerProps) =
   }, [type, user]);
 
   const handleStartAudio = () => {
+    if (audioError) {
+      setAudioStarted(true);
+      return;
+    }
     if (audioRef.current) {
       audioRef.current.play().catch((err) => {
         console.error(err);
-        toast.error("Tap to play audio");
+        toast.error("Audio playback requires interaction, or file is missing.");
       });
       setAudioStarted(true);
     }
   };
 
   const toggleAudio = () => {
-    if (!audioRef.current) return;
+    if (!audioRef.current || audioError) return;
     if (isPlaying) {
       audioRef.current.pause();
     } else {
@@ -121,7 +127,7 @@ export const RitualPlayer = ({ type, onClose, onComplete }: RitualPlayerProps) =
   };
 
   const isNextDisabled = () => {
-    if (!audioStarted) return true; // prevent advancing before audio starts
+    if (!audioStarted && !audioError) return true; // prevent advancing before audio starts unless error
     if (currentStep.type === "input" || currentStep.type === "voice_recording") {
       const val = data[currentStep.key as string];
       return !val || String(val).trim() === "";
@@ -229,7 +235,15 @@ export const RitualPlayer = ({ type, onClose, onComplete }: RitualPlayerProps) =
 
   return (
     <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-xl flex flex-col pt-safe-top pb-safe-bottom">
-      <audio ref={audioRef} src={AUDIO_URLS[type]} playsInline />
+      <audio 
+        ref={audioRef} 
+        src={AUDIO_URLS[type]} 
+        playsInline 
+        onError={(e) => {
+          console.error("Audio failed to load:", e);
+          setAudioError(true);
+        }}
+      />
       
       {/* Top Bar */}
       <div className="flex items-center justify-between px-6 py-4">
@@ -287,9 +301,14 @@ export const RitualPlayer = ({ type, onClose, onComplete }: RitualPlayerProps) =
         {!audioStarted ? (
           <button
             onClick={handleStartAudio}
-            className="w-full bg-primary/20 text-primary border border-primary/50 font-body font-bold text-sm tracking-wider uppercase px-8 py-5 rounded-xl hover:bg-primary/30 transition-colors flex items-center justify-center gap-3 animate-pulse"
+            className={cn(
+              "w-full border font-body font-bold text-sm tracking-wider uppercase px-8 py-5 rounded-xl transition-colors flex items-center justify-center gap-3",
+              audioError 
+                ? "bg-destructive/20 text-destructive border-destructive/50 hover:bg-destructive/30" 
+                : "bg-primary/20 text-primary border-primary/50 hover:bg-primary/30 animate-pulse"
+            )}
           >
-            Start Guided Audio <Play className="w-4 h-4 fill-current ml-1" />
+            {audioError ? "Skip Guided Audio (Unavailable)" : "Start Guided Audio"} {!audioError && <Play className="w-4 h-4 fill-current ml-1" />}
           </button>
         ) : (
           <div className="w-full flex items-center gap-3">

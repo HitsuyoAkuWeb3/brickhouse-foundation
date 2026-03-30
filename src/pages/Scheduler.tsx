@@ -1,34 +1,23 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence, useAnimation, type PanInfo } from "framer-motion";
 import {
-  ChevronLeft, Sparkles, Pin, Paperclip, Home, Trees,
-  Edit2, Trash2, Bug, Hourglass, Share, CheckCircle2, Circle,
-  MousePointer, Plus, X
+  ChevronLeft, Sparkles, Pin, Heart, Sun, Moon, Flame, Edit2, Trash2, Bug, Hourglass, Share, CheckCircle2,
+  Clock, Plus, X, CalendarClock, Activity, BookOpen, Briefcase, CircleDollarSign, Leaf, ChevronDown, ChevronRight
 } from "lucide-react";
 import { useSchedulerTasks, type SchedulerTask } from "@/hooks/useSchedulerTasks";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { format, addMinutes } from "date-fns";
 
-// --- Theme Colors ---
-const THEME = {
-  header: "bg-[#009EDB]",       // Screen top header
-  background: "bg-[#9CBCCC]",   // Screen main body
-  card: "bg-white",             // Unused mostly, but cards are grayish
-  pickerBox: "bg-[#5A5A5A]",    // Dark grey quick pickers
-};
+import { Wrench } from "lucide-react";
 
-// --- Icons ---
 /* eslint-disable @typescript-eslint/no-explicit-any */
-const ICON_MAP: Record<string, React.FC<any>> = {
-  finger: MousePointer,
-  sparkles: Sparkles,
-  pin: Pin,
-  paperclip: Paperclip,
-  home: Home,
-  forest: Trees,
-};
+const SCHEDULING_CATEGORIES = [
+  { id: 'build', label: 'Build It', icon: Briefcase, description: 'Goals & Work' },
+  { id: 'feed', label: 'Feed It', icon: Heart, description: 'Self-care & Spirit' },
+  { id: 'live', label: 'Live It', icon: Sparkles, description: 'Mandatory Fun' }
+];
 
 const BUG_ME_OPTIONS = [
   { label: "None", value: "none" },
@@ -38,7 +27,34 @@ const BUG_ME_OPTIONS = [
 
 const TIME_QUICK_PICKERS = [5, 10, 15, 30, 45, 60];
 
-// --- Swipeable Reminder Card ---
+const GOAL_CATEGORIES = [
+  { id: "love", title: "Attract love and healthy relationships", icon: Heart },
+  { id: "body", title: "Rebuild my relationship with my body", icon: Activity },
+  { id: "business", title: "Build or grow my business or income", icon: Briefcase },
+  { id: "validation", title: "Heal and reclaim my power", icon: Leaf },
+  { id: "purpose", title: "Find my purpose and create a life I love", icon: BookOpen },
+  { id: "peace", title: "Create peace and joy in my everyday life", icon: Sparkles }
+];
+
+const TIMEFRAMES = [
+  { id: "tomorrow", label: "Tomorrow" },
+  { id: "this_week", label: "This Week" },
+  { id: "this_month", label: "This Month" },
+  { id: "3_months", label: "3 Months" },
+  { id: "6_months", label: "6 Months" },
+  { id: "9_months", label: "9 Months" }
+];
+
+const TRUTH_STATEMENTS: Record<string, string> = {
+  love: "I am building a foundation of self-love that naturally attracts the right partner.",
+  body: "My body is a temple being fortified with strength, energy, and discipline.",
+  business: "I am architecting a sovereign enterprise that solves real problems and creates real value.",
+  validation: "I am reconstructing my spirit, stronger at the broken places.",
+  purpose: "I am the master builder of a life filled with meaning and directional power.",
+  peace: "I am fiercely protecting my peace and scheduling joy as non-negotiable."
+};
+
+// --- Swipeable Reminder Card (For general one-off tasks) ---
 const ReminderCard = ({
   task,
   onToggle,
@@ -51,10 +67,10 @@ const ReminderCard = ({
   onBugMeClick: (t: SchedulerTask) => void;
 }) => {
   const controls = useAnimation();
-  const Icon = ICON_MAP[task.category || "finger"] || ICON_MAP.finger;
+  const categoryMatch = SCHEDULING_CATEGORIES.find(c => c.id === task.category);
+  const Icon = categoryMatch ? categoryMatch.icon : Pin;
 
   const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    // If swiped far enough left, snap to -200px (reveal actions), else snap back
     if (info.offset.x < -100) {
       controls.start({ x: -180 });
     } else {
@@ -67,46 +83,47 @@ const ReminderCard = ({
     : format(new Date(task.created_at), "EEE, MMM d, yyyy 'at' h:mm a");
 
   return (
-    <div className="relative mb-3 overflow-hidden rounded-xl bg-black">
-      {/* Background Actions (Revealed via Swipe) */}
-      <div className="absolute right-0 top-0 h-full flex items-center justify-end px-4 gap-4 bg-[#5A5A5A] text-white/50 w-full rounded-xl border border-blue-600">
-        <button className="hover:text-white transition-colors"><Edit2 className="w-5 h-5" /></button>
-        <button className="hover:text-white transition-colors" onClick={() => onBugMeClick(task)}><Bug className="w-5 h-5" /></button>
-        <button className="hover:text-white transition-colors"><Hourglass className="w-5 h-5" /></button>
-        <button className="hover:text-white transition-colors"><Share className="w-5 h-5" /></button>
-        <button className="hover:text-green-400 transition-colors" onClick={() => onToggle(task)}>
+    <div className="relative mb-3 overflow-hidden rounded-2xl bg-gradient-card border border-border">
+      <div className="absolute right-0 top-0 h-full flex items-center justify-end px-4 gap-4 w-full bg-foreground/[0.03]">
+        <button className="text-muted-foreground hover:text-foreground transition-colors"><Edit2 className="w-5 h-5" /></button>
+        <button className="text-accent hover:text-accent/80 transition-colors" onClick={() => onBugMeClick(task)}><Bug className="w-5 h-5" /></button>
+        <button className="text-muted-foreground hover:text-foreground transition-colors"><Hourglass className="w-5 h-5" /></button>
+        <button className="text-muted-foreground hover:text-foreground transition-colors"><Share className="w-5 h-5" /></button>
+        <button className="text-primary hover:text-primary/80 transition-colors" onClick={() => onToggle(task)}>
           <CheckCircle2 className="w-5 h-5" />
         </button>
-        <button className="hover:text-red-400 transition-colors ml-2" onClick={() => onDelete(task.id)}>
+        <button className="text-destructive hover:text-destructive/80 transition-colors ml-2" onClick={() => onDelete(task.id)}>
           <Trash2 className="w-5 h-5" />
         </button>
       </div>
 
-      {/* Foreground Draggable Card */}
       <motion.div
         drag="x"
         dragConstraints={{ left: -180, right: 0 }}
         onDragEnd={handleDragEnd}
         animate={controls}
         className={cn(
-          "relative z-10 p-4 rounded-xl border-2 border-blue-600 bg-gray-300 flex items-start gap-4 transition-colors",
-          task.is_completed ? "opacity-50 grayscale" : ""
+          "relative z-10 p-5 rounded-2xl border-l-[4px] bg-card flex items-start gap-4 transition-colors",
+          task.is_completed ? "opacity-50 grayscale border-l-muted" : "border-l-primary"
         )}
       >
-        <div className="pt-1">
-          <Icon className="w-8 h-8 text-black/40" />
+        <div className={cn(
+          "w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border", 
+          task.is_completed ? "bg-muted border-border" : "bg-primary/10 border-primary/20"
+        )}>
+          <Icon className={cn("w-6 h-6", task.is_completed ? "text-muted-foreground" : "text-primary")} />
         </div>
-        <div className="flex-1 min-w-0">
-          <h3 className={cn("text-[17px] font-bold text-black leading-tight break-words", task.is_completed && "line-through opacity-70")}>
+        <div className="flex-1 min-w-0 pt-1">
+          <h3 className={cn("font-display text-base tracking-wider leading-tight break-words text-foreground", task.is_completed && "line-through opacity-70")}>
             {task.title}
           </h3>
-          <div className="flex items-end justify-between mt-1">
-            <p className="text-[13px] text-black/70">
-              {formattedDate}
+          <div className="flex items-end justify-between mt-2">
+            <p className="font-body text-[11px] text-muted-foreground">
+              {task.time_of_day ? `Scheduled daily at ${task.time_of_day}` : formattedDate}
             </p>
             {task.snooze_interval && task.snooze_interval !== "none" && (
-              <span className="flex items-center gap-1 text-[11px] font-bold text-black/60 bg-black/10 px-1.5 py-0.5 rounded">
-                {task.snooze_interval === "every_minute" ? "1m" : "1h"} <Bug className="w-3 h-3" />
+              <span className="flex items-center gap-1 text-[9px] uppercase font-bold tracking-widest text-accent bg-accent/10 px-2 py-0.5 rounded-full">
+                {task.snooze_interval === "every_minute" ? "1m" : "1h"} <Bug className="w-3 h-3 ml-0.5" />
               </span>
             )}
           </div>
@@ -116,44 +133,137 @@ const ReminderCard = ({
   );
 };
 
-// --- Time Scroller (Fallback) ---
-// Since building a native iOS spinner in React is complex, we use a structured layout
-// mimicking the design, combined with quick pickers.
+// --- Timeframe Section Component ---
+const TimeframeSection = ({ 
+  timeframe, 
+  tasks, 
+  onAddStep, 
+  onToggleStep, 
+  onUpdateNotes,
+  onDeleteStep
+}: { 
+  timeframe: any, 
+  tasks: SchedulerTask[], 
+  onAddStep: (tf: string) => void,
+  onToggleStep: (t: SchedulerTask) => void,
+  onUpdateNotes: (t: SchedulerTask, notes: string) => void,
+  onDeleteStep: (id: string) => void
+}) => {
+  const [isOpen, setIsOpen] = useState(true);
+  
+  return (
+    <div className="mb-4 bg-gradient-card border border-border rounded-xl shadow-sm overflow-hidden">
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between p-4 bg-muted/10 hover:bg-muted/20 transition-colors"
+      >
+        <h3 className="font-display text-base tracking-wider text-foreground">{timeframe.label}</h3>
+        {isOpen ? <ChevronDown className="w-5 h-5 text-muted-foreground" /> : <ChevronRight className="w-5 h-5 text-muted-foreground" />}
+      </button>
+      
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="p-4 pt-2 space-y-3 border-t border-border/50">
+              {tasks.length === 0 ? (
+                <p className="font-body text-xs text-muted-foreground italic">No steps defined for {timeframe.label.toLowerCase()} yet.</p>
+              ) : (
+                tasks.map(task => (
+                  <div key={task.id} className="relative group">
+                    <div className="flex items-start gap-3">
+                      <button 
+                        onClick={() => onToggleStep(task)}
+                        className={cn(
+                          "mt-0.5 w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition-colors",
+                          task.is_completed ? "bg-primary border-primary text-primary-foreground" : "border-muted-foreground/50 hover:border-primary"
+                        )}
+                      >
+                        {task.is_completed && <CheckCircle2 className="w-3.5 h-3.5" />}
+                      </button>
+                      <div className="flex-1">
+                        <p className={cn("font-body text-sm text-foreground", task.is_completed && "line-through opacity-50")}>
+                          {task.title}
+                        </p>
+                        <textarea
+                          placeholder="Add personal notes..."
+                          defaultValue={task.notes || ""}
+                          onBlur={(e) => {
+                            if (e.target.value !== task.notes) {
+                              onUpdateNotes(task, e.target.value);
+                            }
+                          }}
+                          className="mt-2 w-full bg-background/50 border border-border/50 text-foreground font-body text-xs p-2 rounded-lg resize-none focus:outline-none focus:border-primary/50 transition-colors h-16"
+                        />
+                      </div>
+                      <button 
+                        onClick={() => onDeleteStep(task.id)}
+                        className="text-muted-foreground hover:text-destructive transition-colors shrink-0"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+              
+              <button 
+                onClick={() => onAddStep(timeframe.id)}
+                className="w-full mt-2 py-2 flex items-center justify-center gap-2 border border-dashed border-border/80 rounded-lg text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors font-body text-xs uppercase tracking-widest"
+              >
+                <Plus className="w-3 h-3" /> Add Step
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 const Scheduler = () => {
   const { tasks, isLoading, addTask, updateTask, deleteTask } = useSchedulerTasks();
-  const [view, setView] = useState<"list" | "step1" | "step2">("list");
+  const [view, setView] = useState<"list" | "step1" | "step2" | "goal_selection" | "goal_template">("list");
   
-  // Creation Form State
+  // Creation Form State (General Reminders)
   const [draftTitle, setDraftTitle] = useState("");
-  const [draftIcon, setDraftIcon] = useState("finger");
+  const [draftIcon, setDraftIcon] = useState("build");
   const [draftMinutes, setDraftMinutes] = useState<number>(5);
   const [isDoneLoading, setIsDoneLoading] = useState(false);
 
   // Bug Me Sheet State
   const [bugMeTask, setBugMeTask] = useState<SchedulerTask | null>(null);
 
-  // Filter tasks into active RE.minders
-  const reminders = tasks.filter((t) => !t.parent_goal_id)
-    .sort((a, b) => new Date(a.scheduled_for || a.created_at).getTime() - new Date(b.scheduled_for || b.created_at).getTime());
+  // Goal & Roadmap State
+  const [activeGoalId, setActiveGoalId] = useState<string | null>(null);
+  
+  // Filter Tasks
+  const generalTasks = tasks.filter(t => t.task_type !== "goal" && t.task_type !== "goal_step");
+  const activeGoals = tasks.filter(t => t.task_type === "goal");
+  
+  // Sort general reminders
+  const reminders = generalTasks.sort((a, b) => new Date(a.scheduled_for || a.created_at).getTime() - new Date(b.scheduled_for || b.created_at).getTime());
 
-  // Action Handlers
+  // Action Handlers (General)
   const handleToggle = (task: SchedulerTask) => {
     updateTask.mutate({ id: task.id, is_completed: !task.is_completed });
-    if (!task.is_completed) toast.success("RE.minder completed!");
+    if (!task.is_completed) toast.success("Completed! 💎");
   };
 
   const handleDelete = (id: string) => {
-    deleteTask.mutate(id, { onSuccess: () => toast.success("RE.minder deleted") });
+    deleteTask.mutate(id, { onSuccess: () => toast.success("Deleted") });
   };
 
-  const handleCreate = async () => {
+  const handleCreateReminder = async () => {
     if (!draftTitle.trim()) {
       toast.error("Please enter what to remind you about.");
       return;
     }
     setIsDoneLoading(true);
-
     const scheduledDate = addMinutes(new Date(), draftMinutes);
 
     addTask.mutate(
@@ -167,10 +277,10 @@ const Scheduler = () => {
       },
       {
         onSuccess: () => {
-          toast.success("RE.minder created!");
+          toast.success("RE.minder scheduled ⏰");
           setIsDoneLoading(false);
           setDraftTitle("");
-          setDraftIcon("finger");
+          setDraftIcon("build");
           setDraftMinutes(5);
           setView("list");
         },
@@ -183,22 +293,62 @@ const Scheduler = () => {
     if (!bugMeTask) return;
     updateTask.mutate(
       { id: bugMeTask.id, snooze_interval: interval },
+      { onSuccess: () => { toast.success("Bug Me setting updated 🐛"); setBugMeTask(null); } }
+    );
+  };
+
+  // --- Goal Specific Handlers ---
+  const handleCreateGoal = (categoryId: string, title: string) => {
+    addTask.mutate(
       {
-        onSuccess: () => {
-          toast.success("Bug Me setting updated");
-          setBugMeTask(null);
+        title,
+        category: categoryId,
+        task_type: "goal",
+        is_active: true
+      },
+      {
+        onSuccess: (newGoal) => {
+          toast.success("Goal Architecture Initiated 🧱");
+          setActiveGoalId(newGoal.id);
+          setView("goal_template");
         }
       }
     );
   };
 
+  const activeGoal = tasks.find(t => t.id === activeGoalId);
+  const activeGoalSteps = tasks.filter(t => t.task_type === "goal_step" && t.parent_goal_id === activeGoalId);
+
+  const activeGoalProgress = activeGoalSteps.length > 0
+    ? (activeGoalSteps.filter(t => t.is_completed).length / activeGoalSteps.length) * 100
+    : 0;
+
+  const handleAddGoalStep = (timeframe: string) => {
+    const title = window.prompt(`Enter a new step for ${timeframe.replace("_", " ")}:`);
+    if (!title || !title.trim() || !activeGoalId) return;
+    
+    addTask.mutate({
+      title: title.trim(),
+      task_type: "goal_step",
+      parent_goal_id: activeGoalId,
+      timeframe,
+      is_active: true
+    }, {
+      onSuccess: () => toast.success("Step added")
+    });
+  };
+
+  const handleUpdateGoalNotes = (task: SchedulerTask, notes: string) => {
+    updateTask.mutate({ id: task.id, notes });
+  };
+
   if (isLoading) return null;
 
   return (
-    <div className={cn("min-h-screen font-sans", THEME.background)}>
-      <div className="max-w-md mx-auto h-screen flex flex-col relative bg-gradient-to-b from-[#9CBCCC] to-[#AECBD9]">
+    <div className="min-h-screen bg-background flex flex-col items-center px-4 sm:px-6 pt-8 pb-20 overflow-x-hidden font-sans">
+      <div className="w-full max-w-lg mx-auto h-screen flex flex-col relative">
         
-        {/* VIEW 1: LIST */}
+        {/* VIEW 1: HOME (Active Builds & Reminders) */}
         <AnimatePresence mode="wait">
           {view === "list" && (
             <motion.div
@@ -206,48 +356,132 @@ const Scheduler = () => {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="flex-1 flex flex-col h-full absolute inset-0 pb-16"
+              className="flex-1 flex flex-col h-full absolute inset-0 pb-16 overflow-y-auto hide-scrollbar"
             >
               {/* Header */}
-              <div className={cn("flex items-center justify-between px-4 py-4", THEME.header, "text-white shadow-xl relative z-20")}>
-                <Link to="/dashboard" className="text-white hover:opacity-80 transition-opacity">
-                  <ChevronLeft className="w-8 h-8" />
+              <div className="flex items-center justify-between mb-8 relative z-20 shrink-0">
+                <Link 
+                  to="/dashboard" 
+                  className="w-10 h-10 rounded-full border border-border bg-gradient-card flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/50 transition-all"
+                >
+                  <ChevronLeft className="w-5 h-5" />
                 </Link>
-                <h1 className="text-xl font-bold tracking-wide absolute left-1/2 -translate-x-1/2">
-                  RE.minders
-                </h1>
-                <button onClick={() => setView("step1")} className="hover:opacity-80 transition-opacity">
-                  <Plus className="w-7 h-7 font-light" />
-                </button>
+                <div className="text-center absolute left-1/2 -translate-x-1/2">
+                    <div className="font-body text-[10px] uppercase tracking-widest text-accent mb-1">Architecture</div>
+                    <h1 className="font-display text-2xl tracking-wider text-foreground">
+                    Scheduler
+                    </h1>
+                </div>
               </div>
 
-              {/* Ticker */}
-              <div className="bg-[#0A1A1A] py-1 text-center shadow-lg border-b border-black/20">
-                <p className="text-[#00FF00] font-sans text-[13px]">
-                  Next RE.minder in {reminders.length > 0 && reminders[0].scheduled_for ? 
-                    Math.max(0, Math.round((new Date(reminders[0].scheduled_for).getTime() - Date.now()) / 60000)) 
-                    : "0"} minutes
-                </p>
-              </div>
-
-              {/* List */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-1">
-                {reminders.length === 0 ? (
-                  <div className="text-center py-20 opacity-60">
-                    <MousePointer className="w-12 h-12 mx-auto mb-4 text-black/40" />
-                    <p className="text-black/60 font-medium">No active RE.minders</p>
+              {/* ACTIVE BUILDS (GOALS) */}
+              <div className="mb-8">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-body text-[10px] uppercase tracking-widest text-primary ml-1">Active Builds</h2>
+                  <button 
+                    onClick={() => setView("goal_selection")}
+                    className="flex items-center text-[10px] uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Plus className="w-3 h-3 mr-1" /> New Build
+                  </button>
+                </div>
+                
+                {activeGoals.length === 0 ? (
+                  <div className="bg-gradient-card border border-border outline outline-1 outline-border/20 p-6 rounded-2xl text-center shadow-lg">
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                      <Sparkles className="w-6 h-6 text-primary" />
+                    </div>
+                    <h3 className="font-display text-lg tracking-wider text-foreground mb-1">What are you building?</h3>
+                    <p className="font-body text-xs text-muted-foreground mb-4">You have no active architectures in progress.</p>
+                    <button 
+                      onClick={() => setView("goal_selection")}
+                      className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-display tracking-widest shadow-[0_0_20px_hsl(var(--primary)/0.3)] hover:bg-primary/90 transition-all"
+                    >
+                      Start a Build
+                    </button>
                   </div>
                 ) : (
-                  reminders.map((task) => (
-                    <ReminderCard
-                      key={task.id}
-                      task={task}
-                      onToggle={handleToggle}
-                      onDelete={handleDelete}
-                      onBugMeClick={setBugMeTask}
-                    />
-                  ))
+                  <div className="space-y-3">
+                    {activeGoals.map(goal => {
+                      const CatIcon = GOAL_CATEGORIES.find(c => c.id === goal.category)?.icon || Flame;
+                      // Calculate progress for this goal
+                      const goalSteps = tasks.filter(t => t.task_type === "goal_step" && t.parent_goal_id === goal.id);
+                      const progress = goalSteps.length > 0 
+                        ? (goalSteps.filter(t => t.is_completed).length / goalSteps.length) * 100 
+                        : 0;
+
+                      return (
+                        <div 
+                          key={goal.id}
+                          onClick={() => { setActiveGoalId(goal.id); setView("goal_template"); }}
+                          className="bg-gradient-card border border-border p-4 rounded-2xl flex flex-col cursor-pointer hover:border-primary/50 transition-colors group"
+                        >
+                          <div className="flex items-start gap-4">
+                             <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                                <CatIcon className="w-5 h-5 text-primary" />
+                             </div>
+                             <div className="flex-1 min-w-0 pt-0.5">
+                                <h3 className="font-display text-base tracking-wider text-foreground truncate group-hover:text-primary transition-colors">
+                                  {goal.title}
+                                </h3>
+                                <p className="font-body text-[10px] uppercase tracking-widest text-muted-foreground mt-1">
+                                  {goalSteps.filter(t => t.is_completed).length} of {goalSteps.length} Bricks Laid
+                                </p>
+                             </div>
+                             <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors shrink-0 mt-2" />
+                          </div>
+                          {/* Progress Bar (Brick Wall) */}
+                          <div className="w-full h-1.5 bg-muted rounded-full mt-4 overflow-hidden relative">
+                            <div 
+                              className="absolute top-0 left-0 h-full bg-primary transition-all duration-500 ease-out"
+                              style={{ width: `${progress}%` }}
+                            />
+                            {/* Brick segment markers */}
+                            <div className="absolute inset-0 flex justify-between" style={{ mixBlendMode: 'overlay' }}>
+                              <div className="w-[1px] h-full bg-background" />
+                              <div className="w-[1px] h-full bg-background" />
+                              <div className="w-[1px] h-full bg-background" />
+                              <div className="w-[1px] h-full bg-background" />
+                              <div className="w-[1px] h-full bg-background" />
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
                 )}
+              </div>
+
+              {/* GENERAL REMINDERS */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-body text-[10px] uppercase tracking-widest text-primary ml-1">General Reminders</h2>
+                  <button 
+                    onClick={() => setView("step1")}
+                    className="flex items-center text-[10px] uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Plus className="w-3 h-3 mr-1" /> Add
+                  </button>
+                </div>
+                
+                <div className="flex-1 overflow-visible space-y-2">
+                  {reminders.length === 0 ? (
+                    <div className="text-center py-10 opacity-60 bg-gradient-card border border-border rounded-2xl">
+                      <p className="font-display text-sm text-foreground tracking-wider mb-1">NO ACTIVE REMINDERS</p>
+                      <p className="font-body text-[10px] text-muted-foreground uppercase tracking-widest">Your slate is clear</p>
+                    </div>
+                  ) : (
+                    reminders.map((task) => (
+                      <ReminderCard
+                        key={task.id}
+                        task={task}
+                        onToggle={handleToggle}
+                        onDelete={handleDelete}
+                        onBugMeClick={setBugMeTask}
+                      />
+                    ))
+                  )}
+                </div>
               </div>
 
               {/* Bug Me Action Sheet Context Menu */}
@@ -258,7 +492,7 @@ const Scheduler = () => {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="fixed inset-0 bg-black/40 z-40 max-w-md mx-auto"
+                      className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 max-w-lg mx-auto"
                       onClick={() => setBugMeTask(null)}
                     />
                     <motion.div
@@ -266,17 +500,17 @@ const Scheduler = () => {
                       animate={{ y: 0 }}
                       exit={{ y: "100%" }}
                       transition={{ type: "spring", bounce: 0, duration: 0.3 }}
-                      className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-50 p-2 pb-6"
+                      className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto z-50 p-4 pb-8"
                     >
-                      <div className="bg-white/90 backdrop-blur-md rounded-2xl overflow-hidden mb-2 shadow-2xl">
-                        <div className="py-3 text-center border-b border-black/10">
-                          <p className="text-[#8F8F8F] text-[13px] font-medium">Bug Me</p>
+                      <div className="bg-card border border-border rounded-2xl overflow-hidden mb-3 shadow-[0_0_40px_hsl(var(--accent)/0.15)]">
+                        <div className="py-4 text-center border-b border-border/50 bg-muted/30">
+                          <p className="font-body text-[10px] uppercase tracking-widest text-muted-foreground">Bug Me Settings</p>
                         </div>
                         {BUG_ME_OPTIONS.map((opt) => (
                           <button
                             key={opt.value}
                             onClick={() => handleUpdateBugMe(opt.value)}
-                            className="w-full py-4 text-center border-b border-black/10 text-xl text-[#007AFF] hover:bg-black/5 transition-colors"
+                            className="w-full py-5 text-center border-b border-border/50 font-display text-lg tracking-wider text-accent hover:bg-accent/5 transition-colors"
                           >
                             {opt.label}
                           </button>
@@ -284,7 +518,7 @@ const Scheduler = () => {
                       </div>
                       <button
                         onClick={() => setBugMeTask(null)}
-                        className="w-full py-4 text-center rounded-2xl bg-white text-xl font-bold text-[#007AFF] shadow-xl hover:bg-black/5 transition-colors"
+                        className="w-full py-5 text-center rounded-2xl bg-foreground/[0.03] border border-border font-display text-lg tracking-wider text-muted-foreground shadow-lg hover:bg-foreground/[0.05] transition-colors"
                       >
                         Cancel
                       </button>
@@ -295,74 +529,207 @@ const Scheduler = () => {
             </motion.div>
           )}
 
-          {/* VIEW 2: CREATE STEP 1 */}
+          {/* VIEW: GOAL SELECTION ("What are you building?") */}
+          {view === "goal_selection" && (
+            <motion.div
+              key="goal_selection"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="flex-1 flex flex-col h-full absolute inset-0 z-30 bg-background overflow-y-auto hide-scrollbar pb-16"
+            >
+              <div className="flex items-center justify-between mb-8 relative z-20 shrink-0">
+                <button 
+                  onClick={() => setView("list")} 
+                  className="w-10 h-10 rounded-full border border-border bg-gradient-card flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/50 transition-all"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="text-center mb-8">
+                <h1 className="font-display text-3xl tracking-wider text-foreground mb-3">
+                  What are you <span className="text-primary italic">building?</span>
+                </h1>
+                <p className="font-body text-sm text-muted-foreground px-4">
+                  Select a pillar of your life to architect a targeted master plan.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                {GOAL_CATEGORIES.map(category => (
+                  <button
+                    key={category.id}
+                    onClick={() => handleCreateGoal(category.id, category.title)}
+                    className="bg-gradient-card border border-border p-5 rounded-2xl flex flex-col items-center justify-center text-center hover:border-primary/50 hover:bg-primary/5 transition-all group shadow-sm"
+                  >
+                    <div className="w-14 h-14 rounded-full bg-background border border-border flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                      <category.icon className="w-6 h-6 text-foreground group-hover:text-primary transition-colors" />
+                    </div>
+                    <span className="font-display text-sm tracking-widest leading-tight text-foreground">
+                      {category.title}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* VIEW: GOAL TEMPLATE ROADMAP */}
+          {view === "goal_template" && activeGoal && (
+            <motion.div
+              key="goal_template"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="flex-1 flex flex-col h-full absolute inset-0 z-30 bg-background overflow-y-auto hide-scrollbar pb-16"
+            >
+              <div className="flex items-center justify-between mb-6 relative z-20 shrink-0">
+                <button 
+                  onClick={() => { setActiveGoalId(null); setView("list"); }} 
+                  className="font-body text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground flex items-center transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4 mr-1" /> Home
+                </button>
+                <div className="text-center absolute left-1/2 -translate-x-1/2">
+                    <h1 className="font-display text-sm tracking-wider text-foreground">
+                      Architecture
+                    </h1>
+                </div>
+                <button 
+                  onClick={() => {
+                    if(window.confirm("Delete this entire build?")) {
+                      handleDelete(activeGoal.id);
+                      setView("list");
+                    }
+                  }}
+                  className="font-body text-xs p-2 text-destructive hover:bg-destructive/10 rounded-full transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="mb-6">
+                <h2 className="font-display text-3xl tracking-widest text-primary leading-none mb-4">
+                  {activeGoal.title}
+                </h2>
+                
+                {/* Truth Statement */}
+                {activeGoal.category && TRUTH_STATEMENTS[activeGoal.category] && (
+                  <div className="bg-gradient-card border-l-2 border-primary p-4 rounded-r-xl shadow-sm mb-6">
+                    <p className="font-body text-sm italic text-foreground/90 leading-relaxed">
+                      "{TRUTH_STATEMENTS[activeGoal.category]}"
+                    </p>
+                  </div>
+                )}
+
+                {/* Progress Visual */}
+                <div className="mb-8">
+                  <div className="flex justify-between items-end mb-2">
+                    <span className="font-body text-[10px] uppercase tracking-widest text-muted-foreground">Foundation Progress</span>
+                    <span className="font-display text-sm text-primary">{Math.round(activeGoalProgress)}%</span>
+                  </div>
+                  <div className="w-full h-3 bg-muted rounded-md overflow-hidden relative border border-border">
+                    <div 
+                      className="absolute top-0 left-0 h-full bg-primary transition-all duration-700 ease-out"
+                      style={{ width: `${activeGoalProgress}%` }}
+                    />
+                    <div className="absolute inset-0 flex justify-between" style={{ mixBlendMode: 'overlay' }}>
+                      {Array.from({ length: 9 }).map((_, i) => (
+                         <div key={i} className="w-[2px] h-full bg-background" />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Roadmap Sections */}
+                <div className="space-y-4">
+                  {TIMEFRAMES.map((tf) => {
+                    const sectionTasks = activeGoalSteps.filter(t => t.timeframe === tf.id);
+                    return (
+                      <TimeframeSection
+                        key={tf.id}
+                        timeframe={tf}
+                        tasks={sectionTasks}
+                        onAddStep={handleAddGoalStep}
+                        onToggleStep={handleToggle}
+                        onUpdateNotes={handleUpdateGoalNotes}
+                        onDeleteStep={handleDelete}
+                      />
+                    );
+                  })}
+                </div>
+
+              </div>
+            </motion.div>
+          )}
+
+          {/* VIEW: CREATE GENERAL REMINDER STEP 1 */}
           {view === "step1" && (
             <motion.div
               key="step1"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="flex-1 flex flex-col h-full absolute inset-0 z-30 bg-[#9CBCCC]"
+              className="flex-1 flex flex-col h-full absolute inset-0 z-30 bg-background"
             >
-              {/* Header */}
-              <div className={cn("flex items-center justify-between px-4 py-4", THEME.header, "text-white")}>
-                <button onClick={() => setView("list")} className="text-[17px] hover:opacity-80 transition-opacity">
+              <div className="flex items-center justify-between mb-8 relative z-20">
+                <button 
+                  onClick={() => setView("list")} 
+                  className="font-body text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
+                >
                   Cancel
                 </button>
-                <h1 className="text-[17px] font-bold tracking-wide absolute left-1/2 -translate-x-1/2">
-                  New RE.minder
-                </h1>
+                <div className="text-center absolute left-1/2 -translate-x-1/2">
+                    <h1 className="font-display text-base tracking-wider text-foreground">
+                    New RE.minder
+                    </h1>
+                </div>
                 <button 
                   onClick={() => draftTitle.trim() && setView("step2")} 
-                  className={cn("text-[17px] font-medium transition-opacity", !draftTitle.trim() ? "opacity-50" : "hover:opacity-80")}
+                  className={cn("font-body text-xs uppercase tracking-widest transition-colors", !draftTitle.trim() ? "text-muted-foreground/50" : "text-primary hover:text-primary/80")}
                   disabled={!draftTitle.trim()}
                 >
                   Next
                 </button>
               </div>
 
-              {/* Form Body */}
-              <div className="p-4 flex flex-col mt-4">
-                <label className="text-white font-bold text-lg mb-2 drop-shadow-sm">RE.mind me to:</label>
+              <div className="flex flex-col mt-4">
+                <label className="font-body text-[10px] uppercase tracking-widest text-primary mb-3 ml-2">Objective</label>
                 <div className="relative">
                   <input
                     type="text"
                     autoFocus
                     value={draftTitle}
                     onChange={(e) => setDraftTitle(e.target.value)}
-                    className="w-full bg-white text-black text-[17px] py-3 pl-4 pr-10 rounded-lg shadow-sm focus:outline-none"
-                    placeholder="App"
+                    className="w-full bg-gradient-card border border-border text-foreground font-display text-lg tracking-wide py-4 pl-5 pr-12 rounded-2xl focus:outline-none focus:border-primary/50 transition-colors"
+                    placeholder="Enter objective..."
                   />
                   {draftTitle && (
                     <button
                       onClick={() => setDraftTitle("")}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/20 rounded-full p-0.5"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-muted flex items-center justify-center hover:bg-muted-foreground/20 transition-colors"
                     >
-                      <X className="w-4 h-4 text-white" />
+                      <X className="w-3.5 h-3.5 text-foreground" />
                     </button>
                   )}
                 </div>
 
-                <label className="text-white font-bold text-sm mt-12 mb-3 drop-shadow-sm">Quick Pickers:</label>
-                <div className="flex flex-wrap gap-2.5">
-                  {Object.entries(ICON_MAP).map(([key, Icon]) => (
+                <label className="font-body text-[10px] uppercase tracking-widest text-primary mt-10 mb-4 ml-2">Category</label>
+                <div className="grid grid-cols-3 gap-3">
+                  {SCHEDULING_CATEGORIES.map((cat) => (
                     <button
-                      key={key}
-                      onClick={() => setDraftIcon(key)}
+                      key={cat.id}
+                      onClick={() => setDraftIcon(cat.id)}
                       className={cn(
-                        THEME.pickerBox,
-                        "w-16 h-16 rounded-2xl flex items-center justify-center transition-all shadow-md relative overflow-hidden",
-                        draftIcon === key ? "ring-2 ring-white scale-105" : "hover:bg-opacity-80"
+                        "rounded-2xl flex flex-col items-center justify-center p-4 transition-all bg-gradient-card border",
+                        draftIcon === cat.id 
+                          ? "border-primary bg-primary/10 shadow-[0_0_15px_hsl(var(--primary)/0.15)]" 
+                          : "border-border hover:border-primary/30"
                       )}
                     >
-                      <Icon className={cn("w-9 h-9", draftIcon === key ? "text-white" : "text-black")} />
-                      
-                      {/* Fake mini-text line indicator from the screenshot */}
-                      <div className="absolute bottom-1.5 right-1.5 w-3.5 h-3.5 bg-black/20 rounded-full flex flex-col items-center justify-center gap-[1px] opacity-60">
-                         <span className="w-1.5 h-[1px] bg-black/60 rounded"></span>
-                         <span className="w-1.5 h-[1px] bg-black/60 rounded"></span>
-                         <span className="w-1.5 h-[1px] bg-black/60 rounded"></span>
-                      </div>
+                      <cat.icon className={cn("w-6 h-6 mb-2", draftIcon === cat.id ? "text-primary" : "text-muted-foreground")} />
+                      <span className={cn("font-display tracking-widest text-[10px] uppercase", draftIcon === cat.id ? "text-primary" : "text-foreground")}>{cat.label}</span>
                     </button>
                   ))}
                 </div>
@@ -370,98 +737,67 @@ const Scheduler = () => {
             </motion.div>
           )}
 
-          {/* VIEW 3: CREATE STEP 2 */}
+          {/* VIEW: CREATE GENERAL REMINDER STEP 2 */}
           {view === "step2" && (
             <motion.div
               key="step2"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
-              className="flex-1 flex flex-col h-full absolute inset-0 z-30 bg-[#9CBCCC]"
+              className="flex-1 flex flex-col h-full absolute inset-0 z-30 bg-background"
             >
-              {/* Header */}
-              <div className={cn("flex items-center justify-between px-4 py-4 pt-12", THEME.header, "text-white")}>
-                <button onClick={() => setView("step1")} className="text-[17px] flex items-center hover:opacity-80 transition-opacity">
-                  <ChevronLeft className="w-6 h-6 mr-0.5" /> Back
-                </button>
-                <h1 className="text-[17px] font-bold tracking-wide absolute left-1/2 -translate-x-1/2">
-                  {draftTitle.substring(0, 15)}{draftTitle.length > 15 ? "..." : ""}
-                </h1>
+              <div className="flex items-center justify-between mb-8 relative z-20">
                 <button 
-                  onClick={handleCreate}
-                  disabled={isDoneLoading}
-                  className="text-[17px] font-medium hover:opacity-80 transition-opacity disabled:opacity-50"
+                  onClick={() => setView("step1")} 
+                  className="font-body text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground flex items-center transition-colors"
                 >
-                  {isDoneLoading ? "..." : "Done"}
+                  <ChevronLeft className="w-4 h-4 mr-1" /> Back
+                </button>
+                <div className="text-center absolute left-1/2 -translate-x-1/2 w-40 truncate">
+                    <h1 className="font-display text-sm tracking-wider text-foreground truncate">
+                    {draftTitle}
+                    </h1>
+                </div>
+                <button 
+                  onClick={handleCreateReminder}
+                  disabled={isDoneLoading}
+                  className="font-body text-xs uppercase tracking-widest text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
+                >
+                  {isDoneLoading ? "..." : "Schedule"}
                 </button>
               </div>
 
-              {/* Form Body */}
-              <div className="p-4 flex flex-col mt-4">
-                <label className="text-white font-bold text-lg mb-2 drop-shadow-sm">RE.mind me in:</label>
-                <input
-                  type="text"
-                  readOnly
-                  value={`${draftMinutes} minutes`}
-                  className="w-full bg-white text-black text-[17px] py-3 px-4 rounded-lg shadow-sm focus:outline-none"
-                />
+              <div className="flex flex-col mt-4">
+                <label className="font-body text-[10px] uppercase tracking-widest text-primary mb-3 ml-2">Set Time</label>
+                <div className="w-full bg-gradient-card border border-border px-5 py-4 rounded-2xl flex items-center justify-between shadow-[0_0_15px_hsl(var(--primary)/0.05)]">
+                    <span className="font-display text-xl tracking-wider text-foreground">
+                        {draftMinutes} 
+                    </span>
+                    <span className="font-body text-[10px] uppercase tracking-widest text-muted-foreground">Minutes from now</span>
+                </div>
 
-                <label className="text-white font-bold text-sm mt-12 mb-3 drop-shadow-sm">Quick Pickers:</label>
-                <div className="flex flex-wrap gap-2.5">
+                <label className="font-body text-[10px] uppercase tracking-widest text-primary mt-10 mb-4 ml-2">Quick Select</label>
+                <div className="grid grid-cols-3 gap-3">
                   {TIME_QUICK_PICKERS.map((mins) => (
                     <button
                       key={mins}
                       onClick={() => setDraftMinutes(mins)}
                       className={cn(
-                        THEME.pickerBox,
-                        "w-16 h-16 rounded-xl flex flex-col items-center justify-center transition-all shadow-md text-white",
-                        draftMinutes === mins ? "ring-2 ring-white scale-105" : "hover:bg-opacity-80"
+                        "py-5 rounded-2xl flex flex-col items-center justify-center transition-all bg-gradient-card border",
+                        draftMinutes === mins 
+                          ? "border-primary bg-primary/10 shadow-[0_0_15px_hsl(var(--primary)/0.15)] text-primary" 
+                          : "border-border hover:border-primary/30 text-foreground"
                       )}
                     >
-                      <span className="text-2xl font-bold leading-none">{mins}</span>
-                      <span className="text-[10px] font-medium opacity-80 mt-0.5">min</span>
+                      <span className="font-display text-2xl tracking-widest leading-none mb-1">{mins}</span>
+                      <span className="font-body text-[9px] uppercase tracking-widest opacity-60">Min</span>
                     </button>
                   ))}
                 </div>
-
-                {/* Mock Date Picker Spinner Area (Visual mapping for screenshot fidelity) */}
-                <div className="flex-1 mt-12 relative flex items-center justify-center h-48 pointer-events-none opacity-40 mix-blend-multiply">
-                   <div className="absolute w-full h-8 bg-black/10 rounded-md top-1/2 -translate-y-1/2" />
-                   <div className="flex gap-8 text-black/60 font-medium text-xl items-center pb-2">
-                      <div className="text-right w-24 leading-loose">
-                        <div className="opacity-30">Tue Mar 24</div>
-                        <div className="opacity-60">Wed Mar 25</div>
-                        <div className="text-black text-2xl">Today</div>
-                        <div className="opacity-60">Fri Mar 27</div>
-                        <div className="opacity-30">Sat Mar 28</div>
-                      </div>
-                      <div className="text-center w-8 leading-loose">
-                        <div className="opacity-30">5</div>
-                        <div className="opacity-60">6</div>
-                        <div className="text-black text-2xl">7</div>
-                        <div className="opacity-60">8</div>
-                        <div className="opacity-30">9</div>
-                      </div>
-                      <div className="text-center w-8 leading-loose">
-                        <div className="opacity-30">05</div>
-                        <div className="opacity-60">06</div>
-                        <div className="text-black text-2xl">07</div>
-                        <div className="opacity-60">08</div>
-                        <div className="opacity-30">09</div>
-                      </div>
-                      <div className="text-left w-8 leading-loose">
-                        <div className="text-black text-2xl">AM</div>
-                        <div className="opacity-60">PM</div>
-                        <div className="opacity-0">PM</div>
-                        <div className="opacity-0">PM</div>
-                        <div className="opacity-0">PM</div>
-                      </div>
-                   </div>
-                </div>
-
               </div>
             </motion.div>
           )}
+
         </AnimatePresence>
       </div>
     </div>
@@ -469,3 +805,4 @@ const Scheduler = () => {
 };
 
 export default Scheduler;
+

@@ -247,18 +247,24 @@ const Affirmations = () => {
                               <div className="flex-1 font-body text-sm text-foreground leading-relaxed pl-1">
                                 💎 "{a.text.replace('Audio Affirmation: ', '')}"
                               </div>
-                              <button
-                                onClick={() => setSchedulingId(schedulingId === a.id ? null : a.id)}
-                                className={cn(
-                                  "shrink-0 p-2 rounded-lg transition-colors",
-                                  schedulingId === a.id
-                                    ? "bg-accent/20 text-accent"
-                                    : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
-                                )}
-                                title="Schedule this affirmation"
-                              >
-                                <Clock className="w-4 h-4" />
-                              </button>
+                              {brick.id === 1 ? (
+                                <button
+                                  onClick={() => setSchedulingId(schedulingId === a.id ? null : a.id)}
+                                  className={cn(
+                                    "shrink-0 p-2 rounded-lg transition-colors",
+                                    schedulingId === a.id
+                                      ? "bg-accent/20 text-accent"
+                                      : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                                  )}
+                                  title="Schedule this affirmation"
+                                >
+                                  <Clock className="w-4 h-4" />
+                                </button>
+                              ) : (
+                                <div className="shrink-0 p-2" title="Scheduling locked for Beta">
+                                  <Lock className="w-4 h-4 text-muted-foreground/30" />
+                                </div>
+                              )}
                             </div>
                             {/* Inline Time Picker */}
                             <AnimatePresence>

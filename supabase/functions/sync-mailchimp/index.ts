@@ -1,4 +1,4 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+/// <reference types="https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts" />
 
 const MAILCHIMP_API_KEY = Deno.env.get("MAILCHIMP_API_KEY") ?? "";
 const MAILCHIMP_LIST_ID = Deno.env.get("MAILCHIMP_LIST_ID") ?? "";

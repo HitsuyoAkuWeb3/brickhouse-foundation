@@ -9,7 +9,7 @@ export const useAnalytics = () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
-      await supabase.from("analytics_events").insert({
+      await (supabase as any).from("analytics_events").insert({
         user_id: session?.user?.id || null,
         event_type: eventType,
         event_data: eventData || null,

@@ -1,8 +1,17 @@
 import { motion } from "framer-motion";
 import { X } from "lucide-react";
-import { Database } from "@/integrations/supabase/types";
 
-export type PassionPickRow = Database["public"]["Tables"]["passion_picks"]["Row"];
+export type PassionPickRow = {
+  id: string;
+  user_id: string;
+  image_url: string | null;
+  song_url: string | null;
+  song_title: string | null;
+  title: string | null;
+  affirmation_text: string | null;
+  created_at: string;
+  updated_at: string;
+};
 
 export const CodeSwitchModal = ({ pick, onClose }: { pick: PassionPickRow, onClose: () => void }) => {
   // If it's a spotify link, replace /track/ with /embed/track/

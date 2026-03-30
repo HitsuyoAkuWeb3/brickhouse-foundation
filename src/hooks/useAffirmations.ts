@@ -31,7 +31,7 @@ export const useAffirmations = (brickId?: number) => {
   const { data: brickAffirmations = [], isLoading: loadingBrick } = useQuery<BrickAffirmation[]>({
     queryKey: ["brick-affirmations", brickId],
     queryFn: async () => {
-      let q = supabase.from("affirmations").select("*").order("created_at");
+      let q = (supabase as any).from("affirmations").select("*").order("created_at");
       if (brickId) q = q.eq("brick_id", String(brickId));
       const { data, error } = await q;
       if (error) throw error;

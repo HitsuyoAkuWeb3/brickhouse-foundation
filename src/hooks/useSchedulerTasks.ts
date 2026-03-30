@@ -43,8 +43,8 @@ export function useSchedulerTasks() {
     queryKey: key,
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("scheduler_tasks" as any)
+      const { data, error } = await (supabase as any)
+        .from("scheduler_tasks")
         .select("*")
         .eq("profile_id", user!.id)
         .order("created_at", { ascending: false });
@@ -55,9 +55,9 @@ export function useSchedulerTasks() {
 
   const addTask = useMutation({
     mutationFn: async (input: TaskInsert) => {
-      const { data, error } = await supabase
-        .from("scheduler_tasks" as any)
-        .insert({ ...input, profile_id: user!.id } as any)
+      const { data, error } = await (supabase as any)
+        .from("scheduler_tasks")
+        .insert({ ...input, profile_id: user!.id })
         .select()
         .single();
       if (error) throw error;
@@ -68,9 +68,9 @@ export function useSchedulerTasks() {
 
   const updateTask = useMutation({
     mutationFn: async ({ id, ...updates }: TaskUpdate & { id: string }) => {
-      const { error } = await supabase
-        .from("scheduler_tasks" as any)
-        .update({ ...updates } as any)
+      const { error } = await (supabase as any)
+        .from("scheduler_tasks")
+        .update({ ...updates })
         .eq("id", id);
       if (error) throw error;
     },
@@ -79,8 +79,8 @@ export function useSchedulerTasks() {
 
   const deleteTask = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("scheduler_tasks" as any)
+      const { error } = await (supabase as any)
+        .from("scheduler_tasks")
         .delete()
         .eq("id", id);
       if (error) throw error;

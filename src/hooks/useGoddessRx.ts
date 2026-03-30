@@ -59,7 +59,7 @@ export const useGoddessRx = () => {
     queryKey: ["goddess-rx", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("goddess_prescriptions")
         .select("*")
         .eq("profile_id", user!.id)
@@ -74,11 +74,12 @@ export const useGoddessRx = () => {
 
   const generate = useMutation({
     mutationFn: async () => {
-      const { data: profile } = await supabase
+      const { data: profile } = await (supabase as any)
         .from("profiles")
         .select("birth_date, transformation_choice, goals, full_name")
         .eq("id", user!.id)
         .single();
+      if (!profile) throw new Error("Profile not found.");
 
       if (!profile?.birth_date) {
         throw new Error("Please set your birth date in onboarding first.");
@@ -97,7 +98,7 @@ export const useGoddessRx = () => {
       if (data?.error) throw new Error(data.error);
 
       // Save to DB — store everything in prescription_data Json
-      const { error: saveError } = await supabase
+      const { error: saveError } = await (supabase as any)
         .from("goddess_prescriptions")
         .insert({
           profile_id: user!.id,

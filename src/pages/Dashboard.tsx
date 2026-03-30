@@ -115,7 +115,7 @@ const Dashboard = () => {
 
     const fetchProfile = async () => {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
           .from("profiles")
           .select("full_name, transformation_choice, goals")
           .eq("id", user.id)

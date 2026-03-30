@@ -3,12 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
-import { Database } from "@/integrations/supabase/types";
 
-type DailyRitualsRow = Database["public"]["Tables"]["daily_rituals"]["Row"];
-
-export type DailyRitual = Omit<DailyRitualsRow, "ritual_data"> & {
+export type DailyRitual = {
+  id: string;
+  profile_id: string;
+  date: string;
+  morning_completed: boolean;
+  midday_completed: boolean;
+  evening_completed: boolean;
   ritual_data: Record<string, any>;
+  created_at: string;
 };
 
 export const useDailyRitual = (date?: Date) => {
@@ -20,7 +24,7 @@ export const useDailyRitual = (date?: Date) => {
     queryKey: ["daily-ritual", user?.id, today],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("daily_rituals")
         .select("*")
         .eq("profile_id", user!.id)
@@ -37,7 +41,7 @@ export const useDailyRitual = (date?: Date) => {
 
   const upsertRitual = useMutation({
     mutationFn: async (updates: Partial<Omit<DailyRitual, "id" | "profile_id" | "date" | "created_at">>) => {
-      const { data: existing } = await supabase
+      const { data: existing } = await (supabase as any)
         .from("daily_rituals")
         .select("id, ritual_data")
         .eq("profile_id", user!.id)
@@ -49,13 +53,13 @@ export const useDailyRitual = (date?: Date) => {
         : (updates.ritual_data || {});
 
       if (existing) {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from("daily_rituals")
           .update({ ...updates, ritual_data: mergedRitualData })
           .eq("id", existing.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from("daily_rituals")
           .insert({ profile_id: user!.id, date: today, ...updates, ritual_data: mergedRitualData });
         if (error) throw error;
@@ -72,7 +76,7 @@ export const useDailyRitual = (date?: Date) => {
     queryKey: ["ritual-streak", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("daily_rituals")
         .select("date, morning_completed, midday_completed, evening_completed")
         .eq("profile_id", user!.id)

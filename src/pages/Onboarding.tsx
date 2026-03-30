@@ -82,7 +82,7 @@ const Onboarding = () => {
 
     const importAuditScores = async () => {
       try {
-        const { data: transferRecord } = await supabase
+        const { data: transferRecord } = await (supabase as any)
           .from("lead_transfers")
           .select("audit_scores")
           .eq("transfer_token", bridgeToken)
@@ -93,14 +93,14 @@ const Onboarding = () => {
           return;
         }
 
-        const { data: profile } = await supabase
+        const { data: profile } = await (supabase as any)
           .from("profiles")
           .select("audit_scores")
           .eq("id", user.id)
           .single();
 
         if (!profile?.audit_scores || Object.keys(profile.audit_scores as Record<string, unknown>).length === 0) {
-          await supabase
+          await (supabase as any)
             .from("profiles")
             .update({ 
               audit_scores: transferRecord.audit_scores, 
@@ -137,7 +137,7 @@ const Onboarding = () => {
         return 'spiritual';
       };
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("profiles")
         .update({
           zodiac_sign: zodiacSign || null,

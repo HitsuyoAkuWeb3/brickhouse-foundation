@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import type { Database } from "@/integrations/supabase/types";
 
 // Temporarily declaring the type here since we haven't regenerated types yet
 export type SubscriptionTier = 'free' | 'foundation' | 'brickhouse' | 'goddess' | 'coaching';
@@ -30,7 +29,7 @@ export const useProfile = () => {
     queryFn: async (): Promise<Profile | null> => {
       if (!user) return null;
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("profiles")
         .select("*")
         .eq("id", user.id)

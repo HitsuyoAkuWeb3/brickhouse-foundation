@@ -23,7 +23,7 @@ export const usePassionPick = () => {
     queryKey: ["passion-pick", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("passion_picks")
         .select("*")
         .eq("user_id", user!.id)
@@ -38,13 +38,13 @@ export const usePassionPick = () => {
   const upsert = useMutation({
     mutationFn: async (updates: Partial<Omit<PassionPick, "id" | "user_id" | "created_at" | "updated_at">>) => {
       if (pick) {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from("passion_picks")
           .update({ ...updates, updated_at: new Date().toISOString() })
           .eq("id", pick.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from("passion_picks")
           .insert({ user_id: user!.id, ...updates } as any);
         if (error) throw error;

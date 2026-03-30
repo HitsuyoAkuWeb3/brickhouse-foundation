@@ -84,7 +84,7 @@ const LeadCaptureModal = ({
     setErrors({});
     setSubmitting(true);
 
-    const { error } = await supabase.from("leads").insert({
+    const { error } = await (supabase as any).from("leads").insert({
       name: result.data.name,
       email: result.data.email,
       phone: result.data.phone || null,

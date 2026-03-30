@@ -10,7 +10,7 @@ export const useLessonProgress = () => {
     queryKey: ["lesson-progress", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("user_lesson_progress")
         .select("lesson_id, completed_at")
         .eq("user_id", user!.id)
@@ -33,7 +33,7 @@ export const useLessonProgress = () => {
       if (completed) {
         const nextUnlock = new Date();
         nextUnlock.setDate(nextUnlock.getDate() + 7);
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from("user_lesson_progress")
           .insert({ 
             user_id: user!.id, 
@@ -44,7 +44,7 @@ export const useLessonProgress = () => {
           });
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from("user_lesson_progress")
           .delete()
           .eq("user_id", user!.id)

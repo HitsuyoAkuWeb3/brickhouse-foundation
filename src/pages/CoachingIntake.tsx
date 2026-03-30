@@ -116,7 +116,7 @@ const CoachingIntake = () => {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.from('coaching_intakes').insert({
+      const { error } = await (supabase as any).from('coaching_intakes').insert({
         full_name: values.full_name,
         email: values.email,
         phone: values.phone,

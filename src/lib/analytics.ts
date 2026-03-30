@@ -20,7 +20,7 @@ export const trackEvent = async (
     const { data: { user } } = await supabase.auth.getUser();
     
     // We can still log anonymous events or waitlist events if user is null
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('analytics_events')
       .insert({
         user_id: user?.id || null,

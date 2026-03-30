@@ -59,7 +59,7 @@ export const useGoddessRx = () => {
     queryKey: ["goddess-rx", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("goddess_prescriptions")
         .select("*")
         .eq("profile_id", user!.id)

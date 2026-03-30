@@ -49,7 +49,7 @@ export default function Settings() {
         zodiac_sign: zodiacSign || null,
       };
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("profiles")
         .update(updates)
         .eq("id", user.id);

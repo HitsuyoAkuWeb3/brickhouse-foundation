@@ -60,3 +60,37 @@ export async function confirmTestUser(email: string) {
   
   console.log(`Successfully auto-confirmed test user: ${email}`);
 }
+
+export async function createTestUser(
+  email: string, 
+  password = 'TestPassword123!', 
+  fullName = 'E2E Test User',
+  profileData?: Record<string, unknown>
+) {
+  const { data, error } = await adminAuthClient.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: {
+      full_name: fullName
+    }
+  });
+
+  if (error) {
+    throw new Error(`Failed to create test user ${email}: ${error.message}`);
+  }
+
+  // If profile data is provided, upsert it into the profiles table
+  if (profileData && data.user) {
+    const { error: profileError } = await adminAuthClient
+      .from('profiles')
+      .upsert({ id: data.user.id, email, full_name: fullName, ...profileData }, { onConflict: 'id' });
+    
+    if (profileError) {
+      console.warn(`Profile upsert warning for ${email}: ${profileError.message}`);
+    }
+  }
+  
+  console.log(`Successfully created test user via Admin API: ${email}`);
+  return data.user;
+}

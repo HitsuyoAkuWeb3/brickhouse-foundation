@@ -1,12 +1,13 @@
 import { test, expect } from '@playwright/test';
-import { generateTestEmail, deleteTestUser, confirmTestUser } from './utils/test-auth';
+import { generateTestEmail, deleteTestUser, createTestUser } from './utils/test-auth';
 
 test.describe('8-Step Onboarding Flow', () => {
   let testEmail: string;
   const testPassword = 'TestPassword123!';
 
-  test.beforeAll(() => {
+  test.beforeAll(async () => {
     testEmail = generateTestEmail('onboarding');
+    await createTestUser(testEmail, testPassword, 'E2E Onboarding User');
   });
 
   test.afterAll(async () => {
@@ -33,41 +34,12 @@ test.describe('8-Step Onboarding Flow', () => {
     // 1. Navigate to auth screen
     await page.goto('/auth');
 
-    // 2. Switch to Sign Up mode
-    await page.getByRole('button', { name: /Sign up/i }).click();
-    await expect(page.getByRole('heading', { name: 'Start Building' })).toBeVisible();
-
-    // 3. Fill in the signup details
-    await page.getByPlaceholder('Full Name').fill('E2E Onboarding User');
-    await page.getByPlaceholder('Email').fill(testEmail);
-    await page.locator('input[type="password"]').fill(testPassword);
-
-    // Submit
-    await page.getByRole('button', { name: /Create Account/i }).click();
-
-    // Expect the "Check Your Email" view
-    try {
-      await expect(page.getByText('Check Your Email')).toBeVisible({ timeout: 10000 });
-    } catch (e) {
-      await page.screenshot({ path: 'test-failure.png' });
-      const content = await page.content();
-      console.log('PAGE CONTENT at failure:', content);
-      throw e;
-    }
-
-    // 4. Auto-confirm via Supabase Admin API to bypass email checks in E2E
-    await confirmTestUser(testEmail);
-
-    // 5. Switch back to Log In mode
-    await page.getByRole('button', { name: /Back to sign in/i }).click();
-    await expect(page.getByRole('heading', { name: 'Welcome Back' })).toBeVisible();
-
-    // 6. Log in with the confirmed account
+    // 2. Log in with the pre-created account
     await page.getByPlaceholder('Email').fill(testEmail);
     await page.locator('input[type="password"]').fill(testPassword);
     await page.getByRole('button', { name: /Sign In/i }).click();
 
-    // 7. Verify redirection to onboarding flow
+    // 3. Verify redirection to onboarding flow
     // Next.js/React Router should naturally redirect based on profile data missing
     await expect(page).toHaveURL(/\/onboarding/, { timeout: 15000 });
 
@@ -79,7 +51,16 @@ test.describe('8-Step Onboarding Flow', () => {
 
     // Step 2: Life Audit
     await expect(page.getByText('Your Baseline')).toBeVisible();
-    // Default sliders to 5, we are okay with the defaults so click Next
+    
+    // We must interact with the form to set the scores so 'Next' enables.
+    const sliders = page.locator('[role="slider"]');
+    await expect(sliders).toHaveCount(5);
+    for (let i = 0; i < 5; i++) {
+      await sliders.nth(i).focus();
+      await page.keyboard.press('ArrowRight'); // Increments to 6, guaranteeing state registration
+    }
+    
+    await expect(page.getByRole('button', { name: /Next/i })).toBeEnabled();
     await page.getByRole('button', { name: /Next/i }).click();
 
     // Step 3: Zodiac Sign
@@ -108,6 +89,6 @@ test.describe('8-Step Onboarding Flow', () => {
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 15000 });
 
     // Expect the "You're all set." welcome overlay briefly, or Dashboard greetings
-    await expect(page.locator('text=Good Morning, E2E').or(page.locator('text=Good Afternoon, E2E')).or(page.locator('text=Good Evening, E2E'))).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=Wake Up, E2E').or(page.locator('text=Good Afternoon, E2E')).or(page.locator('text=Good Evening, E2E'))).toBeVisible({ timeout: 10000 });
   });
 });

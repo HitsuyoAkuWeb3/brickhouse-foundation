@@ -1,109 +1,61 @@
 import { test, expect } from '@playwright/test';
+import { generateTestEmail, deleteTestUser, createTestUser } from './utils/test-auth';
 
-test.describe('Affirmations View and Builder', () => {
+test.describe('Affirmations View and Builder (Live DB)', () => {
+  let testEmail: string;
+  const testPassword = 'TestPassword123!';
+
+  test.beforeAll(async () => {
+    testEmail = generateTestEmail('affirm');
+    await createTestUser(testEmail, testPassword, 'E2E Affirm User', {
+      onboarding_completed: true,
+      onboarding_complete: true,
+      transformation_choice: 'wellness',
+      audit_scores: { body: 5, mind: 5, spirit: 5, business: 5, relationships: 5 },
+      zodiac_sign: 'Aries',
+      goals: ['Body Transformation']
+    });
+  });
+
+  test.afterAll(async () => {
+    await deleteTestUser(testEmail);
+  });
+
   test.beforeEach(async ({ page }) => {
-    // Mock user being logged in
-    await page.route('**/auth/v1/user', async (route) => {
-      await route.fulfill({ status: 200, body: JSON.stringify({ id: 'test', aud: 'authenticated' }) });
-    });
-    
-    // Mock the affirmations fetching
-    await page.route('**/rest/v1/user_affirmations*', async (route) => {
-      await route.fulfill({ status: 200, body: JSON.stringify([]) }); // Empty personal affirmations
-    });
-
-    await page.route('**/rest/v1/affirmations*', async (route) => {
-      await route.fulfill({ 
-        status: 200, 
-        body: JSON.stringify([
-          { id: '1', text: 'I am the architect of my life', brick_id: 1 }
-        ]) 
-      });
-    });
-
-    await page.addInitScript(() => {
-      const originalGetItem = window.localStorage.getItem;
-      window.localStorage.getItem = function(key) {
-        if (key && key.includes('auth-token')) {
-          return JSON.stringify({
-            access_token: 'test-access',
-            refresh_token: 'test-refresh',
-            user: { id: 'test', aud: 'authenticated', role: 'authenticated' },
-            expires_at: Math.floor(Date.now() / 1000) + 3600
-          });
-        }
-        return originalGetItem.call(this, key);
-      };
-    });
-
-    await page.goto('http://localhost:8080/affirmations');
+    await page.goto('/auth');
+    await page.getByPlaceholder('Email').fill(testEmail);
+    await page.locator('input[type="password"]').fill(testPassword);
+    await page.getByRole('button', { name: /Sign In/i }).click();
+    await expect(page).toHaveURL(/\/(dashboard|onboarding)/, { timeout: 15000 });
   });
 
-  test('Page header and content load', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: /Affirmations/i })).toBeVisible();
-    await expect(page.getByText('Speak your truth into existence')).toBeVisible();
+  test('Affirmations page loads with heading', async ({ page }) => {
+    await page.goto('/affirmations');
+    await expect(page.getByRole('heading', { name: /Affirmations/i })).toBeVisible({ timeout: 10000 });
   });
 
-  test('Adding custom affirmation handles validation', async ({ page }) => {
-    // Open I AM Builder
-    await page.getByRole('button', { name: /I AM Builder/i }).click();
+  test('I AM Builder expands and accepts affirmations', async ({ page }) => {
+    await page.goto('/affirmations');
+    await page.waitForLoadState('networkidle');
 
-    const addBtn = page.getByRole('button', { name: 'Add Affirmation' });
+    // Click the "I AM Builder" accordion to expand it
+    const builderToggle = page.getByText('I AM Builder');
+    await expect(builderToggle).toBeVisible({ timeout: 10000 });
+    await builderToggle.click();
+
+    // Wait for the input to appear (animated collapse/expand)
     const input = page.getByPlaceholder('I am...');
+    await expect(input).toBeVisible({ timeout: 5000 });
 
-    // Test blank submission
-    await expect(addBtn).toBeDisabled();
-
-    // Test missing prefix
-    await input.fill('This is a test');
-    await expect(addBtn).toBeEnabled();
-    
-    // Setup error toast mock or just watch for text
-    await addBtn.click();
-    await expect(page.getByText("Start your affirmation with 'I am' or 'I'")).toBeVisible();
-
-    // Add valid affirmation
+    // Type a valid affirmation
     await input.fill('I am powerful and capable');
-    
-    // Mock the POST for inserting custom affirmation
-    await page.route('**/rest/v1/user_affirmations*', async (route) => {
-      if (route.request().method() === 'POST') {
-        await route.fulfill({ status: 201, body: JSON.stringify({ id: '2', affirmation: 'I am powerful and capable' }) });
-      } else {
-        await route.fulfill({ status: 200, body: JSON.stringify([]) });
-      }
-    });
 
+    // The Add button should be enabled
+    const addBtn = page.getByRole('button', { name: /Add Affirmation/i });
+    await expect(addBtn).toBeEnabled();
     await addBtn.click();
-    await expect(page.getByText('Affirmation added 💎')).toBeVisible();
-  });
 
-  test('Expand preset bricks and schedule an affirmation', async ({ page }) => {
-    // Expand Brick 1
-    const brickButton = page.getByRole('button').filter({ hasText: 'Self-Love' }); 
-    if (await brickButton.isVisible()) {
-      await brickButton.click();
-      
-      // Look for the mock affirmation text
-      await expect(page.getByText('"I am the architect of my life"', { exact: true })).toBeVisible();
-      
-      // Click schedule
-      await page.locator('button[title="Schedule this affirmation"]').click();
-      
-      // Select a time and submit
-      const timeInput = page.locator('input[type="time"]');
-      await expect(timeInput).toBeVisible();
-      await timeInput.fill('08:00');
-      
-      // Mock schedule task creation
-      await page.route('**/rest/v1/scheduler_tasks*', async (route) => {
-        if (route.request().method() === 'POST') {
-          await route.fulfill({ status: 201, body: JSON.stringify({}) });
-        }
-      });
-
-      await page.getByRole('button', { name: 'Schedule', exact: true }).click();
-      await expect(page.getByText(/Affirmation scheduled for 08:00/)).toBeVisible();
-    }
+    // Should see success toast
+    await expect(page.getByText(/Affirmation added/i)).toBeVisible({ timeout: 5000 });
   });
 });

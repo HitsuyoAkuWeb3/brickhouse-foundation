@@ -22,7 +22,7 @@ const corsHeaders = {
 // an external scheduler (e.g., Vercel Cron, GitHub Actions).
 
 const ESCALATION_MESSAGES = [
-  "Hey Queen — you've got a pending task. Let's keep building. 🧱",
+  "Hey Brick House — you've got a pending task. Let's keep building. 🧱",
   "This task is still waiting on you. Don't let it slide. Your future self needs this done. 💪",
   "Final call — this task has been sitting too long. Complete it or let it go. No in-between. 🔥",
 ];

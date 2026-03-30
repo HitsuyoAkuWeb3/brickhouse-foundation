@@ -12,11 +12,25 @@ export interface Profile {
   avatar_url: string | null;
   audit_scores: Record<string, number> | null;
   birth_date: string | null;
+  birth_time: string | null;
+  birth_city: string | null;
   goals: string[] | null;
   transformation_choice: string | null;
+  primary_goal: string | null;
+  primary_focus: string | null;
   subscription_tier: SubscriptionTier;
-  shopify_customer_id: string | null;
-  zodiac_sign?: string | null;
+  stripe_customer_id: string | null;
+  zodiac_sign: string | null;
+  moon_sign: string | null;
+  rising_sign: string | null;
+  morning_reminder: string | null;
+  midday_reminder: string | null;
+  evening_reminder: string | null;
+  morning_reminder_on: boolean;
+  midday_reminder_on: boolean;
+  evening_reminder_on: boolean;
+  onboarding_complete: boolean;
+  has_completed_onboarding: boolean;
   reminder_preferences?: Record<string, unknown> | null;
   passion_pick_media?: string | null;
 }

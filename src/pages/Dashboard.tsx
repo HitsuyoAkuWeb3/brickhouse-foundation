@@ -37,7 +37,7 @@ const getTimeWindow = (): TimeWindow => {
 };
 
 const GREETINGS: Record<TimeWindow, string> = {
-  morning: "Good Morning",
+  morning: "Wake Up",
   midday: "Good Afternoon",
   evening: "Good Evening",
 };

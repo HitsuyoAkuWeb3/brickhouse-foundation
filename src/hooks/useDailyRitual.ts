@@ -53,7 +53,7 @@ export const useDailyRitual = (date?: Date) => {
         : (updates.ritual_data || {});
 
       if (existing) {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from("daily_rituals")
           .update({ ...updates, ritual_data: mergedRitualData })
           .eq("id", existing.id);

@@ -55,9 +55,9 @@ export function useSchedulerTasks() {
 
   const addTask = useMutation({
     mutationFn: async (input: TaskInsert) => {
-      const { data, error } = await supabase
-        .from("scheduler_tasks" as any)
-        .insert({ ...input, profile_id: user!.id } as any)
+      const { data, error } = await (supabase as any)
+        .from("scheduler_tasks")
+        .insert({ ...input, profile_id: user!.id })
         .select()
         .single();
       if (error) throw error;

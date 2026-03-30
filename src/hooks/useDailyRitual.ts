@@ -59,7 +59,7 @@ export const useDailyRitual = (date?: Date) => {
           .eq("id", existing.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from("daily_rituals")
           .insert({ profile_id: user!.id, date: today, ...updates, ritual_data: mergedRitualData });
         if (error) throw error;

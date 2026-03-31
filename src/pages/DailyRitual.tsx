@@ -10,6 +10,7 @@ import { format } from "date-fns";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { useSchedulerTasks } from "@/hooks/useSchedulerTasks";
 import { useAffirmations } from "@/hooks/useAffirmations";
+import { AudioPlayer } from "@/components/ui/AudioPlayer";
 
 const JOY_ACTIVITIES = [
   "🎶 Dance to my favorite song",
@@ -27,19 +28,21 @@ const ritualItems = [
     key: "morning_checkin" as RitualType,
     dbKey: "morning_completed" as const,
     icon: Sun,
-    title: "Morning Check-In",
+    title: "Wake-up Reflection",
     subtitle: "Start your day centered",
     prompt: "Look in the mirror. Say your I AM declarations out loud. Mean every word.",
     time: "Morning",
+    audio_url: "rituals/morning-ritual.m4a",
   },
   {
     key: "midday_checkin" as RitualType,
     dbKey: "midday_completed" as const,
     icon: Clock,
-    title: "Midday Check-In",
+    title: "Mid-day Reflection",
     subtitle: "Reset your energy",
     prompt: "Pause. Breathe. Are you aligned with your goals right now? Code Switch if needed.",
     time: "Afternoon",
+    audio_url: "rituals/midday-ritual.m4a",
   },
   {
     key: "evening_reflection" as RitualType,
@@ -49,6 +52,7 @@ const ritualItems = [
     subtitle: "Honor your progress",
     prompt: "What did you build today? What brick did you lay? Acknowledge it.",
     time: "Evening",
+    audio_url: "rituals/evening-ritual.m4a",
   },
 ];
 
@@ -254,21 +258,28 @@ const DailyRitual = () => {
                     </div>
                     
                     {!done ? (
-                      <button
-                        onClick={() => {
-                          trackEvent('ritual_started', { ritual_type: item.key });
-                          setActiveRitual(item.key);
-                        }}
-                        className="flex items-center gap-2 font-body font-bold text-[10px] tracking-widest uppercase bg-foreground/5 hover:bg-primary/20 hover:text-primary px-3 py-2 rounded-lg transition-colors"
-                      >
-                        Start <Play className="w-3 h-3" />
-                      </button>
+                      <div className="flex flex-col items-end gap-2">
+                        <button
+                          onClick={() => {
+                            trackEvent('ritual_started', { ritual_type: item.key });
+                            setActiveRitual(item.key);
+                          }}
+                          className="flex items-center justify-center gap-2 font-body font-bold text-xs tracking-widest uppercase bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2.5 rounded-xl transition-colors shadow-sm w-full sm:w-auto"
+                        >
+                          Start Journey <Play className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     ) : (
                       <div className="font-body text-[10px] text-primary/70 uppercase tracking-wider font-bold">
                         ✓ Done
                       </div>
                     )}
                   </div>
+                  {item.audio_url && (
+                    <div className="px-4 pb-4">
+                       <AudioPlayer src={item.audio_url} />
+                    </div>
+                  )}
                 </motion.div>
               );
             })}

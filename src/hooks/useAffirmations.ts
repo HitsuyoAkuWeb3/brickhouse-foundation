@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCrudField } from "@/hooks/useCrudField";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { brick1Lessons } from "@/data/brick1Lessons";
 
 interface BrickAffirmation {
   id: string;
@@ -32,11 +33,34 @@ export const useAffirmations = (brickId?: number) => {
   const { data: brickAffirmations = [], isLoading: loadingBrick } = useQuery<BrickAffirmation[]>({
     queryKey: ["brick-affirmations", brickId],
     queryFn: async () => {
+      // @ts-expect-error missing DB types for affirmations table
       let q = supabase.from("affirmations").select("*").order("created_at");
-      if (brickId) q = q.eq("brick_id", String(brickId));
+      
+      if (brickId) {
+        // Since brick_id might be a UUID, we filter by category matching Brick0X
+        const prefix = brickId < 10 ? `Brick0${brickId}` : `Brick${brickId}`;
+        q = q.ilike("category", `${prefix}%`);
+      }
+      
       const { data, error } = await q;
       if (error) throw error;
-      return (data ?? []) as BrickAffirmation[];
+      
+      if (!data || data.length === 0) {
+        return [];
+      }
+      
+      // Transform audio_urls to relative paths so AudioPlayer can fetch signed urls
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return data.map((a: any) => {
+        let transformedUrl = a.audio_url;
+        if (transformedUrl && transformedUrl.startsWith('/audio/affirmations/')) {
+          transformedUrl = transformedUrl.replace('/audio/affirmations/', '');
+        }
+        return {
+          ...a,
+          audio_url: transformedUrl
+        };
+      }) as BrickAffirmation[];
     },
   });
 
@@ -46,7 +70,8 @@ export const useAffirmations = (brickId?: number) => {
     enabled: !!user,
     retry: false,
     queryFn: async () => {
-      const { data, error } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
         .from("user_affirmations")
         .select("*")
         .eq("user_id", user!.id)
@@ -57,7 +82,7 @@ export const useAffirmations = (brickId?: number) => {
   });
 
   const customAffirmationsCrud = useCrudField<UserAffirmation>({
-    tableName: "user_affirmations",
+    tableName: "user_affirmations" as any,
     queryKey: ["user-affirmations", user?.id],
   });
 
@@ -90,7 +115,9 @@ export const useAffirmations = (brickId?: number) => {
 
   // Daily featured — deterministic pick based on date (Restricted to Brick 1 for Beta)
   const dailyAffirmation = (() => {
-    const available = brickAffirmations.filter(a => a.brick_id === "1");
+    const available = brickAffirmations.filter(a => 
+      a.brick_id === "1" || (a.category && a.category.toLowerCase().startsWith("brick01"))
+    );
     if (!available.length) return null;
     const day = new Date();
     const seed = day.getFullYear() * 1000 + day.getMonth() * 31 + day.getDate();

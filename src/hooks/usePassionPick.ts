@@ -43,7 +43,7 @@ export const usePassionPick = () => {
   const uploadMedia = async (file: File): Promise<string> => {
     const ext = file.name.split(".").pop();
     const path = `${user!.id}/passion-${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("passion-picks").upload(path, file, { upsert: true });
+    const { error } = await supabase.storage.from("passion-picks").upload(path, file);
     if (error) throw error;
     const { data } = supabase.storage.from("passion-picks").getPublicUrl(path);
     return data.publicUrl;

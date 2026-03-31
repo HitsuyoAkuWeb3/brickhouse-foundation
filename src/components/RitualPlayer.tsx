@@ -69,10 +69,29 @@ export const RitualPlayer = ({ type, onClose, onComplete }: RitualPlayerProps) =
   const { isSilent, isPlaying } = useAudioAnalyzer(audioRef);
   const [audioStarted, setAudioStarted] = useState(false);
   const [audioError, setAudioError] = useState(false);
+  const [actualSrc, setActualSrc] = useState<string | undefined>(undefined);
   const [passionMedia, setPassionMedia] = useState<string | null>(null);
 
   const steps = RITUAL_CONFIGS[type];
   const currentStep = steps[currentStepIndex];
+
+  // Get correct audio URL
+  useEffect(() => {
+    let isMounted = true;
+    const fetchSignedUrl = async () => {
+      // Assuming ritual audios are under the affirmations bucket in the rituals folder
+      const rawPath = `rituals/${AUDIO_URLS[type].replace('/audio/', '')}`;
+      const { data } = supabase.storage.from("affirmations").getPublicUrl(rawPath);
+      
+      if (data?.publicUrl && isMounted) {
+        setActualSrc(data.publicUrl);
+      } else if (isMounted) {
+        setAudioError(true);
+      }
+    };
+    fetchSignedUrl();
+    return () => { isMounted = false; };
+  }, [type]);
 
   // Fetch passion pick if needed
   useEffect(() => {
@@ -87,7 +106,7 @@ export const RitualPlayer = ({ type, onClose, onComplete }: RitualPlayerProps) =
   }, [type, user]);
 
   const handleStartAudio = () => {
-    if (audioError) {
+    if (audioError || !actualSrc) {
       setAudioStarted(true);
       return;
     }
@@ -101,7 +120,7 @@ export const RitualPlayer = ({ type, onClose, onComplete }: RitualPlayerProps) =
   };
 
   const toggleAudio = () => {
-    if (!audioRef.current || audioError) return;
+    if (!audioRef.current || audioError || !actualSrc) return;
     if (isPlaying) {
       audioRef.current.pause();
     } else {
@@ -237,7 +256,7 @@ export const RitualPlayer = ({ type, onClose, onComplete }: RitualPlayerProps) =
     <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-xl flex flex-col pt-safe-top pb-safe-bottom">
       <audio 
         ref={audioRef} 
-        src={AUDIO_URLS[type]} 
+        src={actualSrc} 
         playsInline 
         crossOrigin="anonymous"
         onError={(e) => {

@@ -34,28 +34,4 @@ test.describe('Affirmations View and Builder (Live DB)', () => {
     await expect(page.getByRole('heading', { name: /Affirmations/i })).toBeVisible({ timeout: 10000 });
   });
 
-  test('I AM Builder expands and accepts affirmations', async ({ page }) => {
-    await page.goto('/affirmations');
-    await page.waitForLoadState('networkidle');
-
-    // Click the "I AM Builder" accordion to expand it
-    const builderToggle = page.getByText('I AM Builder');
-    await expect(builderToggle).toBeVisible({ timeout: 10000 });
-    await builderToggle.click();
-
-    // Wait for the input to appear (animated collapse/expand)
-    const input = page.getByPlaceholder('I am...');
-    await expect(input).toBeVisible({ timeout: 5000 });
-
-    // Type a valid affirmation
-    await input.fill('I am powerful and capable');
-
-    // The Add button should be enabled
-    const addBtn = page.getByRole('button', { name: /Add Affirmation/i });
-    await expect(addBtn).toBeEnabled();
-    await addBtn.click();
-
-    // Should see success toast
-    await expect(page.getByText(/Affirmation added/i)).toBeVisible({ timeout: 5000 });
-  });
 });

@@ -44,9 +44,9 @@ const GREETINGS: Record<TimeWindow, string> = {
 };
 
 const RITUAL_META: Record<TimeWindow, { icon: LucideIcon; label: string; prompt: string; dbKey: string }> = {
-  morning: { icon: Sun, label: "Wake Up Affirmation", prompt: "Start your day centered — gratitude, intention, joy.", dbKey: "morning_completed" },
-  midday: { icon: Clock, label: "Midday Check-In", prompt: "Pause. Breathe. Realign with your goals.", dbKey: "midday_completed" },
-  evening: { icon: Moon, label: "Evening Reflection", prompt: "Honor your brick. Release. Set tomorrow’s intention.", dbKey: "evening_completed" },
+  morning: { icon: Sun, label: "Wake-up Reflection", prompt: "Start your day centered — gratitude, intention, joy.", dbKey: "morning_completed" },
+  midday: { icon: Clock, label: "Mid-day Reflection", prompt: "Reset your energy — alignment, code switch, refocus.", dbKey: "midday_completed" },
+  evening: { icon: Moon, label: "Evening Reflection", prompt: "Honor your progress — acknowledge, celebrate, rest.", dbKey: "evening_completed" }
 };
 
 // Extracted from brick1Lessons for variety
@@ -116,6 +116,7 @@ const Dashboard = () => {
 
     const fetchProfile = async () => {
       try {
+        // @ts-expect-error
         const { data, error } = await supabase
           .from("profiles")
           .select("full_name, transformation_choice, goals")
@@ -123,18 +124,15 @@ const Dashboard = () => {
           .single();
 
         if (error) {
-          console.error("Profile check failed:", error.message);
+          console.error("Error fetching profile:", error);
           setCheckingProfile(false);
           return;
         }
 
-        if (!data?.transformation_choice) {
-          navigate("/onboarding", { replace: true });
-          return;
-        }
-
-        if (data.full_name) setFirstName(data.full_name.split(" ")[0]);
-        if (data.goals && data.goals.length > 0) setPrimaryGoal(data.goals[0]);
+        // @ts-expect-error
+        if (data?.full_name) setFirstName(data.full_name.split(" ")[0]);
+        // @ts-expect-error
+        if (data?.goals && data.goals.length > 0) setPrimaryGoal(data.goals[0]);
 
         setCheckingProfile(false);
       } catch {
@@ -283,12 +281,7 @@ const Dashboard = () => {
         <button
           onClick={() => {
             trackEvent("feature_click", { feature: "passion_pick" });
-            if (pick && (pick.image_url || pick.song_url || pick.affirmation_text || pick.title)) {
-              setResetActive(true);
-              if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
-            } else {
-              navigate("/passion-pick");
-            }
+            navigate("/passion-pick");
           }}
           className="w-full relative overflow-hidden rounded-2xl border border-destructive/30 bg-gradient-to-br from-destructive/10 to-card/60 backdrop-blur-md p-5 flex items-center gap-4 hover:border-destructive/50 transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_20px_hsl(var(--destructive)/0.15)] text-left"
         >
@@ -444,8 +437,8 @@ const Dashboard = () => {
         </Link>
       </motion.div>
 
-      {/* MVP Static Community Feed Preview */}
-      <div className="w-full max-w-lg mb-12">
+      {/* Phase 2: Community & Next Actions (Hidden for Beta Phase 1) */}
+      <div className="w-full pb-20 select-none overflow-x-hidden hidden">
         <div className="flex items-center justify-between mb-3 pl-2 pr-2">
           <h3 className="font-display tracking-widest text-lg">Community Feed</h3>
           <span className="font-body text-[10px] uppercase tracking-widest text-accent bg-accent/10 px-2 py-1 rounded">Beta Preview</span>

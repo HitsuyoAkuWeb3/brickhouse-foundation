@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Play, Pause, Volume2, VolumeX } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export function AudioPlayer({ src }: { src: string }) {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -7,6 +8,7 @@ export function AudioPlayer({ src }: { src: string }) {
   const [isMuted, setIsMuted] = useState(false);
   const [duration, setDuration] = useState("0:00");
   const [currentTime, setCurrentTime] = useState("0:00");
+  const [actualSrc, setActualSrc] = useState<string | undefined>(undefined);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const formatTime = (timeInSeconds: number) => {
@@ -15,6 +17,26 @@ export function AudioPlayer({ src }: { src: string }) {
     const seconds = Math.floor(timeInSeconds % 60);
     return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
   };
+
+  useEffect(() => {
+    let isMounted = true;
+    const resolveSrc = async () => {
+      if (!src) return;
+      
+      // If src is already a full URL, blob, or base64 data, use it directly
+      if (src.startsWith('http') || src.startsWith('blob:') || src.startsWith('data:')) {
+        if (isMounted) setActualSrc(src);
+        return;
+      }
+
+      // If it's a relative storage path, generate the public URL instead of a signed URL
+      // since the affirmations bucket is marked as public and anon users cannot create signed URLs client-side.
+      const { data } = supabase.storage.from('affirmations').getPublicUrl(src);
+      if (isMounted) setActualSrc(data.publicUrl);
+    };
+    resolveSrc();
+    return () => { isMounted = false; };
+  }, [src]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -93,7 +115,7 @@ export function AudioPlayer({ src }: { src: string }) {
       onClick={(e) => e.stopPropagation()}
     >
       <div className="flex items-center gap-4">
-        <audio ref={audioRef} src={src} preload="metadata" crossOrigin="anonymous" />
+        <audio ref={audioRef} src={actualSrc} preload="metadata" crossOrigin="anonymous" />
         
         <button 
           onClick={togglePlay}

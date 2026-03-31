@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Camera, Music, Target, Sparkles, RotateCcw, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { CodeSwitchModal } from "@/components/CodeSwitchModal";
+import { cn } from "@/lib/utils";
 
 const PassionPick = () => {
   const { pick, isLoading, upsert, uploadMedia } = usePassionPick();
@@ -33,7 +34,9 @@ const PassionPick = () => {
       });
       toast.success("Vision media uploaded 📸");
     } catch (err) {
-      toast.error("Upload failed — try again");
+      console.error("Upload error details:", err);
+      const errorMessage = err instanceof Error ? err.message : "Upload failed — try again";
+      toast.error(errorMessage);
     } finally {
       setUploading(false);
     }
@@ -155,26 +158,26 @@ const PassionPick = () => {
                 ) : (
                   <img src={pick.image_url} alt="Passion pick" className="w-full h-48 object-cover" />
                 )}
-                <button
-                  onClick={() => fileRef.current?.click()}
-                  className="absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm text-foreground font-body text-[10px] px-3 py-1.5 rounded-lg border border-border hover:border-primary/30 transition-colors"
-                >
-                  <Upload className="w-3 h-3 inline mr-1" /> Change
-                </button>
+                <label className="absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm text-foreground font-body text-[10px] px-3 py-1.5 rounded-lg border border-border hover:border-primary/30 transition-colors cursor-pointer inline-block overflow-hidden">
+                  <Upload className="w-3 h-3 inline mr-1 relative z-10 pointer-events-none" /> 
+                  <span className="relative z-10 pointer-events-none">Change</span>
+                  <input type="file" accept="image/*,video/*" className="opacity-0 absolute inset-0 w-full h-full cursor-pointer z-20" onChange={handleMediaUpload} disabled={uploading} />
+                </label>
               </div>
             ) : (
-              <button
-                onClick={() => fileRef.current?.click()}
-                disabled={uploading}
-                className="w-full h-40 border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-2 hover:border-primary/30 transition-colors disabled:opacity-50"
+              <label
+                className={cn(
+                  "w-full h-40 border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-2 hover:border-primary/30 transition-colors cursor-pointer",
+                  uploading ? "opacity-50 pointer-events-none" : ""
+                )}
               >
                 <Camera className="w-8 h-8 text-muted-foreground" />
-                <span className="font-body text-xs text-muted-foreground">
+                <span className="font-body text-xs text-muted-foreground relative z-10 pointer-events-none">
                   {uploading ? "Uploading..." : "Upload your vision photo or video"}
                 </span>
-              </button>
+                <input type="file" accept="image/*,video/*" className="opacity-0 absolute inset-0 w-full h-full cursor-pointer z-20" onChange={handleMediaUpload} disabled={uploading} />
+              </label>
             )}
-            <input ref={fileRef} type="file" accept="image/*,video/*" className="hidden" onChange={handleMediaUpload} />
           </div>
 
           {/* Theme Song (Coming Soon per Phase 1 spec) */}

@@ -11,7 +11,6 @@ import { Heart, Plus, Trash2, Sparkles, ChevronDown, ArrowLeft, Lock, Headphones
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { AudioPlayer } from "@/components/ui/AudioPlayer";
-import { AffirmationTeleprompter } from "@/components/AffirmationTeleprompter";
 
 const Affirmations = () => {
   const { user } = useAuth();
@@ -38,11 +37,17 @@ const Affirmations = () => {
     toast.success("Affirmation added 💎");
   };
 
-  // Group brick affirmations by brick_id
+  // Group brick affirmations by extracting the brick integer from the category
   const groupedByBrick = brickAffirmations.reduce((acc, a) => {
-    const key = a.brick_id;
-    if (key == null) return acc;
-    const numKey = Number(key);
+    let numKey: number | null = null;
+    if (a.brick_id && !isNaN(Number(a.brick_id))) {
+      numKey = Number(a.brick_id);
+    } else if (a.category) {
+      const match = a.category.match(/Brick0?(\d+)/i);
+      if (match) numKey = parseInt(match[1]);
+    }
+    
+    if (numKey === null) return acc;
     if (!acc[numKey]) acc[numKey] = [];
     acc[numKey].push(a);
     return acc;
@@ -97,83 +102,7 @@ const Affirmations = () => {
         )}
 
         {/* I AM Builder */}
-        {/* Practice Mode */}
-        <button
-          onClick={() => setPracticeMode(true)}
-          className="w-full flex items-center justify-center gap-3 bg-gradient-pink text-foreground font-display text-sm tracking-wider uppercase py-4 rounded-xl hover:opacity-90 transition-opacity mb-8 shadow-[0_0_20px_hsl(var(--primary)/0.2)]"
-        >
-          <Headphones className="w-5 h-5" />
-          Practice Mode — Speak With Ché
-        </button>
-
-        <AnimatePresence>
-          {practiceMode && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 bg-background/95 backdrop-blur-md flex flex-col items-center justify-center px-6"
-            >
-              <button
-                onClick={() => setPracticeMode(false)}
-                className="absolute top-6 right-6 p-2 rounded-full hover:bg-muted/40 transition-colors"
-              >
-                <X className="w-5 h-5 text-muted-foreground" />
-              </button>
-              <h2 className="font-display text-2xl tracking-wider mb-2">Practice Mode</h2>
-              <p className="font-body text-sm text-muted-foreground mb-10">Listen to Ché speak, then repeat with conviction.</p>
-              <AffirmationTeleprompter
-                count={5}
-                onComplete={() => {
-                  setPracticeMode(false);
-                  toast.success("Practice complete 💎");
-                }}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-        <div className="mb-8">
-          <button
-            onClick={() => setShowBuilder(!showBuilder)}
-            className="w-full flex items-center justify-between bg-gradient-card border border-border rounded-xl px-5 py-4 hover:border-primary/30 transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <Plus className="w-5 h-5 text-primary" />
-              <span className="font-display text-sm tracking-wider">I AM Builder</span>
-            </div>
-            <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${showBuilder ? "rotate-180" : ""}`} />
-          </button>
-
-          <AnimatePresence>
-            {showBuilder && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="overflow-hidden"
-              >
-                <div className="pt-3 space-y-3">
-                  <input
-                    type="text"
-                    value={newAffirmation}
-                    onChange={(e) => setNewAffirmation(e.target.value)}
-                    placeholder="I am..."
-                    maxLength={200}
-                    onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-                    className="w-full bg-input border border-border rounded-lg px-4 py-3 font-body text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
-                  />
-                  <button
-                    onClick={handleAdd}
-                    disabled={addAffirmation.isPending || !newAffirmation.trim()}
-                    className="w-full bg-gradient-pink text-foreground font-body font-bold text-sm tracking-wider uppercase py-3 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
-                  >
-                    {addAffirmation.isPending ? "..." : "Add Affirmation"}
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+        {/* Features Removed for Phase 1 */}
 
         {/* My Affirmations */}
         {userAffirmations.length > 0 && (

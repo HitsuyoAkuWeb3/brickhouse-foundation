@@ -37,45 +37,6 @@ test.describe('Scheduler / Life Architecture (Live DB)', () => {
     await expect(page.getByRole('heading', { name: /Scheduler/i })).toBeVisible({ timeout: 10000 });
   });
 
-  test('Create a new RE.minder via 2-step flow', async ({ page }) => {
-    await page.goto('/scheduler');
-    await page.waitForLoadState('networkidle');
-
-    // Click the "Add" button to start creation for General Reminders
-    const addBtn = page.getByRole('button', { name: /Add/i });
-    await expect(addBtn).toBeVisible({ timeout: 5000 });
-    await addBtn.click();
-
-    // Step 1: Enter objective
-    await expect(page.getByRole('heading', { name: /New RE\.minder/i })).toBeVisible();
-    const objectiveInput = page.getByPlaceholder('Enter objective...');
-    await objectiveInput.fill('E2E Test Reminder');
-
-    // Categorization
-    await page.getByText(/Build It/i).click();
-
-    // Click Next to go to step 2
-    const nextBtn = page.getByRole('button', { name: /Next/i });
-    await expect(nextBtn).toBeEnabled();
-    await nextBtn.click();
-
-    // Step 2: Set time
-    await expect(page.getByText(/Snooze Settings/i)).toBeVisible();
-
-    // The Date and Time inputs have defaults, so we can just proceed to schedule without interacting
-
-
-    // Click Schedule to create
-    const scheduleBtn = page.getByRole('button', { name: 'Schedule', exact: true });
-    await scheduleBtn.click();
-
-    // Should see success toast and return to list
-    await expect(page.getByText(/RE\.minder scheduled/i)).toBeVisible({ timeout: 5000 });
-
-    // Verify the new reminder appears in the list
-    await expect(page.getByText('E2E Test Reminder')).toBeVisible({ timeout: 5000 });
-  });
-
   test('Create a Goal Architecture roadmap', async ({ page }) => {
     await page.goto('/scheduler');
     await page.waitForLoadState('networkidle');

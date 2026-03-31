@@ -120,7 +120,16 @@ const ReminderCard = ({
           </h3>
           <div className="flex items-end justify-between mt-2">
             <p className="font-body text-[11px] text-muted-foreground">
-              {task.time_of_day ? `Scheduled daily at ${task.time_of_day}` : formattedDate}
+              {task.time_of_day ? `Scheduled daily at ${
+                (() => {
+                  try {
+                    const [h, m] = task.time_of_day.split(':');
+                    return format(new Date().setHours(parseInt(h), parseInt(m)), "h:mm a");
+                  } catch (e) {
+                    return task.time_of_day;
+                  }
+                })()
+              }` : formattedDate}
             </p>
             {task.snooze_interval && task.snooze_interval !== "none" && (
               <span className="flex items-center gap-1 text-[9px] uppercase font-bold tracking-widest text-accent bg-accent/10 px-2 py-0.5 rounded-full">
@@ -413,14 +422,14 @@ const Scheduler = () => {
               </div>
 
               {/* ACTIVE BUILDS (GOALS) */}
-              <div className="mb-8">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-body text-[10px] uppercase tracking-widest text-primary ml-1">Active Builds</h2>
+              <div className="mb-0">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="font-body text-lg font-bold uppercase tracking-widest text-primary ml-1">Active Builds</h2>
                   <button 
                     onClick={() => setView("goal_selection")}
-                    className="flex items-center text-[10px] uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
+                    className="flex items-center text-base font-bold uppercase tracking-widest text-accent bg-accent/10 hover:bg-accent/20 px-6 py-3 rounded-xl transition-all shadow-[0_0_15px_hsl(var(--accent)/0.15)] hover:shadow-[0_0_25px_hsl(var(--accent)/0.25)]"
                   >
-                    <Plus className="w-3 h-3 mr-1" /> New Build
+                    <Plus className="w-5 h-5 mr-2" /> New Build
                   </button>
                 </div>
                 
@@ -490,37 +499,7 @@ const Scheduler = () => {
                 )}
               </div>
 
-              {/* GENERAL REMINDERS */}
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-body text-[10px] uppercase tracking-widest text-primary ml-1">General Reminders</h2>
-                  <button 
-                    onClick={() => setView("step1")}
-                    className="flex items-center text-[10px] uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <Plus className="w-3 h-3 mr-1" /> Add
-                  </button>
-                </div>
-                
-                <div className="flex-1 overflow-visible space-y-2">
-                  {reminders.length === 0 ? (
-                    <div className="text-center py-10 opacity-60 bg-gradient-card border border-border rounded-2xl">
-                      <p className="font-display text-sm text-foreground tracking-wider mb-1">NO ACTIVE REMINDERS</p>
-                      <p className="font-body text-[10px] text-muted-foreground uppercase tracking-widest">Your slate is clear</p>
-                    </div>
-                  ) : (
-                    reminders.map((task) => (
-                      <ReminderCard
-                        key={task.id}
-                        task={task}
-                        onToggle={handleToggle}
-                        onDelete={handleDelete}
-                        onBugMeClick={setBugMeTask}
-                      />
-                    ))
-                  )}
-                </div>
-              </div>
+              {/* GENERAL REMINDERS - Removed for Phase 1 */}
 
               {/* Bug Me Action Sheet Context Menu */}
               <AnimatePresence>
@@ -806,24 +785,26 @@ const Scheduler = () => {
               </div>
 
               <div className="flex flex-col mt-4 space-y-6">
-                <div>
-                  <label className="font-body text-[10px] uppercase tracking-widest text-primary mb-3 ml-2 block">Date</label>
-                  <input 
-                    type="date"
-                    value={draftDate}
-                    onChange={(e) => setDraftDate(e.target.value)}
-                    className="w-full bg-input border border-border rounded-lg px-4 py-3 font-body text-sm text-foreground focus:outline-none focus:border-primary transition-colors [&::-webkit-calendar-picker-indicator]:invert"
-                  />
-                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="font-body text-[10px] uppercase tracking-widest text-primary mb-3 ml-2 block">Date</label>
+                    <input 
+                      type="date"
+                      value={draftDate}
+                      onChange={(e) => setDraftDate(e.target.value)}
+                      className="w-full bg-input border border-border rounded-lg px-4 py-3 font-body text-sm text-foreground focus:outline-none focus:border-primary transition-colors [&::-webkit-calendar-picker-indicator]:invert"
+                    />
+                  </div>
 
-                <div>
-                  <label className="font-body text-[10px] uppercase tracking-widest text-primary mb-3 ml-2 block">Time</label>
-                  <input 
-                    type="time"
-                    value={draftTime}
-                    onChange={(e) => setDraftTime(e.target.value)}
-                    className="w-full bg-input border border-border rounded-lg px-4 py-3 font-body text-sm text-foreground focus:outline-none focus:border-primary transition-colors [&::-webkit-calendar-picker-indicator]:invert"
-                  />
+                  <div>
+                    <label className="font-body text-[10px] uppercase tracking-widest text-primary mb-3 ml-2 block">Time (12-Hour)</label>
+                    <input 
+                      type="time"
+                      value={draftTime}
+                      onChange={(e) => setDraftTime(e.target.value)}
+                      className="w-full bg-input border border-border rounded-lg px-4 py-3 font-body text-sm text-foreground focus:outline-none focus:border-primary transition-colors [&::-webkit-calendar-picker-indicator]:invert"
+                    />
+                  </div>
                 </div>
 
                 <div>
@@ -895,24 +876,26 @@ const Scheduler = () => {
                   </div>
                 </div>
 
-                <div>
-                  <label className="font-body text-[10px] uppercase tracking-widest text-primary mb-3 ml-2 block">Date</label>
-                  <input 
-                    type="date"
-                    value={draftGoalStepDate}
-                    onChange={(e) => setDraftGoalStepDate(e.target.value)}
-                    className="w-full bg-input border border-border rounded-lg px-4 py-3 font-body text-sm text-foreground focus:outline-none focus:border-primary transition-colors [&::-webkit-calendar-picker-indicator]:invert"
-                  />
-                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="font-body text-[10px] uppercase tracking-widest text-primary mb-3 ml-2 block">Date</label>
+                    <input 
+                      type="date"
+                      value={draftGoalStepDate}
+                      onChange={(e) => setDraftGoalStepDate(e.target.value)}
+                      className="w-full bg-input border border-border rounded-lg px-4 py-3 font-body text-sm text-foreground focus:outline-none focus:border-primary transition-colors [&::-webkit-calendar-picker-indicator]:invert"
+                    />
+                  </div>
 
-                <div>
-                  <label className="font-body text-[10px] uppercase tracking-widest text-primary mb-3 ml-2 block">Time</label>
-                  <input 
-                    type="time"
-                    value={draftGoalStepTime}
-                    onChange={(e) => setDraftGoalStepTime(e.target.value)}
-                    className="w-full bg-input border border-border rounded-lg px-4 py-3 font-body text-sm text-foreground focus:outline-none focus:border-primary transition-colors [&::-webkit-calendar-picker-indicator]:invert"
-                  />
+                  <div>
+                    <label className="font-body text-[10px] uppercase tracking-widest text-primary mb-3 ml-2 block">Time (12-Hour)</label>
+                    <input 
+                      type="time"
+                      value={draftGoalStepTime}
+                      onChange={(e) => setDraftGoalStepTime(e.target.value)}
+                      className="w-full bg-input border border-border rounded-lg px-4 py-3 font-body text-sm text-foreground focus:outline-none focus:border-primary transition-colors [&::-webkit-calendar-picker-indicator]:invert"
+                    />
+                  </div>
                 </div>
 
                 <div>

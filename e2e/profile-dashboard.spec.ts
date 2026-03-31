@@ -35,7 +35,7 @@ test.describe('Dashboard and Profile (Live DB)', () => {
     const url = page.url();
     if (url.includes('dashboard')) {
       // Dashboard loaded — verify greeting
-      await expect(page.getByRole('heading', { name: /Good (Morning|Afternoon|Evening)/i })).toBeVisible({ timeout: 10000 });
+      await expect(page.getByRole('heading', { level: 1 }).filter({ hasText: /(Wake Up|Good Morning|Good Afternoon|Good Evening)/i })).toBeVisible({ timeout: 10000 });
     } else {
       // Onboarding loaded — verify onboarding heading
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 10000 });

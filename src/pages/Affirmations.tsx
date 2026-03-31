@@ -215,7 +215,7 @@ const Affirmations = () => {
         {/* Browse by Brick — Locked to Brick 1 for Beta */}
         <h2 className="font-display text-lg tracking-wider mb-4">Browse by Brick</h2>
         <div className="space-y-2">
-          {bricks.filter(b => b.id === 1).map((brick) => {
+          {bricks.map((brick) => {
             const affirmations = groupedByBrick[brick.id] || [];
             
             if (!affirmations.length) return null;

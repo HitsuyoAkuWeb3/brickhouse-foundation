@@ -89,6 +89,6 @@ test.describe('8-Step Onboarding Flow', () => {
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 15000 });
 
     // Expect the "You're all set." welcome overlay briefly, or Dashboard greetings
-    await expect(page.locator('text=Wake Up, E2E').or(page.locator('text=Good Afternoon, E2E')).or(page.locator('text=Good Evening, E2E'))).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { level: 1 }).filter({ hasText: /(Wake Up|Good Morning|Good Afternoon|Good Evening)/i })).toBeVisible({ timeout: 10000 });
   });
 });

@@ -9,6 +9,7 @@ import { useSchedulerTasks, type SchedulerTask } from "@/hooks/useSchedulerTasks
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { format, addMinutes } from "date-fns";
+import { NotificationService } from "@/services/NotificationService";
 
 import { Wrench } from "lucide-react";
 
@@ -227,7 +228,7 @@ const TimeframeSection = ({
 
 const Scheduler = () => {
   const { tasks, isLoading, addTask, updateTask, deleteTask } = useSchedulerTasks();
-  const [view, setView] = useState<"list" | "step1" | "step2" | "goal_selection" | "goal_template">("list");
+  const [view, setView] = useState<"list" | "step1" | "step2" | "goal_selection" | "goal_template" | "goal_step_create">("list");
   
   // Creation Form State (General Reminders)
   const [draftTitle, setDraftTitle] = useState("");
@@ -236,6 +237,13 @@ const Scheduler = () => {
   const [draftTime, setDraftTime] = useState<string>("09:00");
   const [draftSnooze, setDraftSnooze] = useState<string>("none");
   const [isDoneLoading, setIsDoneLoading] = useState(false);
+
+  // Creation Form State (Goal Step)
+  const [draftGoalStepTitle, setDraftGoalStepTitle] = useState("");
+  const [draftGoalStepTimeframe, setDraftGoalStepTimeframe] = useState("");
+  const [draftGoalStepDate, setDraftGoalStepDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
+  const [draftGoalStepTime, setDraftGoalStepTime] = useState<string>("09:00");
+  const [draftGoalStepSnooze, setDraftGoalStepSnooze] = useState<string>("none");
 
   // Bug Me Sheet State
   const [bugMeTask, setBugMeTask] = useState<SchedulerTask | null>(null);
@@ -283,6 +291,7 @@ const Scheduler = () => {
       {
         onSuccess: () => {
           toast.success("RE.minder scheduled ⏰");
+          NotificationService.requestPermission();
           setIsDoneLoading(false);
           setDraftTitle("");
           setDraftIcon("build");
@@ -331,17 +340,39 @@ const Scheduler = () => {
     : 0;
 
   const handleAddGoalStep = (timeframe: string) => {
-    const title = window.prompt(`Enter a new step for ${timeframe.replace("_", " ")}:`);
-    if (!title || !title.trim() || !activeGoalId) return;
+    setDraftGoalStepTimeframe(timeframe);
+    setDraftGoalStepTitle("");
+    setDraftGoalStepDate(format(new Date(), "yyyy-MM-dd"));
+    setDraftGoalStepTime("09:00");
+    setDraftGoalStepSnooze("none");
+    setView("goal_step_create");
+  };
+
+  const handleCreateGoalStep = async () => {
+    if (!draftGoalStepTitle.trim() || !activeGoalId) {
+      toast.error("Please enter a title for the step.");
+      return;
+    }
+    setIsDoneLoading(true);
     
+    const scheduledDate = new Date(`${draftGoalStepDate}T${draftGoalStepTime}:00`);
+
     addTask.mutate({
-      title: title.trim(),
+      title: draftGoalStepTitle.trim(),
       task_type: "goal_step",
       parent_goal_id: activeGoalId,
-      timeframe,
+      timeframe: draftGoalStepTimeframe,
+      scheduled_for: scheduledDate.toISOString(),
+      snooze_interval: draftGoalStepSnooze,
       is_active: true
     }, {
-      onSuccess: () => toast.success("Step added")
+      onSuccess: () => {
+        toast.success("Step scheduled 🧱");
+        NotificationService.requestPermission();
+        setIsDoneLoading(false);
+        setView("goal_template");
+      },
+      onError: () => setIsDoneLoading(false)
     });
   };
 
@@ -800,6 +831,95 @@ const Scheduler = () => {
                   <select 
                     value={draftSnooze}
                     onChange={(e) => setDraftSnooze(e.target.value)}
+                    className="w-full bg-input border border-border rounded-lg px-4 py-3 font-body text-sm text-foreground focus:outline-none focus:border-primary transition-colors appearance-none"
+                  >
+                    {BUG_ME_OPTIONS.map(opt => (
+                      <option key={opt.value} value={opt.value} className="bg-background text-foreground">{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* VIEW: CREATE GOAL STEP */}
+          {view === "goal_step_create" && (
+            <motion.div
+              key="goal_step_create"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              className="flex-1 flex flex-col h-full absolute inset-0 z-30 bg-background"
+            >
+              <div className="flex items-center justify-between mb-8 relative z-20">
+                <button 
+                  onClick={() => setView("goal_template")} 
+                  className="font-body text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground flex items-center transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4 mr-1" /> Back
+                </button>
+                <div className="text-center absolute left-1/2 -translate-x-1/2 w-40 truncate">
+                    <h1 className="font-display text-sm tracking-wider text-foreground truncate">
+                    New Step
+                    </h1>
+                </div>
+                <button 
+                  onClick={handleCreateGoalStep}
+                  disabled={isDoneLoading || !draftGoalStepTitle.trim()}
+                  className="font-body text-xs uppercase tracking-widest text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
+                >
+                  {isDoneLoading ? "..." : "Schedule"}
+                </button>
+              </div>
+
+              <div className="flex flex-col mt-4 space-y-6">
+                <div>
+                  <label className="font-body text-[10px] uppercase tracking-widest text-primary mb-3 ml-2 block">Step Title</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      autoFocus
+                      value={draftGoalStepTitle}
+                      onChange={(e) => setDraftGoalStepTitle(e.target.value)}
+                      className="w-full bg-gradient-card border border-border text-foreground font-display text-lg tracking-wide py-4 pl-5 pr-12 rounded-2xl focus:outline-none focus:border-primary/50 transition-colors"
+                      placeholder="Enter step title..."
+                    />
+                    {draftGoalStepTitle && (
+                      <button
+                        onClick={() => setDraftGoalStepTitle("")}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-muted flex items-center justify-center hover:bg-muted-foreground/20 transition-colors"
+                      >
+                        <X className="w-3.5 h-3.5 text-foreground" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="font-body text-[10px] uppercase tracking-widest text-primary mb-3 ml-2 block">Date</label>
+                  <input 
+                    type="date"
+                    value={draftGoalStepDate}
+                    onChange={(e) => setDraftGoalStepDate(e.target.value)}
+                    className="w-full bg-input border border-border rounded-lg px-4 py-3 font-body text-sm text-foreground focus:outline-none focus:border-primary transition-colors [&::-webkit-calendar-picker-indicator]:invert"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-body text-[10px] uppercase tracking-widest text-primary mb-3 ml-2 block">Time</label>
+                  <input 
+                    type="time"
+                    value={draftGoalStepTime}
+                    onChange={(e) => setDraftGoalStepTime(e.target.value)}
+                    className="w-full bg-input border border-border rounded-lg px-4 py-3 font-body text-sm text-foreground focus:outline-none focus:border-primary transition-colors [&::-webkit-calendar-picker-indicator]:invert"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-body text-[10px] uppercase tracking-widest text-primary mb-3 ml-2 block">Snooze Settings</label>
+                  <select 
+                    value={draftGoalStepSnooze}
+                    onChange={(e) => setDraftGoalStepSnooze(e.target.value)}
                     className="w-full bg-input border border-border rounded-lg px-4 py-3 font-body text-sm text-foreground focus:outline-none focus:border-primary transition-colors appearance-none"
                   >
                     {BUG_ME_OPTIONS.map(opt => (

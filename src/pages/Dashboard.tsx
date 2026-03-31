@@ -116,7 +116,7 @@ const Dashboard = () => {
 
     const fetchProfile = async () => {
       try {
-        const { data, error } = await (supabase as any)
+        const { data, error } = await supabase
           .from("profiles")
           .select("full_name, transformation_choice, goals")
           .eq("id", user.id)
@@ -191,8 +191,9 @@ const Dashboard = () => {
           alt="Brickhouse Mindset"
           className="w-32 mb-6 drop-shadow-[0_0_30px_hsl(330_100%_42%/0.3)]"
         />
-        <h1 className="font-display text-[26px] sm:text-4xl md:text-5xl tracking-widest mb-2 whitespace-nowrap">
-          {greeting}, <span className="text-accent">{firstName}</span>
+        <h1 className="font-display text-[26px] sm:text-4xl md:text-5xl tracking-widest mb-2 leading-tight">
+          {greeting},<br />
+          <span className="text-accent">{firstName}</span>
         </h1>
         <p className="font-body text-sm text-foreground/80 italic max-w-[280px]">
           "{dailyAffirmation}"

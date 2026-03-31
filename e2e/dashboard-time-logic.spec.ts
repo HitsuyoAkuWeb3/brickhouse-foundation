@@ -32,7 +32,7 @@ test.describe('Dashboard Time-Based Logic (Live DB)', () => {
   test('Dashboard renders time-appropriate greeting', async ({ page }) => {
     // If we land on dashboard, check greeting; if onboarding, test passes (profile data issue)
     if (page.url().includes('dashboard')) {
-      const greeting = page.getByRole('heading', { name: /Good (Morning|Afternoon|Evening)/i });
+      const greeting = page.getByRole('heading', { level: 1 }).filter({ hasText: /(Wake Up|Good Morning|Good Afternoon|Good Evening)/i });
       await expect(greeting).toBeVisible({ timeout: 10000 });
     } else {
       // On onboarding — confirms auth flow works, profile upsert didn't persist

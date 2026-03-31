@@ -26,7 +26,11 @@ const PassionPick = () => {
     setUploading(true);
     try {
       const url = await uploadMedia(file);
-      await upsert.mutateAsync({ id: pick?.id, updates: { image_url: url } });
+      await upsert.mutateAsync({ 
+        id: pick?.id, 
+        updates: { image_url: url },
+        insertAppend: { title: "Untitled Passion" }
+      });
       toast.success("Vision media uploaded 📸");
     } catch (err) {
       toast.error("Upload failed — try again");
@@ -39,7 +43,11 @@ const PassionPick = () => {
 
   const handleSaveSong = () => {
     if (!songTitle.trim() && !songUrl.trim()) return;
-    upsert.mutate({ id: pick?.id, updates: { song_url: songUrl.trim() || null, song_title: songTitle.trim() || null } });
+    upsert.mutate({ 
+      id: pick?.id, 
+      updates: { song_url: songUrl.trim() || null, song_title: songTitle.trim() || null },
+      insertAppend: { title: "Untitled Passion" }
+    });
     toast.success("Theme song saved 🎵");
   };
 
@@ -51,7 +59,11 @@ const PassionPick = () => {
 
   const handleSaveAffirmation = () => {
     if (!affirmation.trim()) return;
-    upsert.mutate({ id: pick?.id, updates: { affirmation_text: affirmation.trim() } });
+    upsert.mutate({ 
+      id: pick?.id, 
+      updates: { affirmation_text: affirmation.trim() },
+      insertAppend: { title: "Untitled Passion" }
+    });
     toast.success("Power affirmation set 💎");
   };
 

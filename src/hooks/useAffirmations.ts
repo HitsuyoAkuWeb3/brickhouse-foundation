@@ -32,7 +32,7 @@ export const useAffirmations = (brickId?: number) => {
   const { data: brickAffirmations = [], isLoading: loadingBrick } = useQuery<BrickAffirmation[]>({
     queryKey: ["brick-affirmations", brickId],
     queryFn: async () => {
-      let q = (supabase as any).from("affirmations").select("*").order("created_at");
+      let q = supabase.from("affirmations").select("*").order("created_at");
       if (brickId) q = q.eq("brick_id", String(brickId));
       const { data, error } = await q;
       if (error) throw error;
@@ -44,13 +44,14 @@ export const useAffirmations = (brickId?: number) => {
   const { data: userAffirmations = [], isLoading: loadingUser } = useQuery<UserAffirmation[]>({
     queryKey: ["user-affirmations", user?.id],
     enabled: !!user,
+    retry: false,
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("user_affirmations")
         .select("*")
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false });
-      if (error) throw error;
+      if (error && error.code !== '42P01') throw error;
       return (data ?? []) as UserAffirmation[];
     },
   });

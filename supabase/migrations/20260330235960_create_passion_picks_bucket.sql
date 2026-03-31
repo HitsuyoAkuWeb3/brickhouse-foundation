@@ -3,8 +3,7 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('passion-picks', 'passion-picks', true)
 ON CONFLICT (id) DO NOTHING;
 
--- Enable RLS on the storage.objects table if not already enabled
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+
 
 -- Policy: Allow public read access to passion-picks
 CREATE POLICY "Public Access"

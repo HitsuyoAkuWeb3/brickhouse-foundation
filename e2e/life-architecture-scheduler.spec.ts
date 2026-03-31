@@ -60,10 +60,10 @@ test.describe('Scheduler / Life Architecture (Live DB)', () => {
     await nextBtn.click();
 
     // Step 2: Set time
-    await expect(page.getByText(/Set Time/i)).toBeVisible();
+    await expect(page.getByText(/Snooze Settings/i)).toBeVisible();
 
-    // Select 15 min quick picker (accessible name includes "Min")
-    await page.getByRole('button', { name: /15 Min/i }).click();
+    // The Date and Time inputs have defaults, so we can just proceed to schedule without interacting
+
 
     // Click Schedule to create
     const scheduleBtn = page.getByRole('button', { name: 'Schedule', exact: true });

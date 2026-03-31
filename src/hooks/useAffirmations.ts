@@ -1,4 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCrudField } from "@/hooks/useCrudField";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -54,41 +55,45 @@ export const useAffirmations = (brickId?: number) => {
     },
   });
 
-  const addAffirmation = useMutation({
-    mutationFn: async ({ affirmation, brickId: bId }: { affirmation: string; brickId?: number }) => {
-      const { error } = await (supabase as any)
-        .from("user_affirmations")
-        .insert({ user_id: user!.id, affirmation, brick_id: bId ?? null });
-      if (error) throw error;
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["user-affirmations", user?.id] }),
+  const customAffirmationsCrud = useCrudField<UserAffirmation>({
+    tableName: "user_affirmations",
+    queryKey: ["user-affirmations", user?.id],
   });
 
-  const toggleFavorite = useMutation({
-    mutationFn: async ({ id, is_favorite }: { id: string; is_favorite: boolean }) => {
-      const { error } = await (supabase as any)
-        .from("user_affirmations")
-        .update({ is_favorite })
-        .eq("id", id);
-      if (error) throw error;
+  const addAffirmation = {
+    mutate: (payload: { affirmation: string; brickId?: number }) => {
+      customAffirmationsCrud.mutate({
+        updates: { affirmation: payload.affirmation, brick_id: payload.brickId ?? null, is_favorite: false },
+      });
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["user-affirmations", user?.id] }),
-  });
+    isPending: customAffirmationsCrud.isPending,
+  };
 
-  const deleteAffirmation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await (supabase as any).from("user_affirmations").delete().eq("id", id);
-      if (error) throw error;
+  const toggleFavorite = {
+    mutate: (payload: { id: string; is_favorite: boolean }) => {
+      customAffirmationsCrud.mutate({
+        id: payload.id,
+        updates: { is_favorite: payload.is_favorite },
+      });
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["user-affirmations", user?.id] }),
-  });
+  };
 
-  // Daily featured — deterministic pick based on date
+  const deleteAffirmation = {
+    mutate: (id: string) => {
+      customAffirmationsCrud.mutate({
+        id,
+        action: 'delete'
+      });
+    },
+  };
+
+  // Daily featured — deterministic pick based on date (Restricted to Brick 1 for Beta)
   const dailyAffirmation = (() => {
-    if (!brickAffirmations.length) return null;
+    const available = brickAffirmations.filter(a => a.brick_id === "1");
+    if (!available.length) return null;
     const day = new Date();
     const seed = day.getFullYear() * 1000 + day.getMonth() * 31 + day.getDate();
-    return brickAffirmations[seed % brickAffirmations.length];
+    return available[seed % available.length];
   })();
 
   return {

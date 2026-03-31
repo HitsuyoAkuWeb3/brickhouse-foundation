@@ -16,6 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import logo from "@/assets/brickhouse-logo.png";
 import { brick1Lessons } from "@/data/brick1Lessons";
+import { bricks } from "@/data/bricksContent";
 import { useLeveling } from "@/hooks/useLeveling";
 
 type TimeWindow = "morning" | "midday" | "evening";
@@ -190,7 +191,7 @@ const Dashboard = () => {
           alt="Brickhouse Mindset"
           className="w-32 mb-6 drop-shadow-[0_0_30px_hsl(330_100%_42%/0.3)]"
         />
-        <h1 className="font-display text-4xl sm:text-5xl tracking-wider mb-2">
+        <h1 className="font-display text-[26px] sm:text-4xl md:text-5xl tracking-widest mb-2 whitespace-nowrap">
           {greeting}, <span className="text-accent">{firstName}</span>
         </h1>
         <p className="font-body text-sm text-foreground/80 italic max-w-[280px]">
@@ -329,10 +330,8 @@ const Dashboard = () => {
         transition={{ duration: 0.5, delay: 0.25 }}
         className="w-full max-w-lg mb-6"
       >
-        <a
-          href={calendlyUrl}
-          target="_blank"
-          rel="noopener noreferrer"
+        <Link
+          to="/coaching-intake"
           onClick={() => trackEvent("feature_click", { feature: "coaching" })}
           className="w-full rounded-2xl border border-accent/30 bg-gradient-to-br from-accent/10 to-card/60 backdrop-blur-md p-5 flex items-center gap-4 hover:border-accent/50 transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_20px_hsl(var(--accent)/0.15)]"
         >
@@ -340,11 +339,11 @@ const Dashboard = () => {
             <Video className="w-6 h-6 text-accent" />
           </div>
           <div className="flex-1 text-left">
-            <h3 className="font-display text-base tracking-wider">Book a Coaching Call</h3>
+            <h3 className="font-display text-base tracking-wider">Request a Coaching Call</h3>
             <p className="font-body text-[11px] text-muted-foreground mt-0.5">1:1 with Che' — your Lifestyle Architect</p>
           </div>
           <ArrowRight className="w-4 h-4 text-muted-foreground" />
-        </a>
+        </Link>
       </motion.div>
 
       {/* Join the Collective — §G.2 Position 4 */}
@@ -354,22 +353,18 @@ const Dashboard = () => {
         transition={{ duration: 0.5, delay: 0.3 }}
         className="w-full max-w-lg mb-8"
       >
-        <a
-          href={collectiveUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={() => trackEvent("feature_click", { feature: "collective" })}
-          className="w-full rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 to-card/60 backdrop-blur-md p-5 flex items-center gap-4 hover:border-primary/50 transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_20px_hsl(var(--primary)/0.15)]"
+        <div
+          title="Coming Soon in Phase 2"
+          className="w-full rounded-2xl border border-primary/10 bg-gradient-to-br from-primary/5 to-card/40 backdrop-blur-md p-5 flex items-center gap-4 opacity-60 cursor-not-allowed transition-all grayscale"
         >
-          <div className="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
-            <Users className="w-6 h-6 text-primary" />
+          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+            <Users className="w-6 h-6 text-primary/60" />
           </div>
           <div className="flex-1 text-left">
-            <h3 className="font-display text-base tracking-wider">Join the Collective</h3>
-            <p className="font-body text-[11px] text-muted-foreground mt-0.5">Connect with your Brickhouse sisters</p>
+            <h3 className="font-display text-base tracking-wider text-muted-foreground">Join the Collective</h3>
+            <p className="font-body text-[11px] text-muted-foreground mt-0.5">Coming Soon in Phase 2</p>
           </div>
-          <ArrowRight className="w-4 h-4 text-muted-foreground" />
-        </a>
+        </div>
       </motion.div>
 
       {/* Toolbox Grid — 5 tiles (Passion Pick promoted above) */}
@@ -422,7 +417,7 @@ const Dashboard = () => {
       >
         <div className="absolute -inset-1 rounded-[2rem] bg-gradient-to-r from-primary to-accent opacity-30 blur-lg group-hover:opacity-60 transition duration-500 animate-pulse"></div>
         <Link 
-          to="/bricks/self-love/lesson/1" 
+          to="/bricks/self-love" 
           className="relative flex flex-col items-start bg-card/60 backdrop-blur-md border border-primary/30 rounded-3xl p-6 sm:p-8 overflow-hidden hover:bg-card/80 transition-all"
         >
           <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
@@ -435,7 +430,7 @@ const Dashboard = () => {
           
           <h2 className="font-display text-2xl sm:text-3xl text-foreground mb-3 text-left">
             Brick 1: <br />
-            <span className="text-accent">Self-Love & Identity</span>
+            <span className="text-accent">{bricks[0].name}</span>
           </h2>
           
           <p className="font-body text-sm text-foreground/70 text-left mb-6 max-w-[280px]">

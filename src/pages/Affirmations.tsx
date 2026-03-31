@@ -5,6 +5,7 @@ import { useAffirmations } from "@/hooks/useAffirmations";
 import { useSchedulerTasks } from "@/hooks/useSchedulerTasks";
 import { bricks } from "@/data/bricksContent";
 import { supabase } from "@/integrations/supabase/client";
+import { NotificationService } from "@/services/NotificationService";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Plus, Trash2, Sparkles, ChevronDown, ArrowLeft, Lock, Headphones, X, Clock } from "lucide-react";
 import { toast } from "sonner";
@@ -214,7 +215,7 @@ const Affirmations = () => {
         {/* Browse by Brick — Locked to Brick 1 for Beta */}
         <h2 className="font-display text-lg tracking-wider mb-4">Browse by Brick</h2>
         <div className="space-y-2">
-          {bricks.map((brick) => {
+          {bricks.filter(b => b.id === 1).map((brick) => {
             const affirmations = groupedByBrick[brick.id] || [];
             
             if (!affirmations.length) return null;
@@ -294,6 +295,30 @@ const Affirmations = () => {
                                           snooze_interval: 'every_hour',
                                           is_active: true,
                                         });
+
+                                        // Ensure push permissions and wire up local fallback pushing
+                                        NotificationService.requestPermission().then((granted) => {
+                                          if (granted) {
+                                            const now = new Date();
+                                            const [hours, minutes] = scheduleTime.split(':').map(Number);
+                                            const scheduledDate = new Date();
+                                            scheduledDate.setHours(hours, minutes, 0, 0);
+                                            if (scheduledDate < now) {
+                                              scheduledDate.setDate(scheduledDate.getDate() + 1);
+                                            }
+
+                                            NotificationService.schedulePushNotification({
+                                              title: "Affirmation Reminder",
+                                              body: a.text.replace('Audio Affirmation: ', ''),
+                                              scheduledFor: scheduledDate,
+                                              data: {
+                                                affirmation_id: a.id,
+                                                scheduleTime
+                                              }
+                                            });
+                                          }
+                                        });
+
                                         toast.success(`Affirmation scheduled for ${scheduleTime} ⏰`);
                                         setSchedulingId(null);
                                       }}

@@ -1,4 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
+import { useCrudField } from "@/hooks/useCrudField";
 import { supabase } from "@/integrations/supabase/client";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useAuth } from "@/hooks/useAuth";
@@ -17,7 +18,6 @@ export interface PassionPick {
 
 export const usePassionPick = () => {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
 
   const { data: pick, isLoading } = useQuery({
     queryKey: ["passion-pick", user?.id],
@@ -35,22 +35,9 @@ export const usePassionPick = () => {
     },
   });
 
-  const upsert = useMutation({
-    mutationFn: async (updates: Partial<Omit<PassionPick, "id" | "user_id" | "created_at" | "updated_at">>) => {
-      if (pick) {
-        const { error } = await (supabase as any)
-          .from("passion_picks")
-          .update({ ...updates, updated_at: new Date().toISOString() })
-          .eq("id", pick.id);
-        if (error) throw error;
-      } else {
-        const { error } = await (supabase as any)
-          .from("passion_picks")
-          .insert({ user_id: user!.id, ...updates } as any);
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["passion-pick", user?.id] }),
+  const upsert = useCrudField<Partial<PassionPick>>({
+    tableName: "passion_picks",
+    queryKey: ["passion-pick", user?.id],
   });
 
   const uploadMedia = async (file: File): Promise<string> => {

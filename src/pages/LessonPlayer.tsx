@@ -14,11 +14,13 @@ const LessonPlayer = () => {
   const { isLessonCompleted, toggleLesson } = useLessonProgress();
   const { trackEvent } = useAnalytics();
 
-  if (!brick || !lesson) {
+  if (!brick || !lesson || brick.id !== 1) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <p className="font-display text-2xl mb-4">Lesson not found</p>
+          <p className="font-display text-2xl mb-4">
+            {brick && brick.id !== 1 ? "Component is currently locked for Beta" : "Lesson not found"}
+          </p>
           <button onClick={() => navigate("/bricks")} className="text-accent hover:underline font-body text-sm">
             ← Back to My Bricks
           </button>

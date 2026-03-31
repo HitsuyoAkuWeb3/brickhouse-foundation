@@ -1,5 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useCrudField } from "@/hooks/useCrudField";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
@@ -39,37 +40,40 @@ export const useDailyRitual = (date?: Date) => {
     },
   });
 
-  const upsertRitual = useMutation({
-    mutationFn: async (updates: Partial<Omit<DailyRitual, "id" | "profile_id" | "date" | "created_at">>) => {
-      const { data: existing } = await (supabase as any)
-        .from("daily_rituals")
-        .select("id, ritual_data")
-        .eq("profile_id", user!.id)
-        .eq("date", today)
-        .maybeSingle();
+  const crudMutation = useCrudField<DailyRitual>({
+    tableName: "daily_rituals",
+    queryKey: ["daily-ritual", user?.id, today],
+    userIdColumn: "profile_id",
+  });
 
-      const mergedRitualData = existing 
-        ? { ...((existing.ritual_data as Record<string, any>) || {}), ...(updates.ritual_data || {}) }
-        : (updates.ritual_data || {});
+  const upsertRitual = {
+    mutate: (updates: Partial<Omit<DailyRitual, "id" | "profile_id" | "date" | "created_at">>) => {
+      // Manual merge for JSON data
+      const mergedRitualData = {
+        ...((ritual?.ritual_data as Record<string, any>) || {}),
+        ...(updates.ritual_data || {})
+      };
 
-      if (existing) {
-        const { error } = await (supabase as any)
-          .from("daily_rituals")
-          .update({ ...updates, ritual_data: mergedRitualData })
-          .eq("id", existing.id);
-        if (error) throw error;
+      const mutationOptions = {
+        onSettled: () => {
+          queryClient.invalidateQueries({ queryKey: ["ritual-streak", user?.id] });
+        }
+      };
+
+      if (ritual?.id) {
+        crudMutation.mutate({
+          id: ritual.id,
+          updates: { ...updates, ritual_data: mergedRitualData }
+        }, mutationOptions);
       } else {
-        const { error } = await (supabase as any)
-          .from("daily_rituals")
-          .insert({ profile_id: user!.id, date: today, ...updates, ritual_data: mergedRitualData });
-        if (error) throw error;
+        crudMutation.mutate({
+          insertAppend: { date: today },
+          updates: { ...updates, ritual_data: mergedRitualData }
+        }, mutationOptions);
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["daily-ritual", user?.id, today] });
-      queryClient.invalidateQueries({ queryKey: ["ritual-streak", user?.id] });
-    },
-  });
+    isPending: crudMutation.isPending,
+  };
 
   // Streak calculation
   const { data: streakData } = useQuery({

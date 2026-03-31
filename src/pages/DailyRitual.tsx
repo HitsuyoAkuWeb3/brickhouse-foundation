@@ -6,8 +6,10 @@ import { useDailyRitual } from "@/hooks/useDailyRitual";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { RitualPlayer, RitualType } from "@/components/RitualPlayer";
+import { format } from "date-fns";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { useSchedulerTasks } from "@/hooks/useSchedulerTasks";
+import { useAffirmations } from "@/hooks/useAffirmations";
 
 const JOY_ACTIVITIES = [
   "🎶 Dance to my favorite song",
@@ -22,10 +24,10 @@ const JOY_ACTIVITIES = [
 
 const ritualItems = [
   {
-    key: "morning_affirmation" as RitualType,
+    key: "morning_checkin" as RitualType,
     dbKey: "morning_completed" as const,
     icon: Sun,
-    title: "Wake Up Affirmation",
+    title: "Morning Check-In",
     subtitle: "Start your day centered",
     prompt: "Look in the mirror. Say your I AM declarations out loud. Mean every word.",
     time: "Morning",
@@ -58,6 +60,8 @@ const DailyRitual = () => {
   const [gratitude, setGratitude] = useState("");
   const [showGratitudeHistory, setShowGratitudeHistory] = useState(false);
   const [activeRitual, setActiveRitual] = useState<RitualType | null>(null);
+  const { dailyAffirmation } = useAffirmations();
+  const [joyDate, setJoyDate] = useState("");
   const { trackEvent } = useAnalytics();
   const { addTask } = useSchedulerTasks();
 
@@ -71,7 +75,7 @@ const DailyRitual = () => {
     if (!activeRitual) return;
     
     // Convert RitualType to DB column name
-    const dbColumn = activeRitual === "morning_affirmation" ? "morning_completed" :
+    const dbColumn = activeRitual === "morning_checkin" ? "morning_completed" :
                      activeRitual === "midday_checkin" ? "midday_completed" : "evening_completed";
 
     upsertRitual.mutate({ 
@@ -89,16 +93,18 @@ const DailyRitual = () => {
     if (!text) return;
     const joyData: Record<string, string> = { joy_moment: text };
     if (joyTime) joyData.joy_scheduled_time = joyTime;
+    if (joyDate) joyData.joy_scheduled_date = joyDate;
     upsertRitual.mutate({ ritual_data: joyData });
     
-    // Convert to schedulable item in Scheduler if time is provided
-    if (joyTime) {
+    // Convert to schedulable item in Scheduler if time or date is provided
+    if (joyTime || joyDate) {
       addTask.mutate({
         title: `Joy: ${text}`,
         category: "live_it",
         task_type: "joy_moment",
-        time_of_day: `${joyTime}:00`,
-        reminder_type: "daily",
+        time_of_day: joyTime ? `${joyTime}:00` : "09:00:00",
+        scheduled_for: joyDate || undefined,
+        reminder_type: joyDate ? "exact" : "daily",
         snooze_interval: "none",
         is_active: true,
       });
@@ -107,6 +113,7 @@ const DailyRitual = () => {
     toast.success(joyTime ? `Joy moment scheduled for ${joyTime} ✨` : "Joy moment captured ✨");
     setJoyMoment("");
     setJoyTime("");
+    setJoyDate("");
     setShowJoyPicker(false);
   };
 
@@ -131,6 +138,7 @@ const DailyRitual = () => {
   // Retrieve joy and gratitude from ritual_data to display
   const savedJoy = ritual?.ritual_data?.joy_moment;
   const savedJoyTime = ritual?.ritual_data?.joy_scheduled_time;
+  const savedJoyDate = ritual?.ritual_data?.joy_scheduled_date;
   const savedGratitude = ritual?.ritual_data?.gratitude_note;
   // Gratitude history from ritual_data (array of past entries)
   const gratitudeHistory: string[] = ritual?.ritual_data?.gratitude_history || [];
@@ -192,6 +200,28 @@ const DailyRitual = () => {
 
           {/* Ritual Checkpoints */}
           <div className="space-y-3 mb-8">
+            {/* Slot 1: My Daily Affirmation */}
+            <Link to="/affirmations">
+              <motion.div
+                layout
+                className="bg-primary/5 border border-primary/20 hover:border-primary/50 rounded-xl overflow-hidden transition-all cursor-pointer"
+              >
+                <div className="w-full flex items-center gap-4 p-4 text-left">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all bg-primary/20 text-primary">
+                    <Sun className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-display text-sm tracking-wider text-primary">
+                      My Daily Affirmation
+                    </h3>
+                    <p className="font-body text-[10px] sm:text-xs text-foreground/80 mt-1 italic">
+                      "{dailyAffirmation?.text || "Build the foundation. Lay the brick. Claim the joy."}"
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            </Link>
+
             {ritualItems.map((item) => {
               const done = ritual?.[item.dbKey] ?? false;
               const Icon = item.icon;
@@ -265,8 +295,10 @@ const DailyRitual = () => {
             {savedJoy ? (
               <div className="font-body text-sm text-foreground/80 bg-foreground/[0.04] rounded-lg p-3 border border-border/50">
                 ✨ {savedJoy}
-                {savedJoyTime && (
-                  <span className="text-[10px] text-accent ml-2">@ {savedJoyTime}</span>
+                {(savedJoyTime || savedJoyDate) && (
+                  <span className="text-[10px] text-accent ml-2">
+                    @ {savedJoyDate && format(new Date(savedJoyDate), "MMM do")} {savedJoyTime}
+                  </span>
                 )}
               </div>
             ) : (
@@ -295,28 +327,36 @@ const DailyRitual = () => {
                   )}
                 </AnimatePresence>
 
-                <div className="flex gap-2">
+                <div className="flex gap-2 mt-3 flex-wrap">
                   <input
                     type="text"
                     placeholder="Or type your own joy moment..."
                     value={joyMoment}
                     onChange={(e) => setJoyMoment(e.target.value)}
                     maxLength={200}
-                    className="flex-1 bg-input border border-border rounded-lg px-3 py-2.5 font-body text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
+                    className="flex-1 min-w-[200px] bg-input border border-border rounded-lg px-3 py-2.5 font-body text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
                   />
-                  <input
-                    type="time"
-                    value={joyTime}
-                    onChange={(e) => setJoyTime(e.target.value)}
-                    className="w-24 bg-input border border-border rounded-lg px-2 py-2.5 font-body text-xs text-foreground focus:outline-none focus:border-primary transition-colors"
-                  />
-                  <button
-                    onClick={() => handleSaveJoy()}
-                    disabled={!joyMoment.trim()}
-                    className="bg-gradient-pink text-foreground font-body font-bold text-[10px] uppercase tracking-wider px-4 py-2.5 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40"
-                  >
-                    Save
-                  </button>
+                  <div className="flex gap-2">
+                    <input
+                      type="date"
+                      value={joyDate}
+                      onChange={(e) => setJoyDate(e.target.value)}
+                      className="w-[110px] bg-input border border-border rounded-lg px-2 py-2.5 font-body text-xs text-foreground focus:outline-none focus:border-primary transition-colors"
+                    />
+                    <input
+                      type="time"
+                      value={joyTime}
+                      onChange={(e) => setJoyTime(e.target.value)}
+                      className="w-[90px] bg-input border border-border rounded-lg px-2 py-2.5 font-body text-xs text-foreground focus:outline-none focus:border-primary transition-colors"
+                    />
+                    <button
+                      onClick={() => handleSaveJoy()}
+                      disabled={!joyMoment.trim()}
+                      className="bg-gradient-pink text-foreground font-body font-bold text-[10px] uppercase tracking-wider px-4 py-2.5 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40"
+                    >
+                      Save
+                    </button>
+                  </div>
                 </div>
               </>
             )}

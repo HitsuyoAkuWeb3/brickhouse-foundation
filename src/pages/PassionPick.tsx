@@ -26,7 +26,7 @@ const PassionPick = () => {
     setUploading(true);
     try {
       const url = await uploadMedia(file);
-      await upsert.mutateAsync({ image_url: url });
+      await upsert.mutateAsync({ id: pick?.id, updates: { image_url: url } });
       toast.success("Vision media uploaded 📸");
     } catch (err) {
       toast.error("Upload failed — try again");
@@ -39,19 +39,19 @@ const PassionPick = () => {
 
   const handleSaveSong = () => {
     if (!songTitle.trim() && !songUrl.trim()) return;
-    upsert.mutate({ song_url: songUrl.trim() || null, song_title: songTitle.trim() || null });
+    upsert.mutate({ id: pick?.id, updates: { song_url: songUrl.trim() || null, song_title: songTitle.trim() || null } });
     toast.success("Theme song saved 🎵");
   };
 
   const handleSaveGoal = () => {
     if (!goalText.trim()) return;
-    upsert.mutate({ title: goalText.trim() });
+    upsert.mutate({ id: pick?.id, updates: { title: goalText.trim() } });
     toast.success("Goal locked in 🎯");
   };
 
   const handleSaveAffirmation = () => {
     if (!affirmation.trim()) return;
-    upsert.mutate({ affirmation_text: affirmation.trim() });
+    upsert.mutate({ id: pick?.id, updates: { affirmation_text: affirmation.trim() } });
     toast.success("Power affirmation set 💎");
   };
 
@@ -165,11 +165,14 @@ const PassionPick = () => {
             <input ref={fileRef} type="file" accept="image/*,video/*" className="hidden" onChange={handleMediaUpload} />
           </div>
 
-          {/* Theme Song */}
-          <div className="bg-gradient-card border border-border rounded-xl p-5 mb-3">
+          {/* Theme Song (Coming Soon per Phase 1 spec) */}
+          <div className="bg-gradient-card border border-border/50 rounded-xl p-5 mb-3 opacity-60 grayscale pointer-events-none relative overflow-hidden">
+            <div className="absolute top-4 right-4 bg-muted text-muted-foreground text-[10px] font-display uppercase tracking-widest px-2 py-1 rounded-full">
+              Coming Soon
+            </div>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center">
-                <Music className="w-5 h-5 text-accent" />
+                <Music className="w-5 h-5 text-accent opacity-50" />
               </div>
               <div>
                 <h3 className="font-display text-sm tracking-wider">Theme Song</h3>
@@ -177,43 +180,26 @@ const PassionPick = () => {
               </div>
             </div>
 
-            {pick?.song_title ? (
-              <div className="flex items-center justify-between bg-foreground/[0.04] rounded-lg p-3">
-                <span className="font-body text-sm">🎵 {pick.song_title}</span>
-                <button
-                  onClick={() => { setSongTitle(""); setSongUrl(""); upsert.mutate({ song_title: null, song_url: null }); }}
-                  className="font-body text-[10px] text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Change
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <input
-                  type="text"
-                  placeholder="Song name (e.g. Run the World — Beyoncé)"
-                  value={songTitle}
-                  onChange={(e) => setSongTitle(e.target.value)}
-                  maxLength={150}
-                  className="w-full bg-input border border-border rounded-lg px-4 py-3 font-body text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
-                />
-                <input
-                  type="url"
-                  placeholder="Spotify/YouTube link (optional)"
-                  value={songUrl}
-                  onChange={(e) => setSongUrl(e.target.value)}
-                  maxLength={500}
-                  className="w-full bg-input border border-border rounded-lg px-4 py-3 font-body text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
-                />
-                <button
-                  onClick={handleSaveSong}
-                  disabled={!songTitle.trim()}
-                  className="w-full bg-gradient-pink text-foreground font-body font-bold text-sm tracking-wider uppercase py-3 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
-                >
-                  Save Song
-                </button>
-              </div>
-            )}
+            <div className="space-y-2">
+              <input
+                type="text"
+                placeholder="Song name (e.g. Run the World — Beyoncé)"
+                disabled
+                className="w-full bg-input/50 border border-border/50 rounded-lg px-4 py-3 font-body text-sm text-muted-foreground placeholder:text-muted-foreground/50 focus:outline-none"
+              />
+              <input
+                type="url"
+                placeholder="Spotify/YouTube link (optional)"
+                disabled
+                className="w-full bg-input/50 border border-border/50 rounded-lg px-4 py-3 font-body text-sm text-muted-foreground placeholder:text-muted-foreground/50 focus:outline-none"
+              />
+              <button
+                disabled
+                className="w-full bg-gradient-pink text-foreground font-body font-bold text-sm tracking-wider uppercase py-3 rounded-lg opacity-30 cursor-not-allowed"
+              >
+                Save Song
+              </button>
+            </div>
           </div>
 
           {/* Goal */}
@@ -232,7 +218,7 @@ const PassionPick = () => {
               <div className="flex items-center justify-between bg-foreground/[0.04] rounded-lg p-3">
                 <span className="font-body text-sm">🎯 {pick.title}</span>
                 <button
-                  onClick={() => upsert.mutate({ title: null })}
+                  onClick={() => upsert.mutate({ id: pick?.id, updates: { title: null } })}
                   className="font-body text-[10px] text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Change
@@ -275,7 +261,7 @@ const PassionPick = () => {
               <div className="flex items-center justify-between bg-foreground/[0.04] rounded-lg p-3">
                 <span className="font-body text-sm italic">"{pick.affirmation_text}"</span>
                 <button
-                  onClick={() => upsert.mutate({ affirmation_text: null })}
+                  onClick={() => upsert.mutate({ id: pick?.id, updates: { affirmation_text: null } })}
                   className="font-body text-[10px] text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Change

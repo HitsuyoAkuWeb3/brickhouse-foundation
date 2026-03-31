@@ -45,34 +45,54 @@ const MyBricks = () => {
         >
           {bricks.map((brick) => {
             const progress = getBrickProgress(brick.id, brick.lessonCount);
-            return (
-              <motion.div key={brick.id} variants={tile}>
-                <Link to={`/bricks/${brick.slug}`} className="block group">
-                  <div className="relative bg-gradient-card border border-border rounded-xl p-5 h-full transition-all hover:border-primary/40 hover:shadow-[0_0_20px_hsl(var(--primary)/0.15)] overflow-hidden">
-                    <div className="absolute top-2 right-3 font-display text-[40px] leading-none text-foreground/[0.04]">
-                      {String(brick.id).padStart(2, "0")}
-                    </div>
-                    <div className="text-3xl mb-3">{brick.icon}</div>
-                    <h3 className="font-display text-sm tracking-wider leading-snug mb-1 group-hover:text-accent transition-colors">
-                      {brick.name}
-                    </h3>
-                    <p className="font-body text-[10px] text-muted-foreground uppercase tracking-wider mb-3">
-                      {brick.subtitle}
-                    </p>
-                    <div className="mt-auto">
-                      <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1.5">
-                        <span>{brick.lessonCount} lessons</span>
-                        <span>{progress.percent}%</span>
-                      </div>
-                      <div className="h-1 bg-foreground/[0.07] rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-gradient-to-r from-primary to-accent transition-all"
-                          style={{ width: `${progress.percent}%` }}
-                        />
-                      </div>
+            const isLocked = brick.id !== 1;
+
+            const BrickCard = (
+              <div className="relative bg-gradient-card border border-border rounded-xl p-5 h-full transition-all hover:border-primary/40 hover:shadow-[0_0_20px_hsl(var(--primary)/0.15)] overflow-hidden">
+                <div className="absolute top-2 right-3 font-display text-[40px] leading-none text-foreground/[0.04]">
+                  {String(brick.id).padStart(2, "0")}
+                </div>
+                <div className="text-3xl mb-3">{brick.icon}</div>
+                <h3 className="font-display text-sm tracking-wider leading-snug mb-1 group-hover:text-accent transition-colors">
+                  {brick.name}
+                </h3>
+                <p className="font-body text-[10px] text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                  {brick.subtitle}
+                  {isLocked && <span className="text-muted-foreground/50">— Phase 2</span>}
+                </p>
+                <div className="mt-auto">
+                  <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1.5">
+                    <span>{brick.lessonCount} lessons</span>
+                    <span>{isLocked ? "0" : progress.percent}%</span>
+                  </div>
+                  <div className="h-1 bg-foreground/[0.07] rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-primary to-accent transition-all"
+                      style={{ width: isLocked ? '0%' : `${progress.percent}%` }}
+                    />
+                  </div>
+                </div>
+                {isLocked && (
+                  <div className="absolute inset-0 bg-background/60 backdrop-blur-[1px] flex items-center justify-center rounded-xl z-10 transition-opacity">
+                    <div className="bg-background/80 px-3 py-1.5 rounded-full border border-border flex items-center gap-2">
+                       <span className="text-xs font-display tracking-widest uppercase text-muted-foreground">Locked</span>
                     </div>
                   </div>
-                </Link>
+                )}
+              </div>
+            );
+
+            return (
+              <motion.div key={brick.id} variants={tile}>
+                {isLocked ? (
+                  <div className="block group cursor-not-allowed" title="Available in Phase 2">
+                    {BrickCard}
+                  </div>
+                ) : (
+                  <Link to={`/bricks/${brick.slug}`} className="block group">
+                    {BrickCard}
+                  </Link>
+                )}
               </motion.div>
             );
           })}

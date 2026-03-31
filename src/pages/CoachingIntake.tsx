@@ -138,11 +138,21 @@ const CoachingIntake = () => {
 
       if (error) throw error;
       
-      toast.success("Intake submitted successfully. Redirecting to schedule...");
+      // Trigger the email notification to admin via Edge Function
+      try {
+        await supabase.functions.invoke('send-intake-email', {
+          body: { formData: values }
+        });
+      } catch (emailError) {
+        console.error("Failed to send notification email:", emailError);
+        // We catch and log this without throwing so the user's flow isn't interrupted
+      }
       
-      // Delay to let toast show, then redirect to Calendly route
+      toast.success("Intake submitted successfully. I will review and reach out.");
+      
+      // Delay to let toast show, then redirect to Dashboard
       setTimeout(() => {
-        window.location.href = "http://calendly.com/che-brickhousemindset";
+        window.location.href = "/dashboard";
       }, 1500);
       
     } catch (error) {
@@ -763,7 +773,8 @@ const CoachingIntake = () => {
               transition={{ delay: 0.2 }}
             >
               <p className="text-sm text-muted-foreground mb-8">
-                Once I receive your form, you will be redirected to schedule your complimentary discovery call time.
+                Once I receive your form, I will review your application and touch base with you to coordinate a complimentary discovery call if it's a fit.
+                <br />
                 <br />
                 <span className="italic">Loving yourself is not an option — it's THE solution.</span>
               </p>
@@ -779,7 +790,7 @@ const CoachingIntake = () => {
                     Submitting...
                   </>
                 ) : (
-                  "Submit & Schedule"
+                  "Submit Application"
                 )}
               </button>
             </motion.div>

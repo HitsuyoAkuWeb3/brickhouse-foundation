@@ -10,7 +10,7 @@ import { useAudioAnalyzer } from "@/hooks/useAudioAnalyzer";
 import { AffirmationTeleprompter } from "@/components/AffirmationTeleprompter";
 import { VoiceRecorder } from "@/components/VoiceRecorder";
 
-export type RitualType = "morning_affirmation" | "midday_checkin" | "evening_reflection";
+export type RitualType = "morning_checkin" | "midday_checkin" | "evening_reflection";
 
 interface Step {
   id: string;
@@ -22,7 +22,7 @@ interface Step {
 }
 
 const RITUAL_CONFIGS: Record<RitualType, Step[]> = {
-  morning_affirmation: [
+  morning_checkin: [
     { id: "gratitude", title: "Gratitude", prompt: "What are you grateful for today?", type: "input", key: "gratitude_note" },
     { id: "intention", title: "Intention", prompt: "What is your intention for today?", type: "input", key: "morning_intention" },
     { id: "affirmation", title: "Affirmation", prompt: "Listen to Ché, then repeat each declaration with conviction.", type: "teleprompter" },
@@ -50,7 +50,7 @@ const slideVariants = {
 };
 
 const AUDIO_URLS: Record<RitualType, string> = {
-  morning_affirmation: "/audio/morning-ritual.m4a",
+  morning_checkin: "/audio/morning-ritual.m4a",
   midday_checkin: "/audio/midday-ritual.m4a",
   evening_reflection: "/audio/evening-ritual.m4a",
 };

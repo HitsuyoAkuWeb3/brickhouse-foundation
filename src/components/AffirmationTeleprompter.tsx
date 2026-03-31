@@ -45,7 +45,9 @@ export const AffirmationTeleprompter = ({
         .not("audio_url", "is", null);
 
       if (brickId) {
-        q = q.eq("brick_id", brickId);
+        q = q.eq("brick_id", String(brickId));
+      } else {
+        q = q.eq("brick_id", "1"); // Force Brick 1 for Beta constraint
       }
 
       const { data, error } = await q;

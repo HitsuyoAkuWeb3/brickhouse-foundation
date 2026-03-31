@@ -232,7 +232,9 @@ const Scheduler = () => {
   // Creation Form State (General Reminders)
   const [draftTitle, setDraftTitle] = useState("");
   const [draftIcon, setDraftIcon] = useState("build");
-  const [draftMinutes, setDraftMinutes] = useState<number>(5);
+  const [draftDate, setDraftDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
+  const [draftTime, setDraftTime] = useState<string>("09:00");
+  const [draftSnooze, setDraftSnooze] = useState<string>("none");
   const [isDoneLoading, setIsDoneLoading] = useState(false);
 
   // Bug Me Sheet State
@@ -264,7 +266,9 @@ const Scheduler = () => {
       return;
     }
     setIsDoneLoading(true);
-    const scheduledDate = addMinutes(new Date(), draftMinutes);
+    
+    // Parse combined date and time
+    const scheduledDate = new Date(`${draftDate}T${draftTime}:00`);
 
     addTask.mutate(
       {
@@ -273,6 +277,7 @@ const Scheduler = () => {
         reminder_type: "one_off",
         task_type: "custom",
         scheduled_for: scheduledDate.toISOString(),
+        snooze_interval: draftSnooze,
         is_active: true,
       },
       {
@@ -281,7 +286,9 @@ const Scheduler = () => {
           setIsDoneLoading(false);
           setDraftTitle("");
           setDraftIcon("build");
-          setDraftMinutes(5);
+          setDraftDate(format(new Date(), "yyyy-MM-dd"));
+          setDraftTime("09:00");
+          setDraftSnooze("none");
           setView("list");
         },
         onError: () => setIsDoneLoading(false)
@@ -767,32 +774,38 @@ const Scheduler = () => {
                 </button>
               </div>
 
-              <div className="flex flex-col mt-4">
-                <label className="font-body text-[10px] uppercase tracking-widest text-primary mb-3 ml-2">Set Time</label>
-                <div className="w-full bg-gradient-card border border-border px-5 py-4 rounded-2xl flex items-center justify-between shadow-[0_0_15px_hsl(var(--primary)/0.05)]">
-                    <span className="font-display text-xl tracking-wider text-foreground">
-                        {draftMinutes} 
-                    </span>
-                    <span className="font-body text-[10px] uppercase tracking-widest text-muted-foreground">Minutes from now</span>
+              <div className="flex flex-col mt-4 space-y-6">
+                <div>
+                  <label className="font-body text-[10px] uppercase tracking-widest text-primary mb-3 ml-2 block">Date</label>
+                  <input 
+                    type="date"
+                    value={draftDate}
+                    onChange={(e) => setDraftDate(e.target.value)}
+                    className="w-full bg-input border border-border rounded-lg px-4 py-3 font-body text-sm text-foreground focus:outline-none focus:border-primary transition-colors [&::-webkit-calendar-picker-indicator]:invert"
+                  />
                 </div>
 
-                <label className="font-body text-[10px] uppercase tracking-widest text-primary mt-10 mb-4 ml-2">Quick Select</label>
-                <div className="grid grid-cols-3 gap-3">
-                  {TIME_QUICK_PICKERS.map((mins) => (
-                    <button
-                      key={mins}
-                      onClick={() => setDraftMinutes(mins)}
-                      className={cn(
-                        "py-5 rounded-2xl flex flex-col items-center justify-center transition-all bg-gradient-card border",
-                        draftMinutes === mins 
-                          ? "border-primary bg-primary/10 shadow-[0_0_15px_hsl(var(--primary)/0.15)] text-primary" 
-                          : "border-border hover:border-primary/30 text-foreground"
-                      )}
-                    >
-                      <span className="font-display text-2xl tracking-widest leading-none mb-1">{mins}</span>
-                      <span className="font-body text-[9px] uppercase tracking-widest opacity-60">Min</span>
-                    </button>
-                  ))}
+                <div>
+                  <label className="font-body text-[10px] uppercase tracking-widest text-primary mb-3 ml-2 block">Time</label>
+                  <input 
+                    type="time"
+                    value={draftTime}
+                    onChange={(e) => setDraftTime(e.target.value)}
+                    className="w-full bg-input border border-border rounded-lg px-4 py-3 font-body text-sm text-foreground focus:outline-none focus:border-primary transition-colors [&::-webkit-calendar-picker-indicator]:invert"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-body text-[10px] uppercase tracking-widest text-primary mb-3 ml-2 block">Snooze Settings</label>
+                  <select 
+                    value={draftSnooze}
+                    onChange={(e) => setDraftSnooze(e.target.value)}
+                    className="w-full bg-input border border-border rounded-lg px-4 py-3 font-body text-sm text-foreground focus:outline-none focus:border-primary transition-colors appearance-none"
+                  >
+                    {BUG_ME_OPTIONS.map(opt => (
+                      <option key={opt.value} value={opt.value} className="bg-background text-foreground">{opt.label}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </motion.div>

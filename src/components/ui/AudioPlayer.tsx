@@ -29,6 +29,9 @@ export function AudioPlayer({ src }: { src: string }) {
       setDuration(formatTime(audio.duration));
     };
 
+    const handlePlayEvent = () => setIsPlaying(true);
+    const handlePauseEvent = () => setIsPlaying(false);
+
     const handleEnded = () => {
       setIsPlaying(false);
       setProgress(0);
@@ -37,47 +40,60 @@ export function AudioPlayer({ src }: { src: string }) {
 
     audio.addEventListener("timeupdate", updateProgress);
     audio.addEventListener("loadedmetadata", handleLoadedMetadata);
+    audio.addEventListener("play", handlePlayEvent);
+    audio.addEventListener("pause", handlePauseEvent);
     audio.addEventListener("ended", handleEnded);
 
     return () => {
       audio.removeEventListener("timeupdate", updateProgress);
       audio.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      audio.removeEventListener("play", handlePlayEvent);
+      audio.removeEventListener("pause", handlePauseEvent);
       audio.removeEventListener("ended", handleEnded);
     };
   }, []);
 
-  const togglePlay = () => {
+  const togglePlay = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (audioRef.current) {
       if (isPlaying) {
         audioRef.current.pause();
       } else {
-        audioRef.current.play();
+        audioRef.current.play().catch(err => {
+          console.error("Audio playback failed:", err);
+        });
       }
-      setIsPlaying(!isPlaying);
     }
   };
 
-  const toggleMute = () => {
+  const toggleMute = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (audioRef.current) {
       audioRef.current.muted = !isMuted;
       setIsMuted(!isMuted);
     }
   };
 
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSeek = (e: React.ChangeEvent<HTMLInputElement> | React.MouseEvent) => {
+    e.stopPropagation();
     if (audioRef.current) {
-      const time = (Number(e.target.value) / 100) * audioRef.current.duration;
+      const time = (Number((e.target as HTMLInputElement).value) / 100) * audioRef.current.duration;
       if (!isNaN(time)) {
         audioRef.current.currentTime = time;
-        setProgress(Number(e.target.value));
+        setProgress(Number((e.target as HTMLInputElement).value));
       }
     }
   };
 
   return (
-    <div className="flex flex-col gap-2 mt-3 p-3 bg-card/30 border border-primary/10 rounded-xl">
+    <div 
+      className="flex flex-col gap-2 mt-3 p-3 bg-card/30 border border-primary/10 rounded-xl"
+      onClick={(e) => e.stopPropagation()}
+    >
       <div className="flex items-center gap-4">
-        <audio ref={audioRef} src={src} preload="metadata" />
+        <audio ref={audioRef} src={src} preload="metadata" crossOrigin="anonymous" />
         
         <button 
           onClick={togglePlay}

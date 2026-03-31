@@ -239,6 +239,7 @@ export const RitualPlayer = ({ type, onClose, onComplete }: RitualPlayerProps) =
         ref={audioRef} 
         src={AUDIO_URLS[type]} 
         playsInline 
+        crossOrigin="anonymous"
         onError={(e) => {
           console.error("Audio failed to load:", e);
           setAudioError(true);

@@ -60,7 +60,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [checkingProfile, setCheckingProfile] = useState(true);
-  const [firstName, setFirstName] = useState("Brick House");
+  const [firstName, setFirstName] = useState("Brickhouse");
   const [primaryGoal, setPrimaryGoal] = useState("");
   const { completedLessons } = useLessonProgress();
   const { ritual, streak } = useDailyRitual();
@@ -229,7 +229,7 @@ const Dashboard = () => {
               </h3>
               <p className="font-body text-[11px] text-muted-foreground mt-0.5">
                 {allDone
-                  ? "You laid every brick today. Rest well, Brick House."
+                  ? "You laid every brick today. Rest well, Brickhouse."
                   : isFeaturedDone
                   ? "Done ✓ — Next ritual awaits"
                   : featuredRitual.prompt}

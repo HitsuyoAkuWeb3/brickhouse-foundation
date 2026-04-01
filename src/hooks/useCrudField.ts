@@ -36,10 +36,8 @@ export function useCrudField<T extends { id?: string | number; user_id?: string;
       // (Some tables like passion_picks have updated_at)
       
       const updateData = { ...payload.updates };
-      // Try to gracefully add updated_at if it's an update
-      if (payload.id && !options.isInsertOnly) {
-         (updateData as any).updated_at = new Date().toISOString();
-      }
+      // Note: Removed forced updated_at injection because not all tables have this column.
+      // E.g. passion_picks does not have updated_at, causing postgres schema errors.
 
       if (payload.id && !options.isInsertOnly) {
         const { error, data } = await (supabase as any)

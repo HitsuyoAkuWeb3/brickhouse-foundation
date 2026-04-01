@@ -55,4 +55,25 @@ test.describe('Passion Pick & Code Switch (Live DB)', () => {
     const accept = await fileInput.getAttribute('accept');
     expect(accept).toBeTruthy();
   });
+
+  test('Passion Pick page successfully uploads and displays an image', async ({ page }) => {
+    test.setTimeout(30000); // Give upload time if needed
+    await page.goto('/passion-pick');
+    await page.waitForLoadState('networkidle');
+
+    // the file input is visually hidden but we can interact with it
+    const fileInput = page.locator('input[type="file"]');
+    
+    // We can upload a local asset that is part of the repo
+    await fileInput.setInputFiles('src/assets/brickhouse-logo.png');
+
+    // Need to wait for the image tag to become visible
+    // The image has alt="Passion pick"
+    const displayImage = page.locator('img[alt="Passion pick"]');
+    await expect(displayImage).toBeVisible({ timeout: 15000 });
+    
+    // Check that src is a valid url (will depend on storage bucket config)
+    const src = await displayImage.getAttribute('src');
+    expect(src).toContain('passion-picks');
+  });
 });

@@ -13,7 +13,7 @@ import {
   Sun, Clock, Moon, Play, CheckCircle2, MessageSquare, Heart, ArrowRight, Flame, Video, Users, Trophy, Edit2, type LucideIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import logo from "@/assets/brickhouse-logo.png";
+import logo from "@/assets/BHhres-white.png";
 import { brick1Lessons } from "@/data/brick1Lessons";
 import { bricks } from "@/data/bricksContent";
 import { useLeveling } from "@/hooks/useLeveling";
@@ -178,7 +178,7 @@ const Dashboard = () => {
         <img
           src={logo}
           alt="Brickhouse Mindset"
-          className="w-32 mb-6 drop-shadow-[0_0_30px_hsl(330_100%_42%/0.3)]"
+          className="w-32 mb-6"
         />
         <h1 className="font-display text-[26px] sm:text-4xl md:text-5xl tracking-widest mb-2 leading-tight">
           {greeting},<br />

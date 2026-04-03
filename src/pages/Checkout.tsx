@@ -1,7 +1,7 @@
 import { SquarePaymentForm } from "@/components/SquarePaymentForm";
 import { CheckCircle2 } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
-import logo from "@/assets/logo-marketing.png";
+import logo from "@/assets/BHhres-white.png";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 

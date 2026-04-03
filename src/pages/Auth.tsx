@@ -127,7 +127,8 @@ const Auth = () => {
         <div className="relative z-10 w-full max-w-[400px] text-center">
           <img
             src={logo}
-            className="w-48 mx-auto mb-8 drop-shadow-[0_0_30px_hsl(330_100%_42%/0.4)]"
+            alt="Brickhouse Mindset"
+            className="w-48 mx-auto mb-8"
           />
           <div className="bg-gradient-card border border-primary/30 rounded-2xl p-8 mb-6">
             <div className="w-14 h-14 rounded-full bg-primary/15 flex items-center justify-center mx-auto mb-4">

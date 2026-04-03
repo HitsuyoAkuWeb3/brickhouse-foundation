@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Mail, Instagram, Send } from "lucide-react";
 import { toast } from "sonner";
-import logo from "@/assets/logo-marketing.png";
+import logo from "@/assets/BHhres-white.png";
 
 const Contact = () => {
   const [name, setName] = useState("");

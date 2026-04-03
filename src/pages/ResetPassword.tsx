@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
-import logo from "@/assets/logo-app.png";
+import logo from "@/assets/BHhres-white.png";
 import { toast } from "sonner";
 
 const passwordSchema = z.string().min(8, "Password must be at least 8 characters").max(72);

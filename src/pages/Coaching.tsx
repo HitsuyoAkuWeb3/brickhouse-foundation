@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import logo from "@/assets/logo-marketing.png";
+import logo from "@/assets/BHhres-white.png";
 import LandingFooter from "@/components/LandingFooter";
 import ScrollReveal from "@/components/ScrollReveal";
 import { trackEvent } from "@/lib/analytics";
@@ -30,7 +30,7 @@ const Coaching = () => {
           <img
             src={logo}
             alt="Brickhouse Mindset"
-            className="w-[clamp(180px,50vw,320px)] mx-auto mb-8 drop-shadow-[0_0_40px_hsl(330_100%_42%/0.4)]"
+            className="w-[clamp(180px,50vw,320px)] mx-auto mb-8"
           />
 
           <p className="font-display text-base tracking-[5px] text-accent mb-5 opacity-90">

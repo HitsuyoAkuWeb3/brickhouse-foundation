@@ -28,7 +28,7 @@ const HeroSection = () => {
           <img
             src={logo}
             alt="Brickhouse Mindset"
-            className="w-[clamp(220px,60vw,420px)] mx-auto drop-shadow-[0_0_40px_hsl(330_100%_42%/0.5)]"
+            className="w-[clamp(220px,60vw,420px)] mx-auto"
           />
         </div>
 

@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { cn } from "@/lib/utils";
-import logo from "@/assets/logo-marketing.png";
+import logo from "@/assets/BHhres-white.png";
 import { toast } from "sonner";
 import { Slider } from "@/components/ui/slider";
 
@@ -187,7 +187,7 @@ const Onboarding = () => {
         <img
           src={logo}
           alt="Brickhouse Mindset"
-          className="w-40 mx-auto mb-6 drop-shadow-[0_0_30px_hsl(330_100%_42%/0.4)]"
+          className="w-40 mx-auto mb-6"
         />
 
         {/* Step Indicator */}

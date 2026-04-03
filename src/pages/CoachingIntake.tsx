@@ -6,7 +6,7 @@ import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import LandingFooter from "@/components/LandingFooter";
-import logo from "@/assets/logo-marketing.png";
+import logo from "@/assets/BHhres-white.png";
 import {
   Form,
   FormControl,
@@ -183,7 +183,7 @@ const CoachingIntake = () => {
           <img
             src={logo}
             alt="Brickhouse Mindset"
-            className="w-[180px] sm:w-[220px] mx-auto mb-8 drop-shadow-[0_0_30px_hsl(330_100%_42%/0.3)]"
+            className="w-[180px] sm:w-[220px] mx-auto mb-8"
           />
           <h1 className="font-display text-4xl sm:text-5xl leading-[1.1] mb-4">
             Pre-Discovery <span className="text-gradient-pink">Intake Form</span>

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import logo from "@/assets/brickhouse-logo.png";
+import logo from "@/assets/BHhres-white.png";
 
 const Terms = () => (
   <div className="min-h-screen bg-background px-6 py-12">

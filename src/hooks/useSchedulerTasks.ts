@@ -1,7 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 export interface SchedulerTask {
   id: string;
@@ -74,19 +76,55 @@ export function useSchedulerTasks() {
         .eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: key }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: key });
+    },
   });
 
   const deleteTask = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase as any)
-        .from("scheduler_tasks")
+      const { data, error } = await supabase
+        .from('scheduler_tasks')
         .delete()
-        .eq("id", id);
+        .eq('id', id)
+        .select()
+        .single();
+        
       if (error) throw error;
+      return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: key }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: key });
+    },
   });
 
-  return { tasks, isLoading, addTask, updateTask, deleteTask };
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+    
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'SNOOZE_TASK') {
+        const taskId = event.data.data?.task_id;
+        console.log("Received SNOOZE_TASK for task:", taskId);
+        if (taskId) {
+           // We schedule it for 1 hour from now for testing (or based on business logic)
+           updateTask.mutate({ id: taskId, snooze_interval: 'every_hour' });
+           toast.success("Task snoozed for later.");
+        }
+      }
+    };
+
+    navigator.serviceWorker.addEventListener('message', handleMessage);
+    return () => {
+      navigator.serviceWorker.removeEventListener('message', handleMessage);
+    };
+  }, [updateTask]);
+
+
+  return {
+    tasks,
+    isLoading,
+    addTask,
+    updateTask,
+    deleteTask,
+  };
 }

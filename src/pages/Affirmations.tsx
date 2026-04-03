@@ -21,6 +21,10 @@ const Affirmations = () => {
   const [practiceMode, setPracticeMode] = useState(false);
   const [schedulingId, setSchedulingId] = useState<string | null>(null);
   const [scheduleTime, setScheduleTime] = useState("09:00");
+  const [scheduleDate, setScheduleDate] = useState(() => {
+    const today = new Date();
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  });
   const { addTask: addSchedulerTask } = useSchedulerTasks();
 
   const { brickAffirmations, userAffirmations, dailyAffirmation, addAffirmation, toggleFavorite, deleteAffirmation, isLoading } = useAffirmations(selectedBrick);
@@ -206,21 +210,36 @@ const Affirmations = () => {
                                   className="overflow-hidden"
                                 >
                                   <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/30">
-                                    <input
-                                      type="time"
-                                      value={scheduleTime}
-                                      onChange={(e) => setScheduleTime(e.target.value)}
-                                      className="flex-1 bg-input border border-border rounded-lg px-3 py-2 font-body text-xs text-foreground focus:outline-none focus:border-primary transition-colors"
-                                    />
+                                    <div className="flex-1 space-y-1">
+                                      <label className="text-[10px] text-muted-foreground uppercase tracking-wider pl-1">Date</label>
+                                      <input
+                                        type="date"
+                                        value={scheduleDate}
+                                        onChange={(e) => setScheduleDate(e.target.value)}
+                                        className="w-full bg-input border border-border rounded-lg px-3 py-2 font-body text-xs text-foreground focus:outline-none focus:border-primary transition-colors [color-scheme:dark]"
+                                      />
+                                    </div>
+                                    <div className="flex-1 space-y-1">
+                                      <label className="text-[10px] text-muted-foreground uppercase tracking-wider pl-1">Time</label>
+                                      <input
+                                        type="time"
+                                        value={scheduleTime}
+                                        onChange={(e) => setScheduleTime(e.target.value)}
+                                        className="w-full bg-input border border-border rounded-lg px-3 py-2 font-body text-xs text-foreground focus:outline-none focus:border-primary transition-colors [color-scheme:dark]"
+                                      />
+                                    </div>
                                     <button
                                       onClick={() => {
+                                        const scheduledDate = new Date(`${scheduleDate}T${scheduleTime}:00`);
                                         addSchedulerTask.mutate({
                                           title: a.text.replace('Audio Affirmation: ', ''),
                                           task_type: 'affirmation',
                                           affirmation_id: a.id,
                                           time_of_day: scheduleTime + ':00',
-                                          reminder_type: 'daily',
-                                          days_of_week: [1, 2, 3, 4, 5, 6, 7],
+                                          due_date: scheduleDate,
+                                          due_time: scheduleTime + ':00',
+                                          scheduled_for: scheduledDate.toISOString(),
+                                          reminder_type: 'one_off',
                                           snooze_interval: 'every_hour',
                                           is_active: true,
                                         });
@@ -228,14 +247,6 @@ const Affirmations = () => {
                                         // Ensure push permissions and wire up local fallback pushing
                                         NotificationService.requestPermission().then((granted) => {
                                           if (granted) {
-                                            const now = new Date();
-                                            const [hours, minutes] = scheduleTime.split(':').map(Number);
-                                            const scheduledDate = new Date();
-                                            scheduledDate.setHours(hours, minutes, 0, 0);
-                                            if (scheduledDate < now) {
-                                              scheduledDate.setDate(scheduledDate.getDate() + 1);
-                                            }
-
                                             NotificationService.schedulePushNotification({
                                               title: "Affirmation Reminder",
                                               body: a.text.replace('Audio Affirmation: ', ''),
@@ -248,7 +259,7 @@ const Affirmations = () => {
                                           }
                                         });
 
-                                        toast.success(`Affirmation scheduled for ${scheduleTime} ⏰`);
+                                        toast.success(`Affirmation scheduled for ${scheduleDate} at ${scheduleTime} ⏰`);
                                         setSchedulingId(null);
                                       }}
                                       className="bg-gradient-pink text-foreground font-body font-bold text-[10px] uppercase tracking-wider px-4 py-2 rounded-lg hover:opacity-90 transition-opacity"

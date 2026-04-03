@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { cn } from "@/lib/utils";
-import logo from "@/assets/brickhouse-logo.png";
+import logo from "@/assets/logo-marketing.png";
 import { toast } from "sonner";
 import { Slider } from "@/components/ui/slider";
 

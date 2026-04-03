@@ -4,7 +4,6 @@ import { usePassionPick } from "@/hooks/usePassionPick";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Camera, Music, Target, Sparkles, RotateCcw, Upload } from "lucide-react";
 import { toast } from "sonner";
-import { CodeSwitchModal } from "@/components/CodeSwitchModal";
 import { cn } from "@/lib/utils";
 
 const PassionPick = () => {
@@ -15,7 +14,7 @@ const PassionPick = () => {
   const [songTitle, setSongTitle] = useState("");
   const [goalText, setGoalText] = useState("");
   const [affirmation, setAffirmation] = useState("");
-  const [resetActive, setResetActive] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -71,9 +70,29 @@ const PassionPick = () => {
   };
 
   const handleVibrationReset = () => {
-    setResetActive(true);
-    // Haptic feedback if supported
+    setShowConfirmModal(true);
+  };
+
+  const executeReset = () => {
+    if (pick?.id) {
+      upsert.mutate({
+        id: pick.id,
+        updates: {
+          image_url: null,
+          song_url: null,
+          song_title: null,
+          title: "",
+          affirmation_text: null
+        }
+      });
+      setGoalText("");
+      setAffirmation("");
+      setSongTitle("");
+      setSongUrl("");
+      toast.success("Vibration sequences reset 🔄");
+    }
     if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
+    setShowConfirmModal(false);
   };
 
   if (isLoading) {
@@ -87,8 +106,40 @@ const PassionPick = () => {
   return (
     <>
       <AnimatePresence>
-        {resetActive && pick && (
-          <CodeSwitchModal pick={pick} onClose={() => setResetActive(false)} />
+        {showConfirmModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-card border border-border rounded-xl p-6 max-w-sm w-full shadow-2xl relative overflow-hidden"
+            >
+              <h3 className="font-display text-xl text-foreground mb-2">Initialize Reset?</h3>
+              <p className="font-body text-sm text-muted-foreground mb-6">
+                This will instantly wipe your current Passion Pick, resetting your vibration sequences and giving you a blank slate.
+              </p>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowConfirmModal(false)}
+                  className="flex-1 py-3 px-4 rounded-lg border border-border font-body text-sm text-foreground hover:bg-muted transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={executeReset}
+                  className="flex-1 py-3 px-4 rounded-lg bg-primary text-primary-foreground font-body font-bold tracking-wider text-sm hover:opacity-90 transition-opacity"
+                >
+                  Confirm Reset
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
 

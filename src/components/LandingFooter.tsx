@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Instagram } from "lucide-react";
-import logo from "@/assets/brickhouse-logo.png";
+import logo from "@/assets/BHhres-white.png";
 
 const LandingFooter = () => {
   return (

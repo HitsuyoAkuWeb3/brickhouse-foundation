@@ -120,7 +120,7 @@ const ReminderCard = ({
           </h3>
           <div className="flex items-end justify-between mt-2">
             <p className="font-body text-[11px] text-muted-foreground">
-              {task.time_of_day ? `Scheduled daily at ${
+              {task.reminder_type === 'daily' && task.time_of_day ? `Scheduled daily at ${
                 (() => {
                   try {
                     const [h, m] = task.time_of_day.split(':');
@@ -259,6 +259,22 @@ const Scheduler = () => {
 
   // Goal & Roadmap State
   const [activeGoalId, setActiveGoalId] = useState<string | null>(null);
+
+  // Listen for push notification actions
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+    
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'SNOOZE_TASK' && event.data.data) {
+        setBugMeTask(event.data.data);
+      }
+    };
+    
+    navigator.serviceWorker.addEventListener('message', handleMessage);
+    return () => {
+      navigator.serviceWorker.removeEventListener('message', handleMessage);
+    };
+  }, []);
   
   // Filter Tasks
   const generalTasks = tasks.filter(t => t.task_type !== "goal" && t.task_type !== "goal_step");
@@ -318,7 +334,18 @@ const Scheduler = () => {
     if (!bugMeTask) return;
     updateTask.mutate(
       { id: bugMeTask.id, snooze_interval: interval },
-      { onSuccess: () => { toast.success("Bug Me setting updated 🐛"); setBugMeTask(null); } }
+      { onSuccess: () => { 
+          toast.success("Bug Me setting updated 🐛");
+          if (interval !== "none") {
+            NotificationService.showLocalTestNotification(
+              "Snooze Active 🐛",
+              `We'll bug you ${interval === "every_minute" ? "every minute" : "every hour"} for: ${bugMeTask.title}`,
+              { task_id: bugMeTask.id }
+            );
+          }
+          setBugMeTask(null); 
+        } 
+      }
     );
   };
 
@@ -421,8 +448,51 @@ const Scheduler = () => {
                 </div>
               </div>
 
+              {/* MY WEEK (General Build Button) */}
+              <div className="mb-4">
+                <button
+                  onClick={() => setView("step1")}
+                  className="w-full bg-gradient-card border border-border p-5 rounded-2xl flex flex-col items-start gap-4 hover:border-primary/50 hover:bg-primary/5 transition-all shadow-sm group"
+                >
+                  <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                        <CalendarClock className="w-6 h-6 text-primary" />
+                      </div>
+                      <div className="text-left">
+                        <h2 className="font-display text-xl tracking-wider text-foreground group-hover:text-primary transition-colors">My Week</h2>
+                        <p className="font-body text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Schedule new tasks</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </div>
+                </button>
+              </div>
+
+              {/* GENERAL REMINDERS (MY WEEK'S SCHEDULE) */}
+              <div className="mb-10">
+                <h2 className="font-body text-lg font-bold uppercase tracking-widest text-primary ml-1 mb-4">My Week's Schedule</h2>
+                {reminders.length === 0 ? (
+                  <div className="bg-gradient-card border border-border p-6 rounded-2xl text-center shadow-sm">
+                    <p className="font-body text-xs text-muted-foreground mb-4">No tasks scheduled for this week.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {reminders.map(task => (
+                      <ReminderCard
+                        key={task.id}
+                        task={task}
+                        onToggle={handleToggle}
+                        onDelete={handleDelete}
+                        onBugMeClick={setBugMeTask}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {/* ACTIVE BUILDS (GOALS) */}
-              <div className="mb-0">
+              <div className="mb-10">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="font-body text-lg font-bold uppercase tracking-widest text-primary ml-1">Active Builds</h2>
                   <button 
@@ -499,7 +569,7 @@ const Scheduler = () => {
                 )}
               </div>
 
-              {/* GENERAL REMINDERS - Removed for Phase 1 */}
+              {/* GENERAL REMINDERS MOVED TO TOP */}
 
               {/* Bug Me Action Sheet Context Menu */}
               <AnimatePresence>

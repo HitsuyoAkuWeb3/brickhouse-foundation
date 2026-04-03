@@ -1,4 +1,4 @@
-import logo from "@/assets/brickhouse-logo.png";
+import logo from "@/assets/BHhres-white.png";
 import heroImage from "@/assets/hero-image.jpg";
 
 const HeroSection = () => {

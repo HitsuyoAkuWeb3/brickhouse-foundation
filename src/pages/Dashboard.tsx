@@ -8,7 +8,6 @@ import { useSchedulerTasks } from "@/hooks/useSchedulerTasks";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { usePassionPick } from "@/hooks/usePassionPick";
 import { motion, AnimatePresence } from "framer-motion";
-import { CodeSwitchModal } from "@/components/CodeSwitchModal";
 import {
   Blocks, Sunrise, Diamond, CalendarClock, Sparkles,
   Sun, Clock, Moon, Play, CheckCircle2, MessageSquare, Heart, ArrowRight, Flame, Video, Users, Trophy, Edit2, type LucideIcon
@@ -70,7 +69,6 @@ const Dashboard = () => {
   const { pick } = usePassionPick();
 
   const [showWelcomeOverlay, setShowWelcomeOverlay] = useState(false);
-  const [resetActive, setResetActive] = useState(false);
 
   useEffect(() => {
     if (location.state && (location.state as { justFinishedOnboarding?: boolean }).justFinishedOnboarding) {
@@ -116,9 +114,8 @@ const Dashboard = () => {
 
     const fetchProfile = async () => {
       try {
-        // @ts-expect-error
-        const { data, error } = await supabase
-          .from("profiles")
+        const { data, error } = await (supabase
+          .from("profiles") as any)
           .select("full_name, transformation_choice, goals")
           .eq("id", user.id)
           .single();
@@ -129,10 +126,9 @@ const Dashboard = () => {
           return;
         }
 
-        // @ts-expect-error
-        if (data?.full_name) setFirstName(data.full_name.split(" ")[0]);
-        // @ts-expect-error
-        if (data?.goals && data.goals.length > 0) setPrimaryGoal(data.goals[0]);
+        const profileData = data as any;
+        if (profileData?.full_name) setFirstName(profileData.full_name.split(" ")[0]);
+        if (profileData?.goals && profileData.goals.length > 0) setPrimaryGoal(profileData.goals[0]);
 
         setCheckingProfile(false);
       } catch {
@@ -176,11 +172,6 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center px-4 sm:px-6 pt-8 pb-20 overflow-x-hidden">
-      <AnimatePresence>
-        {resetActive && pick && (
-          <CodeSwitchModal pick={pick} onClose={() => setResetActive(false)} />
-        )}
-      </AnimatePresence>
       
       {/* Top Header */}
       <div className="w-full max-w-lg mb-8 text-center flex flex-col items-center">

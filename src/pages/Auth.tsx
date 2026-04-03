@@ -5,7 +5,7 @@ import { lovable } from "@/integrations/lovable/index";
 import { useAuth } from "@/hooks/useAuth";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { z } from "zod";
-import logo from "@/assets/brickhouse-logo.png";
+import logo from "@/assets/BHhres-white.png";
 import { toast } from "sonner";
 import { CheckCircle2, Clock } from "lucide-react";
 
@@ -127,7 +127,6 @@ const Auth = () => {
         <div className="relative z-10 w-full max-w-[400px] text-center">
           <img
             src={logo}
-            alt="Brickhouse Mindset"
             className="w-48 mx-auto mb-8 drop-shadow-[0_0_30px_hsl(330_100%_42%/0.4)]"
           />
           <div className="bg-gradient-card border border-primary/30 rounded-2xl p-8 mb-6">
@@ -170,7 +169,6 @@ const Auth = () => {
       <div className="relative z-10 w-full max-w-[400px]">
         <img
           src={logo}
-          alt="Brickhouse Mindset"
           className="w-48 mx-auto mb-8 drop-shadow-[0_0_30px_hsl(330_100%_42%/0.4)]"
         />
 

@@ -21,16 +21,25 @@ export class NotificationService {
       return false;
     }
 
+    let granted = false;
+
     if (Notification.permission === 'granted') {
-      return true;
-    }
-
-    if (Notification.permission !== 'denied') {
+      granted = true;
+    } else if (Notification.permission !== 'denied') {
       const permission = await Notification.requestPermission();
-      return permission === 'granted';
+      granted = permission === 'granted';
     }
 
-    return false;
+    if (granted && 'serviceWorker' in navigator) {
+      try {
+        await navigator.serviceWorker.register('/sw.js');
+        console.log('[NotificationService] Service Worker registered');
+      } catch (err) {
+        console.error('[NotificationService] Service Worker registration failed', err);
+      }
+    }
+
+    return granted;
   }
 
   /**
@@ -59,9 +68,22 @@ export class NotificationService {
   /**
    * Utility for local test notifications
    */
-  static async showLocalTestNotification(title: string, body: string) {
+  static async showLocalTestNotification(title: string, body: string, data?: any) {
     const granted = await this.requestPermission();
-    if (granted) {
+    if (granted && 'serviceWorker' in navigator) {
+      const registration = await navigator.serviceWorker.ready;
+      registration.showNotification(title, {
+        body,
+        icon: "/icon-192x192.png",
+        badge: "/icon-192x192.png",
+        data: data,
+        actions: [
+          { action: 'snooze', title: 'Snooze (1h)' },
+          { action: 'open', title: 'Open App' }
+        ],
+        vibrate: [200, 100, 200]
+      });
+    } else if (granted) {
       new Notification(title, {
         body,
         icon: "/icon-192x192.png",

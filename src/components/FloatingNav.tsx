@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Home, LayoutDashboard, BookOpen, Sunrise, ClipboardCheck, LogOut, Sparkles, Flame, Gem } from "lucide-react";
-import logo from "@/assets/brickhouse-logo.png";
+import logo from "@/assets/BHhres-white.png";
 
 const publicLinks = [
   { to: "/", label: "Home", icon: Home },

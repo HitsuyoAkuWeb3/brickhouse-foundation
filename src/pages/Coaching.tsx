@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import logo from "@/assets/brickhouse-logo.png";
+import logo from "@/assets/logo-marketing.png";
 import LandingFooter from "@/components/LandingFooter";
 import ScrollReveal from "@/components/ScrollReveal";
 import { trackEvent } from "@/lib/analytics";

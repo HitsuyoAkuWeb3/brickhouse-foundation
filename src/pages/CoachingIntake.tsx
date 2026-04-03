@@ -6,7 +6,7 @@ import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import LandingFooter from "@/components/LandingFooter";
-import logo from "@/assets/brickhouse-logo.png";
+import logo from "@/assets/logo-marketing.png";
 import {
   Form,
   FormControl,

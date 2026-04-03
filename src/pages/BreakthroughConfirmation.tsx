@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { CheckCircle, Instagram, Calendar, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
-import logo from "@/assets/brickhouse-logo.png";
+import logo from "@/assets/logo-marketing.png";
 
 const steps = [
   {

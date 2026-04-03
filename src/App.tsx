@@ -37,6 +37,20 @@ import { useEffect } from "react";
 
 const App = () => {
   useEffect(() => {
+    // Register Service Worker for PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(
+          (registration) => {
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          },
+          (err) => {
+            console.log('ServiceWorker registration failed: ', err);
+          }
+        );
+      });
+    }
+
     const setVH = () => {
       const vh = window.innerHeight * 0.01;
       document.documentElement.style.setProperty('--vh', `${vh}px`);

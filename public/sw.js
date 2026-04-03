@@ -63,3 +63,8 @@ self.addEventListener('notificationclick', (event) => {
     );
   }
 });
+
+// Add a minimal fetch event listener so it's recognized as a valid PWA by Safari
+self.addEventListener('fetch', (event) => {
+  // We don't intercept any requests right now, but this is required for PWA installation
+});

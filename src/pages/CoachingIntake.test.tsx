@@ -27,6 +27,16 @@ global.ResizeObserver = class ResizeObserver {
   disconnect() {}
 };
 
+global.IntersectionObserver = class IntersectionObserver {
+  root: any = null;
+  rootMargin: string = '';
+  thresholds: ReadonlyArray<number> = [];
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+  takeRecords() { return []; }
+};
+
 class MockPointerEvent extends Event {
   button: number;
   ctrlKey: boolean;
@@ -83,7 +93,7 @@ describe('CoachingIntake Component', () => {
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
 
     // Click submit
-    const submitButton = screen.getByRole('button', { name: /Submit & Schedule/i });
+    const submitButton = screen.getByRole('button', { name: /Submit Application/i });
     fireEvent.click(submitButton);
 
     // Verify Supabase insert was called

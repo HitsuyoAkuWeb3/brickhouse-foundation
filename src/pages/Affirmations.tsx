@@ -5,7 +5,7 @@ import { useAffirmations } from "@/hooks/useAffirmations";
 import { useSchedulerTasks } from "@/hooks/useSchedulerTasks";
 import { bricks } from "@/data/bricksContent";
 import { supabase } from "@/integrations/supabase/client";
-import { NotificationService } from "@/services/NotificationService";
+import { NotificationService } from "@/lib/NotificationService";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Plus, Trash2, Sparkles, ChevronDown, ArrowLeft, Lock, Headphones, X, Clock } from "lucide-react";
 import { toast } from "sonner";

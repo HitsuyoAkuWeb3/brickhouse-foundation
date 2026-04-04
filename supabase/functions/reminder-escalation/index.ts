@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import webpush from "npm:web-push@3.6.7";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,9 +18,6 @@ const corsHeaders = {
 //   snooze_interval = 'every_minute' → re-fires every cron cycle
 //   snooze_interval = 'every_hour'  → re-fires if last_reminded_at > 1 hour ago
 //   snooze_interval = 'none'        → standard escalation only
-//
-// This function is designed to be called via Supabase cron (pg_cron) or
-// an external scheduler (e.g., Vercel Cron, GitHub Actions).
 
 const ESCALATION_MESSAGES = [
   "Hey Brickhouse — you've got a pending task. Let's keep building. 🧱",
@@ -40,6 +38,19 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
+    const vapidPublic = Deno.env.get("VAPID_PUBLIC_KEY");
+    const vapidPrivate = Deno.env.get("VAPID_PRIVATE_KEY");
+
+    if (vapidPublic && vapidPrivate) {
+      webpush.setVapidDetails(
+        "mailto:admin@brickhousemindset.local",
+        vapidPublic,
+        vapidPrivate
+      );
+    } else {
+      console.warn("VAPID Keys not found in environment. Real web push will be skipped.");
+    }
+
     const now = new Date();
 
     // ─── 1. Fetch active, incomplete tasks that have reminders ────────────────
@@ -59,6 +70,7 @@ serve(async (req) => {
       level: number;
       message: string;
       abandoned: boolean;
+      pushed: number;
     }> = [];
 
     for (const task of pendingTasks || []) {
@@ -71,9 +83,8 @@ serve(async (req) => {
       if (lastReminded) {
         const msSinceLastReminder = now.getTime() - lastReminded.getTime();
         if (snooze === "every_hour" && msSinceLastReminder < 60 * 60 * 1000) continue;
-        // 'every_minute' always fires (cron cycle is ≥ 1 min)
-        // 'none' — proceed with standard escalation cadence
-        if (snooze === "none" && msSinceLastReminder < 4 * 60 * 60 * 1000) continue; // 4hr between standard escalations
+        // 'none' — proceed with standard escalation cadence (e.g., 4 hrs)
+        if (snooze === "none" && msSinceLastReminder < 4 * 60 * 60 * 1000) continue;
       }
 
       // ─── Escalate ────────────────────────────────────────────────────────
@@ -81,19 +92,18 @@ serve(async (req) => {
       const isAbandoned = newLevel >= MAX_ESCALATION && snooze === "none";
       const message = ESCALATION_MESSAGES[newLevel - 1] || ESCALATION_MESSAGES[2];
 
-      // Update the task
+      // Update the task in the database
       await supabase
         .from("scheduler_tasks")
         .update({
           escalation_level: newLevel,
           reminder_count: (task.reminder_count || 0) + 1,
           last_reminded_at: now.toISOString(),
-          // If snooze is 'none' and we hit max, deactivate
           ...(isAbandoned ? { is_active: false } : {}),
         })
         .eq("id", task.id);
 
-      // ─── Fire analytics event ────────────────────────────────────────────
+      // Fire analytics event
       const eventType = isAbandoned ? "task_abandoned" : "reminder_sent";
       await supabase.from("analytics_events").insert({
         user_id: task.profile_id,
@@ -101,13 +111,41 @@ serve(async (req) => {
         event_data: {
           task_id: task.id,
           task_title: task.title,
-          category: task.category,
-          task_type: task.task_type,
           escalation_level: newLevel,
           snooze_interval: snooze,
           reminder_count: (task.reminder_count || 0) + 1,
         },
       });
+
+      // ─── Web Push ────────────────────────────────────────────────────────
+      let pushedCount = 0;
+      if (vapidPublic && vapidPrivate) {
+        // Find all active push subscriptions for the profile
+        const { data: subs } = await supabase
+          .from("push_subscriptions")
+          .select("endpoint, auth_key, p256dh_key")
+          .eq("profile_id", task.profile_id);
+
+        for (const sub of subs || []) {
+          try {
+            await webpush.sendNotification(
+              {
+                endpoint: sub.endpoint,
+                keys: { auth: sub.auth_key, p256dh: sub.p256dh_key },
+              },
+              JSON.stringify({
+                title: "Brickhouse Mindset",
+                body: message,
+                data: { taskId: task.id },
+              })
+            );
+            pushedCount++;
+          } catch (pushErr: any) {
+            console.error("Failed pushing to endpoint:", sub.endpoint, pushErr.message);
+            // In a robust system, we might delete stale endpoints that return 410 Gone.
+          }
+        }
+      }
 
       escalated.push({
         taskId: task.id,
@@ -116,20 +154,19 @@ serve(async (req) => {
         level: newLevel,
         message,
         abandoned: isAbandoned,
+        pushed: pushedCount
       });
 
       console.log(
-        `[${eventType}] "${task.title}" → Level ${newLevel} (${snooze}) for profile ${task.profile_id}`
+        `[${eventType}] "${task.title}" → Level ${newLevel} (${snooze}) for profile ${task.profile_id}. Webpushed: ${pushedCount}`
       );
     }
-
-    const abandoned = escalated.filter((e) => e.abandoned).length;
 
     return new Response(
       JSON.stringify({
         success: true,
         processed: escalated.length,
-        abandoned,
+        abandoned: escalated.filter((e) => e.abandoned).length,
         escalated,
       }),
       {
@@ -137,7 +174,7 @@ serve(async (req) => {
         status: 200,
       }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Reminder escalation error:", error);
     return new Response(
       JSON.stringify({ error: error.message }),

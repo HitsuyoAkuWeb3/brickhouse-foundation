@@ -116,7 +116,7 @@ const Dashboard = () => {
       try {
         const { data, error } = await (supabase
           .from("profiles") as any)
-          .select("full_name, transformation_choice, goals")
+          .select("full_name, transformation_choice, goals, onboarding_completed")
           .eq("id", user.id)
           .single();
 
@@ -127,6 +127,12 @@ const Dashboard = () => {
         }
 
         const profileData = data as any;
+
+        if (profileData && profileData.onboarding_completed === false) {
+          navigate("/onboarding", { replace: true });
+          return;
+        }
+
         if (profileData?.full_name) setFirstName(profileData.full_name.split(" ")[0]);
         if (profileData?.goals && profileData.goals.length > 0) setPrimaryGoal(profileData.goals[0]);
 

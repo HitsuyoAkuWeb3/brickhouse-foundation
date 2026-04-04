@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence, useAnimation, type PanInfo } from "framer-motion";
 import {
@@ -9,7 +9,7 @@ import { useSchedulerTasks, type SchedulerTask } from "@/hooks/useSchedulerTasks
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { format, addMinutes } from "date-fns";
-import { NotificationService } from "@/services/NotificationService";
+import { NotificationService } from "@/lib/NotificationService";
 
 import { Wrench } from "lucide-react";
 

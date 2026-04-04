@@ -34,7 +34,7 @@ test.describe('Scheduler / Life Architecture (Live DB)', () => {
 
   test('Scheduler page loads with Architecture heading', async ({ page }) => {
     await page.goto('/scheduler');
-    await expect(page.getByRole('heading', { name: /Scheduler/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: /Scheduler/i })).toBeVisible({ timeout: 5000 });
   });
 
   test('Create a Goal Architecture roadmap', async ({ page }) => {

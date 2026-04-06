@@ -1,0 +1,54 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - region "Notifications (F8)":
+    - list
+  - region "Notifications alt+T"
+  - generic [ref=e3]:
+    - main [ref=e4]:
+      - generic [ref=e6]:
+        - img "Brickhouse Mindset" [ref=e7]
+        - heading "Welcome Back" [level=1] [ref=e8]
+        - paragraph [ref=e9]: Sign in to your Brickhouse
+        - button "Continue with Google" [ref=e10] [cursor=pointer]:
+          - img [ref=e11]
+          - text: Continue with Google
+        - generic [ref=e18]: or
+        - generic [ref=e20]:
+          - textbox "Email" [ref=e22]: sched+1775511550294@example.com
+          - textbox "Password (min 8 characters)" [ref=e24]: TestPassword123!
+          - button "Sign In" [ref=e25] [cursor=pointer]
+        - generic [ref=e26]:
+          - button "Forgot password?" [ref=e27] [cursor=pointer]
+          - paragraph [ref=e28]:
+            - text: Don't have an account?
+            - button "Sign up" [ref=e29] [cursor=pointer]
+    - contentinfo [ref=e30]:
+      - generic [ref=e31]:
+        - generic [ref=e32]:
+          - generic [ref=e33]:
+            - img "Brickhouse Mindset" [ref=e34]
+            - paragraph [ref=e35]: Simplifying Loving Yourself and Creating a Life That You Love.
+            - link [ref=e36] [cursor=pointer]:
+              - /url: https://instagram.com/BrickhouseMindset
+              - img [ref=e37]
+          - generic [ref=e40]:
+            - generic [ref=e41]:
+              - generic [ref=e42]: EXPLORE
+              - link "Life Audit" [ref=e43] [cursor=pointer]:
+                - /url: /life-audit
+              - link "Coaching" [ref=e44] [cursor=pointer]:
+                - /url: /coaching
+              - link "Sign In" [ref=e45] [cursor=pointer]:
+                - /url: /auth
+            - generic [ref=e46]:
+              - generic [ref=e47]: LEGAL
+              - link "Terms of Service" [ref=e48] [cursor=pointer]:
+                - /url: /terms
+              - link "Privacy Policy" [ref=e49] [cursor=pointer]:
+                - /url: /privacy
+              - link "Contact" [ref=e50] [cursor=pointer]:
+                - /url: /contact
+        - paragraph [ref=e52]: © 2026 Brickhouse Mindset. Che' Lovelight, Lifestyle Architect. All rights reserved.
+```

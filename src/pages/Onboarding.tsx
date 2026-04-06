@@ -215,7 +215,7 @@ const Onboarding = () => {
                 Welcome to <span className="text-accent">Brickhouse</span>
               </h1>
               <p className="font-body text-base text-muted-foreground mb-10 max-w-md mx-auto leading-relaxed">
-                You are about to build an unshakeable foundation. We’ll guide you through a quick 6-step setup so the system can set your baseline.
+                You are about to build an unshakeable foundation. We’ll guide you through a quick 6-step setup (5-10 mins) so the system can set your baseline.
               </p>
               <button onClick={nextStep} className="bg-gradient-pink text-foreground font-body font-bold text-sm tracking-wider uppercase px-10 py-4 rounded-lg hover:opacity-90 transition-opacity">
                 Begin Architecture →

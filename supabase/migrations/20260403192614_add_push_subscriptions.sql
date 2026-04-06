@@ -27,6 +27,15 @@ create policy "Users can delete their own push subscriptions"
   on push_subscriptions for delete
   using (auth.uid() = profile_id);
 
+-- Create the handle_updated_at function if it doesn't exist
+CREATE OR REPLACE FUNCTION handle_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = timezone('utc'::text, now());
+  RETURN NEW;
+END;
+$$ language 'plpgsql';
+
 -- Add updated_at trigger
 create trigger set_push_subscriptions_updated_at
   before update on push_subscriptions

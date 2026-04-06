@@ -245,7 +245,7 @@ const Affirmations = () => {
                                         });
 
                                         // Ensure push permissions and wire up local fallback pushing
-                                        NotificationService.requestPermission().then((granted) => {
+                                        NotificationService.requestPermissionAndSubscribe(user!.id).then((granted) => {
                                           if (granted) {
                                             NotificationService.schedulePushNotification({
                                               title: "Affirmation Reminder",

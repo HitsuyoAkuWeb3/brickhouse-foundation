@@ -8,6 +8,7 @@ import {
 import { useSchedulerTasks, type SchedulerTask } from "@/hooks/useSchedulerTasks";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 import { format, addMinutes } from "date-fns";
 import { NotificationService } from "@/lib/NotificationService";
 
@@ -236,6 +237,7 @@ const TimeframeSection = ({
 };
 
 const Scheduler = () => {
+  const { user } = useAuth();
   const { tasks, isLoading, addTask, updateTask, deleteTask } = useSchedulerTasks();
   const [view, setView] = useState<"list" | "step1" | "step2" | "goal_selection" | "goal_template" | "goal_step_create">("list");
   
@@ -316,7 +318,7 @@ const Scheduler = () => {
       {
         onSuccess: () => {
           toast.success("RE.minder scheduled ⏰");
-          NotificationService.requestPermission();
+          NotificationService.requestPermissionAndSubscribe(user!.id);
           setIsDoneLoading(false);
           setDraftTitle("");
           setDraftIcon("build");
@@ -404,7 +406,8 @@ const Scheduler = () => {
     }, {
       onSuccess: () => {
         toast.success("Step scheduled 🧱");
-        NotificationService.requestPermission();
+        // Register for push notifications via service worker
+        NotificationService.requestPermissionAndSubscribe(user!.id);
         setIsDoneLoading(false);
         setView("goal_template");
       },

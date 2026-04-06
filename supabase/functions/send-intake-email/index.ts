@@ -21,9 +21,9 @@ serve(async (req: Request) => {
       })
     }
 
-    const MAILCHIMP_API_KEY = Deno.env.get('MAILCHIMP_API_KEY')
-    if (!MAILCHIMP_API_KEY) {
-      console.log('MAILCHIMP_API_KEY missing, skipping email send but returning success for demo.')
+    const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
+    if (!RESEND_API_KEY) {
+      console.log('RESEND_API_KEY missing, skipping email send but returning success for demo.')
       return new Response(JSON.stringify({ success: true, simulated: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
@@ -60,42 +60,27 @@ serve(async (req: Request) => {
       <p><strong>Connection Preference:</strong> ${formData.connect_preference || 'N/A'}</p>
     `
 
-    // Use Mailchimp Transactional API (Mandrill)
-    const mandrillRes = await fetch('https://mandrillapp.com/api/1.0/messages/send.json', {
+    const resendRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        key: MAILCHIMP_API_KEY,
-        message: {
-          from_email: "onboarding@brickhousemindset.com", 
-          from_name: "Brickhouse System",
-          to: [
-            {
-              email: "che@brickhousemindset.com",
-              type: "to"
-            }
-          ],
-          subject: `New Coaching Intake: ${formData.full_name}`,
-          html: htmlContent
-        }
-      })
+        from: 'Brickhouse Intake <onboarding@resend.dev>', 
+        to: ['che@brickhousemindset.com'], 
+        subject: `New Coaching Intake: ${formData.full_name}`,
+        html: htmlContent,
+      }),
     })
 
-    if (!mandrillRes.ok) {
-      const errorText = await mandrillRes.text();
-      console.error('Mailchimp/Mandrill error:', errorText);
-      throw new Error(`Failed to send email via Mailchimp Transactional: ${errorText}`);
+    if (!resendRes.ok) {
+      const errorText = await resendRes.text();
+      console.error('Resend error:', errorText);
+      throw new Error(`Failed to send email: ${errorText}`);
     }
 
-    const responseData = await mandrillRes.json();
-    if (responseData[0]?.status === 'rejected' || responseData[0]?.status === 'invalid') {
-       console.error('Mailchimp/Mandrill rejected:', responseData);
-       throw new Error(`Email rejected by Mailchimp: ${responseData[0]?.reject_reason || 'Unknown error'}`);
-    }
-
-    return new Response(JSON.stringify({ success: true, detail: responseData }), {
+    return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     })

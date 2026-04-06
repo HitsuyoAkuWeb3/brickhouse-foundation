@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Mail, Instagram, Send } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/BHhres-white.png";
 
 const Contact = () => {
@@ -10,7 +11,7 @@ const Contact = () => {
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !email.trim() || !message.trim()) {
       toast.error("Please fill in all fields");
@@ -18,15 +19,29 @@ const Contact = () => {
     }
     setSending(true);
 
-    // mailto fallback — replace with edge function when ready
-    const subject = encodeURIComponent(`Brickhouse Contact: ${name.trim()}`);
-    const body = encodeURIComponent(`From: ${name.trim()} (${email.trim()})\n\n${message.trim()}`);
-    window.location.href = `mailto:hello@brickhousemindset.com?subject=${subject}&body=${body}`;
+    // Send admin alert via Resend
+    const { error } = await supabase.functions.invoke("send-admin-alert", {
+      body: {
+        type: "contact_form",
+        data: {
+          name: name.trim(),
+          email: email.trim(),
+          message: message.trim(),
+        },
+      },
+    });
 
-    setTimeout(() => {
-      setSending(false);
-      toast.success("Opening your email client...");
-    }, 500);
+    setSending(false);
+
+    if (error) {
+      toast.error("Something went wrong. Please try again.");
+      console.error("Contact form error:", error);
+    } else {
+      toast.success("Message sent successfully!");
+      setName("");
+      setEmail("");
+      setMessage("");
+    }
   };
 
   return (

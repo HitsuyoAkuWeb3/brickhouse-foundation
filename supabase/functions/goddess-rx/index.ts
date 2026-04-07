@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,35 +7,27 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-function getZodiacSign(birthDate: string): { sign: string; element: string; rulingPlanet: string } {
-  const d = new Date(birthDate);
-  const month = d.getMonth() + 1;
-  const day = d.getDate();
-
+function getZodiacDetails(signName: string): { sign: string; element: string; rulingPlanet: string } {
   const signs = [
-    { sign: "Capricorn", element: "Earth", planet: "Saturn", start: [1, 1], end: [1, 19] },
-    { sign: "Aquarius", element: "Air", planet: "Uranus", start: [1, 20], end: [2, 18] },
-    { sign: "Pisces", element: "Water", planet: "Neptune", start: [2, 19], end: [3, 20] },
-    { sign: "Aries", element: "Fire", planet: "Mars", start: [3, 21], end: [4, 19] },
-    { sign: "Taurus", element: "Earth", planet: "Venus", start: [4, 20], end: [5, 20] },
-    { sign: "Gemini", element: "Air", planet: "Mercury", start: [5, 21], end: [6, 20] },
-    { sign: "Cancer", element: "Water", planet: "Moon", start: [6, 21], end: [7, 22] },
-    { sign: "Leo", element: "Fire", planet: "Sun", start: [7, 23], end: [8, 22] },
-    { sign: "Virgo", element: "Earth", planet: "Mercury", start: [8, 23], end: [9, 22] },
-    { sign: "Libra", element: "Air", planet: "Venus", start: [9, 23], end: [10, 22] },
-    { sign: "Scorpio", element: "Water", planet: "Pluto", start: [10, 23], end: [11, 21] },
-    { sign: "Sagittarius", element: "Fire", planet: "Jupiter", start: [11, 22], end: [12, 21] },
-    { sign: "Capricorn", element: "Earth", planet: "Saturn", start: [12, 22], end: [12, 31] },
+    { sign: "Capricorn", element: "Earth", planet: "Saturn" },
+    { sign: "Aquarius", element: "Air", planet: "Uranus" },
+    { sign: "Pisces", element: "Water", planet: "Neptune" },
+    { sign: "Aries", element: "Fire", planet: "Mars" },
+    { sign: "Taurus", element: "Earth", planet: "Venus" },
+    { sign: "Gemini", element: "Air", planet: "Mercury" },
+    { sign: "Cancer", element: "Water", planet: "Moon" },
+    { sign: "Leo", element: "Fire", planet: "Sun" },
+    { sign: "Virgo", element: "Earth", planet: "Mercury" },
+    { sign: "Libra", element: "Air", planet: "Venus" },
+    { sign: "Scorpio", element: "Water", planet: "Pluto" },
+    { sign: "Sagittarius", element: "Fire", planet: "Jupiter" },
   ];
 
-  for (const s of signs) {
-    const afterStart = month > s.start[0] || (month === s.start[0] && day >= s.start[1]);
-    const beforeEnd = month < s.end[0] || (month === s.end[0] && day <= s.end[1]);
-    if (afterStart && beforeEnd) {
-      return { sign: s.sign, element: s.element, rulingPlanet: s.planet };
-    }
+  const found = signs.find(s => s.sign.toLowerCase() === signName.toLowerCase());
+  if (found) {
+    return { sign: found.sign, element: found.element, rulingPlanet: found.planet };
   }
-  return { sign: "Capricorn", element: "Earth", rulingPlanet: "Saturn" };
+  return { sign: "Unknown", element: "Unknown", rulingPlanet: "Unknown" };
 }
 
 serve(async (req) => {
@@ -46,16 +39,37 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const { birth_date, transformation_choice, goals, name } = await req.json();
+    let { zodiac_sign, transformation_choice, goals, name, generate, user_id } = await req.json();
 
-    if (!birth_date) {
-      return new Response(JSON.stringify({ error: "Birth date is required for your Goddess Rx." }), {
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    // If user_id is provided (like from Onboarding background trigger), fetch their details
+    if (user_id) {
+      const { data: profile } = await supabaseClient
+        .from("profiles")
+        .select("zodiac_sign, transformation_choice, goals, full_name")
+        .eq("id", user_id)
+        .single();
+        
+      if (profile) {
+        zodiac_sign = profile.zodiac_sign || zodiac_sign;
+        transformation_choice = profile.transformation_choice || transformation_choice;
+        goals = profile.goals || goals;
+        name = profile.full_name || name;
+      }
+    }
+
+    if (!zodiac_sign && !generate) {
+      return new Response(JSON.stringify({ error: "Zodiac sign is required for your Goddess Rx." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const { sign, element, rulingPlanet } = getZodiacSign(birth_date);
+    const { sign, element, rulingPlanet } = getZodiacDetails(zodiac_sign || "Aries");
 
     const systemPrompt = `You are a mystical spiritual advisor for the Brickhouse Mindset platform — a luxury personal development brand for women building their dream lives.
 
@@ -178,6 +192,22 @@ Create her Goddess Prescription with:
     } else {
       const content = data.choices?.[0]?.message?.content || "{}";
       prescription = JSON.parse(content);
+    }
+
+    // Save to DB if we have a user_id
+    if (user_id) {
+      await supabaseClient.from("goddess_prescriptions").insert({
+        profile_id: user_id,
+        prescription_data: {
+          zodiac_sign: sign,
+          element,
+          ruling_planet: rulingPlanet,
+          crystals: prescription.crystals,
+          colors: prescription.colors,
+          spiritual_tools: prescription.spiritual_tools,
+          mantra: prescription.mantra,
+        },
+      });
     }
 
     return new Response(

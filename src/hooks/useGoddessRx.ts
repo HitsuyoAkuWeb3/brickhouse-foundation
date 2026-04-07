@@ -76,18 +76,18 @@ export const useGoddessRx = () => {
     mutationFn: async () => {
       const { data: profile } = await (supabase as any)
         .from("profiles")
-        .select("birth_date, transformation_choice, goals, full_name")
+        .select("zodiac_sign, transformation_choice, goals, full_name")
         .eq("id", user!.id)
         .single();
       if (!profile) throw new Error("Profile not found.");
 
-      if (!profile?.birth_date) {
-        throw new Error("Please set your birth date in onboarding first.");
+      if (!profile?.zodiac_sign) {
+        throw new Error("Please set your zodiac sign in onboarding first.");
       }
 
       const { data, error } = await supabase.functions.invoke("goddess-rx", {
         body: {
-          birth_date: profile.birth_date,
+          zodiac_sign: profile.zodiac_sign,
           transformation_choice: profile.transformation_choice,
           goals: profile.goals,
           name: profile.full_name,

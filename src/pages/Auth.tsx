@@ -35,6 +35,12 @@ const Auth = () => {
     if (bridgeToken) {
       localStorage.setItem("bridge_token", bridgeToken);
     }
+    
+    const urlEmail = searchParams.get("email");
+    if (urlEmail) {
+      setEmail(urlEmail);
+      setMode("signup");
+    }
   }, [searchParams]);
 
   useEffect(() => {

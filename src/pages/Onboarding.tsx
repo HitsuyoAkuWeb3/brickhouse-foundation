@@ -75,27 +75,23 @@ const Onboarding = () => {
 
   // Import audit scores if user completed audit before signup via Bridge API
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id || !user?.email) return;
     
-    const bridgeToken = localStorage.getItem("bridge_token");
-    if (!bridgeToken) return;
-
     const importAuditScores = async () => {
       try {
         const { data: transferRecord } = await (supabase as any)
           .from("lead_transfers")
-          .select("audit_scores")
-          .eq("transfer_token", bridgeToken)
+          .select("audit_scores, name")
+          .eq("email", user.email)
           .maybeSingle();
 
         if (!transferRecord) {
-          localStorage.removeItem("bridge_token");
           return;
         }
 
         const { data: profile } = await (supabase as any)
           .from("profiles")
-          .select("audit_scores")
+          .select("audit_scores, full_name")
           .eq("id", user.id)
           .single();
 
@@ -103,7 +99,8 @@ const Onboarding = () => {
           await (supabase as any)
             .from("profiles")
             .update({ 
-              audit_scores: transferRecord.audit_scores, 
+              audit_scores: transferRecord.audit_scores,
+              full_name: profile?.full_name || transferRecord.name,
               updated_at: new Date().toISOString() 
             })
             .eq("id", user.id);
@@ -113,8 +110,6 @@ const Onboarding = () => {
             setLifeAuditScore(key, val as number);
           });
         }
-
-        localStorage.removeItem("bridge_token");
       } catch (err) {
         console.error("Audit import failed:", err);
       }
@@ -153,6 +148,12 @@ const Onboarding = () => {
 
       if (error) throw error;
       trackEvent("profile_setup_completed", { goals, zodiac_sign: zodiacSign });
+      
+      // Auto-trigger Goddess Rx Generation in the background so it's ready on Day 1
+      supabase.functions.invoke('goddess-rx', {
+        body: { generate: true, user_id: user.id }
+      }).catch(err => console.error("Auto Goddess Rx Trigger failed:", err));
+
       navigate("/dashboard", { replace: true, state: { justFinishedOnboarding: true } });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Something went wrong";

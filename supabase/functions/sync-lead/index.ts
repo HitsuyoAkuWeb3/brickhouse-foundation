@@ -18,7 +18,7 @@ serve(async (req: Request) => {
     )
 
     const payload = await req.json()
-    const { audit_scores } = payload
+    const { audit_scores, email, name } = payload
 
     if (!audit_scores) {
       return new Response(JSON.stringify({ error: 'Missing audit_scores payload' }), {
@@ -30,7 +30,9 @@ serve(async (req: Request) => {
     const { data, error } = await supabaseClient
       .from('lead_transfers')
       .insert({ 
-        audit_scores: audit_scores 
+        audit_scores: audit_scores,
+        email: email || null,
+        name: name || null
       })
       .select('transfer_token')
       .single()

@@ -247,6 +247,7 @@ const Scheduler = () => {
   const [draftDate, setDraftDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
   const [draftTime, setDraftTime] = useState<string>("09:00");
   const [draftSnooze, setDraftSnooze] = useState<string>("none");
+  const [isDaily, setIsDaily] = useState(false);
   const [isDoneLoading, setIsDoneLoading] = useState(false);
 
   // Creation Form State (Goal Step)
@@ -309,9 +310,10 @@ const Scheduler = () => {
       {
         title: draftTitle.trim(),
         category: draftIcon,
-        reminder_type: "one_off",
+        reminder_type: isDaily ? "daily" : "one_off",
         task_type: "custom",
         scheduled_for: scheduledDate.toISOString(),
+        time_of_day: isDaily ? `${draftTime}:00` : undefined,
         snooze_interval: draftSnooze,
         is_active: true,
       },
@@ -325,6 +327,7 @@ const Scheduler = () => {
           setDraftDate(format(new Date(), "yyyy-MM-dd"));
           setDraftTime("09:00");
           setDraftSnooze("none");
+          setIsDaily(false);
           setView("list");
         },
         onError: () => setIsDoneLoading(false)
@@ -860,7 +863,7 @@ const Scheduler = () => {
               <div className="flex flex-col mt-4 space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="font-body text-[10px] uppercase tracking-widest text-primary mb-3 ml-2 block">Date</label>
+                    <label className="font-body text-[10px] uppercase tracking-widest text-primary mb-3 ml-2 block">{isDaily ? "Start Date" : "Date"}</label>
                     <input 
                       type="date"
                       value={draftDate}
@@ -878,6 +881,25 @@ const Scheduler = () => {
                       className="w-full bg-input border border-border rounded-lg px-4 py-3 font-body text-sm text-foreground focus:outline-none focus:border-primary transition-colors [&::-webkit-calendar-picker-indicator]:invert"
                     />
                   </div>
+                </div>
+
+                <div className="flex items-center justify-between bg-input border border-border rounded-lg p-4">
+                  <div>
+                    <label className="font-body text-sm text-foreground block">Repeat Everyday</label>
+                    <p className="font-body text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Schedule this reminder daily</p>
+                  </div>
+                  <button
+                    onClick={() => setIsDaily(!isDaily)}
+                    className={cn(
+                      "w-12 h-6 rounded-full transition-colors relative flex items-center shrink-0",
+                      isDaily ? "bg-primary" : "bg-muted"
+                    )}
+                  >
+                    <div className={cn(
+                      "w-4 h-4 rounded-full bg-background absolute transition-all duration-300 shadow-sm",
+                      isDaily ? "left-7" : "left-1"
+                    )} />
+                  </button>
                 </div>
 
                 <div>

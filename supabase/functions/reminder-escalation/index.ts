@@ -142,7 +142,11 @@ serve(async (req) => {
             pushedCount++;
           } catch (pushErr: any) {
             console.error("Failed pushing to endpoint:", sub.endpoint, pushErr.message);
-            // In a robust system, we might delete stale endpoints that return 410 Gone.
+            // Clean up stale push subscriptions (410 Gone)
+            if (pushErr?.statusCode === 410) {
+              await supabase.from("push_subscriptions").delete().eq("endpoint", sub.endpoint).eq("profile_id", task.profile_id);
+              console.log(`Deleted stale push subscription for endpoint: ${sub.endpoint}`);
+            }
           }
         }
       }

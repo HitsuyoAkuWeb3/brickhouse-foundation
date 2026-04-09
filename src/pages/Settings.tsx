@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { CreditCard, Bell, User, Loader2, ArrowLeft } from "lucide-react";
@@ -14,7 +14,6 @@ import { useNavigate } from "react-router-dom";
 export default function Settings() {
   const { data: profile, refetch, isLoading } = useProfile();
   const { user } = useAuth();
-  const { toast } = useToast();
   const navigate = useNavigate();
   
   const [name, setName] = useState("");
@@ -57,16 +56,9 @@ export default function Settings() {
       if (error) throw error;
       
       await refetch();
-      toast({
-        title: "Profile updated",
-        description: "Your personal information has been saved.",
-      });
+      toast.success("Profile updated");
     } catch (error) {
-      toast({
-        title: "Error saving profile",
-        description: error instanceof Error ? error.message : "Unknown error occurred",
-        variant: "destructive",
-      });
+      toast.error("Error saving profile");
     } finally {
       setIsSaving(false);
     }
@@ -87,17 +79,10 @@ export default function Settings() {
         
       if (error) throw error;
       
-      toast({
-        title: enabled ? "Reminders enabled" : "Reminders disabled",
-        description: "Your notification preferences have been updated.",
-      });
+      toast.success(enabled ? "Reminders enabled" : "Reminders disabled");
     } catch (error) {
       setRemindersEnabled(!enabled); // Revert on failure
-      toast({
-        title: "Error updating preferences",
-        description: error instanceof Error ? error.message : "Unknown error occurred",
-        variant: "destructive",
-      });
+      toast.error("Error updating preferences");
     }
   };
 

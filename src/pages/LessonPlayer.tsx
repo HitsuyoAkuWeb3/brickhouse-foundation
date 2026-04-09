@@ -33,17 +33,18 @@ const LessonPlayer = () => {
 
   const handleComplete = () => {
     if (!completed) {
-      toggleLesson.mutate({
-        lessonId: lesson.id,
-        brickId: brick.id,
-        completed: true,
-      });
-      trackEvent("lesson_completed", { lesson_id: lesson.id }, brick.id.toString());
-    }
-    // Navigate back to the brick detail page after a short delay
-    setTimeout(() => {
+      toggleLesson.mutate(
+        { lessonId: lesson.id, brickId: brick.id, completed: true },
+        {
+          onSuccess: () => {
+            trackEvent("lesson_completed", { lesson_id: lesson.id }, brick.id.toString());
+            setTimeout(() => navigate(`/bricks/${brick.slug}`), 600);
+          },
+        }
+      );
+    } else {
       navigate(`/bricks/${brick.slug}`);
-    }, 600);
+    }
   };
 
   const isReflection = lesson.promptType?.toLowerCase() === "reflection";
@@ -117,7 +118,7 @@ const LessonPlayer = () => {
           <div className="flex flex-col items-center pt-8 border-t border-border/50 pb-16">
             <button
               onClick={handleComplete}
-              disabled={completed}
+              disabled={completed || toggleLesson.isPending}
               className={cn(
                 "w-full sm:w-auto font-body font-bold text-sm tracking-widest uppercase px-10 py-5 rounded-xl transition-all duration-300 flex items-center justify-center gap-3",
                 completed 
@@ -130,7 +131,7 @@ const LessonPlayer = () => {
                   <CheckCircle2 className="w-5 h-5" /> Work Completed
                 </>
               ) : (
-                "I'VE DONE THE WORK"
+                toggleLesson.isPending ? "SAVING..." : "I'VE DONE THE WORK"
               )}
             </button>
             {!completed && (

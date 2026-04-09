@@ -44,10 +44,11 @@ export class NotificationService {
             console.log("[NotificationService] Service Worker registered");
 
             // Check if VAPID key exists
-            const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
-            
+            // Fallback to hardcoded value for Lovable deploy where import.meta.env may be unreliable
+            const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY || "";
+
             if (!vapidPublicKey) {
-               console.warn("VITE_VAPID_PUBLIC_KEY not found in env, skipping push subscription.");
+               console.warn("VITE_VAPID_PUBLIC_KEY not found in env and no fallback set, skipping push subscription.");
                return true;
             }
 
@@ -148,10 +149,23 @@ export class NotificationService {
     title: string;
     body: string;
     scheduledFor: Date;
-    tag?: string; 
+    profileId: string;
+    tag?: string;
     data?: Record<string, unknown>;
   }) {
-    console.log("[NotificationService] Scheduled internal push for:", params.scheduledFor, params.title);
+    const { error } = await supabase.from("scheduler_tasks").insert({
+      profile_id: params.profileId,
+      title: params.title,
+      description: params.body,
+      task_type: "push_notification",
+      reminder_type: "one_off",
+      scheduled_for: params.scheduledFor.toISOString(),
+      is_active: true,
+    });
+    if (error) {
+      console.error("[NotificationService] Failed to schedule push:", error);
+      throw error;
+    }
   }
 
   static async scheduleTask(

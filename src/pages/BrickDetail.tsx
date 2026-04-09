@@ -3,15 +3,12 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Lock, Check } from "lucide-react";
 import { getBrickBySlug } from "@/data/bricksContent";
 import { useLessonProgress } from "@/hooks/useLessonProgress";
-import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
-import { addDays, isBefore, formatDistanceToNow } from "date-fns";
 
 const BrickDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const brick = slug ? getBrickBySlug(slug) : undefined;
-  const { isLessonCompleted, toggleLesson, getBrickProgress } = useLessonProgress();
-  const { user } = useAuth();
+  const { isLessonCompleted, toggleLesson, getBrickProgress, isLessonLocked, getUnlockCountdown } = useLessonProgress();
 
   if (!brick) {
     return (
@@ -82,25 +79,8 @@ const BrickDetail = () => {
         <div className="space-y-2">
           {brick.lessons.map((lesson, i) => {
             const completed = isLessonCompleted(lesson.id);
-            
-            let locked = !isUnlocked;
-            let unlockDate: Date | null = null;
-            
-            if (!locked && i > 0) {
-              // Always lock if the preceding lesson isn't completed
-              const prevCompleted = isLessonCompleted(brick.lessons[i - 1].id);
-              if (!prevCompleted) {
-                locked = true;
-              } else if (user) {
-                const createdAt = new Date(user.created_at);
-                unlockDate = addDays(createdAt, i * 7);
-                if (isBefore(new Date(), unlockDate)) {
-                  locked = true;
-                } else {
-                  unlockDate = null;
-                }
-              }
-            }
+            const locked = !isUnlocked || isLessonLocked(brick.id, i);
+            const countdown = getUnlockCountdown(brick.id, i);
 
             return (
               <motion.div
@@ -130,13 +110,17 @@ const BrickDetail = () => {
                     </div>
                   ) : (
                     <button
-                      onClick={() =>
-                        toggleLesson.mutate({
-                          lessonId: lesson.id,
-                          brickId: brick.id,
-                          completed: !completed,
-                        })
-                      }
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (!toggleLesson.isPending) {
+                          toggleLesson.mutate({
+                            lessonId: lesson.id,
+                            brickId: brick.id,
+                            completed: !completed,
+                          });
+                        }
+                      }}
                       className={cn(
                         "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 font-display text-sm transition-all",
                         completed
@@ -158,9 +142,9 @@ const BrickDetail = () => {
                     >
                       {lesson.title}
                     </h3>
-                    {unlockDate ? (
+                    {countdown ? (
                       <p className="font-body text-xs text-accent mt-0.5 leading-relaxed">
-                        Unlocks in {formatDistanceToNow(unlockDate)}
+                        {countdown}
                       </p>
                     ) : (
                       <p className="font-body text-xs text-muted-foreground mt-0.5 leading-relaxed">

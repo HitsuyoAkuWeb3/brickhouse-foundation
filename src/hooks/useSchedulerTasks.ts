@@ -57,6 +57,16 @@ export function useSchedulerTasks() {
 
   const addTask = useMutation({
     mutationFn: async (input: TaskInsert) => {
+      // Enforce frequency limit: max 50 active reminders per user
+      const { count } = await (supabase as any)
+        .from("scheduler_tasks")
+        .select("*", { count: "exact", head: true })
+        .eq("profile_id", user!.id)
+        .eq("is_active", true);
+      if ((count ?? 0) >= 50) {
+        throw new Error("Maximum active reminders reached (50)");
+      }
+
       const { data, error } = await (supabase as any)
         .from("scheduler_tasks")
         .insert({ ...input, profile_id: user!.id })
@@ -66,6 +76,9 @@ export function useSchedulerTasks() {
       return data as unknown as SchedulerTask;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: key }),
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to create reminder");
+    },
   });
 
   const updateTask = useMutation({

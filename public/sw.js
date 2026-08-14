@@ -45,19 +45,25 @@ self.addEventListener('notificationclick', (event) => {
       })
     );
   } else {
-    // Default action (or 'open'): Open the app or focus the window
+    // Default action (or 'open'): open the app on the right page.
+    // Reminders (including the wake-up / mid-day / evening rituals) should land
+    // on Home. Notifications may override this via data.url for deep links.
     console.log('[Service Worker] Open app clicked');
+    const targetUrl = (event.notification.data && event.notification.data.url) || '/dashboard';
     event.waitUntil(
-      self.clients.matchAll({ type: 'window' }).then((clientList) => {
-        // Find existing open window and focus it
+      self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+        // Reuse an existing window: navigate it to the target page, then focus.
         for (const client of clientList) {
-          if (client.url && 'focus' in client) {
+          if ('focus' in client) {
+            if ('navigate' in client) {
+              return client.navigate(targetUrl).then((navigated) => (navigated || client).focus());
+            }
             return client.focus();
           }
         }
-        // If no window is open, open one
+        // No window open: open one on the target page.
         if (self.clients.openWindow) {
-          return self.clients.openWindow('/');
+          return self.clients.openWindow(targetUrl);
         }
       })
     );

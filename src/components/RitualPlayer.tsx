@@ -16,10 +16,20 @@ interface Step {
   id: string;
   title: string;
   prompt: string;
-  type: "input" | "timer" | "slider" | "passion_timer" | "teleprompter" | "voice_recording";
+  type: "input" | "timer" | "slider" | "passion_timer" | "teleprompter" | "voice_recording" | "joy_schedule";
   duration?: number; // for timer
   key?: string; // for data saving
 }
+
+// Quick-pick joy activities offered inside the wake-up ritual's Joy Claim step
+const JOY_ACTIVITIES = [
+  "🎶 Dance to a favorite song",
+  "☕ A quiet cup of tea",
+  "🚶‍♀️ A walk outside",
+  "📞 Call someone I love",
+  "🎨 Something creative",
+  "🧘‍♀️ 10 min meditation",
+];
 
 const RITUAL_CONFIGS: Record<RitualType, Step[]> = {
   morning_checkin: [
@@ -27,7 +37,7 @@ const RITUAL_CONFIGS: Record<RitualType, Step[]> = {
     { id: "intention", title: "Intention", prompt: "What is your intention for today?", type: "input", key: "morning_intention" },
     { id: "affirmation", title: "Affirmation", prompt: "Listen to Ché, then repeat each declaration with conviction.", type: "teleprompter" },
     { id: "voice_affirmation", title: "Your Voice", prompt: "Now record your own 'I AM' declaration.", type: "voice_recording", key: "voice_affirmation" },
-    { id: "joy", title: "Joy Claim", prompt: "Schedule one joyful thing today.", type: "input", key: "joy_moment" },
+    { id: "joy", title: "Joy Claim", prompt: "Claim one joyful thing — then lock in a day and time to make it real.", type: "joy_schedule", key: "joy_moment" },
   ],
   midday_checkin: [
     { id: "energy", title: "Energy Check", prompt: "Are you aligned with your goals right now? (1 = Drowning, 10 = Flowing)", type: "slider", key: "energy_level" },
@@ -145,10 +155,18 @@ export const RitualPlayer = ({ type, onClose, onComplete }: RitualPlayerProps) =
     }
   };
 
+  const mergeData = (partial: Record<string, string | number>) => {
+    setData((prev) => ({ ...prev, ...partial }));
+  };
+
   const isNextDisabled = () => {
     if (!audioStarted && !audioError) return true; // prevent advancing before audio starts unless error
     if (currentStep.type === "input" || currentStep.type === "voice_recording") {
       const val = data[currentStep.key as string];
+      return !val || String(val).trim() === "";
+    }
+    if (currentStep.type === "joy_schedule") {
+      const val = data["joy_moment"];
       return !val || String(val).trim() === "";
     }
     if (currentStep.type === "slider") {
@@ -198,6 +216,72 @@ export const RitualPlayer = ({ type, onClose, onComplete }: RitualPlayerProps) =
         return (
           <VoiceRecorder onRecordingComplete={(url) => handleInput(url)} />
         );
+      case "joy_schedule": {
+        const joyText = (data["joy_moment"] as string) || "";
+        const joyDate = (data["joy_scheduled_date"] as string) || "";
+        const joyTime = (data["joy_scheduled_time"] as string) || "";
+        return (
+          <div className="flex flex-col gap-4">
+            {/* Quick-pick joy activities */}
+            <div className="grid grid-cols-2 gap-2">
+              {JOY_ACTIVITIES.map((activity) => (
+                <button
+                  key={activity}
+                  type="button"
+                  onClick={() => mergeData({ joy_moment: activity })}
+                  className={cn(
+                    "text-left rounded-lg px-3 py-2.5 font-body text-xs border transition-all",
+                    joyText === activity
+                      ? "bg-accent/15 border-accent/60 text-foreground"
+                      : "bg-foreground/[0.03] border-border/50 text-foreground/80 hover:border-accent/40 hover:bg-accent/5"
+                  )}
+                >
+                  {activity}
+                </button>
+              ))}
+            </div>
+
+            {/* Custom joy moment */}
+            <textarea
+              className="w-full bg-input border border-border rounded-xl p-4 font-body text-base text-foreground focus:outline-none focus:border-primary resize-none transition-colors"
+              rows={2}
+              placeholder="Or write your own joyful thing..."
+              value={joyText}
+              onChange={(e) => mergeData({ joy_moment: e.target.value })}
+            />
+
+            {/* Schedule day + time */}
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <label className="block font-body text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">
+                  Day
+                </label>
+                <input
+                  type="date"
+                  value={joyDate}
+                  onChange={(e) => mergeData({ joy_scheduled_date: e.target.value })}
+                  className="w-full bg-input border border-border rounded-lg px-3 py-2.5 font-body text-sm text-foreground focus:outline-none focus:border-primary transition-colors"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="block font-body text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">
+                  Time
+                </label>
+                <input
+                  type="time"
+                  value={joyTime}
+                  onChange={(e) => mergeData({ joy_scheduled_time: e.target.value })}
+                  className="w-full bg-input border border-border rounded-lg px-3 py-2.5 font-body text-sm text-foreground focus:outline-none focus:border-primary transition-colors"
+                />
+              </div>
+            </div>
+
+            <p className="font-body text-[11px] text-center text-muted-foreground leading-relaxed">
+              Pick a day or time and we'll drop this joy moment straight into your Scheduler. ✨
+            </p>
+          </div>
+        );
+      }
       case "passion_timer":
       case "timer": {
         return (

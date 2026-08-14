@@ -82,14 +82,32 @@ const DailyRitual = () => {
     const dbColumn = activeRitual === "morning_checkin" ? "morning_completed" :
                      activeRitual === "midday_checkin" ? "midday_completed" : "evening_completed";
 
-    upsertRitual.mutate({ 
+    upsertRitual.mutate({
       [dbColumn]: true,
-      ritual_data: data 
+      ritual_data: data
     });
+
+    // If the wake-up ritual captured a joy moment with a day/time, add it to the Scheduler
+    const joyText = typeof data.joy_moment === "string" ? data.joy_moment.trim() : "";
+    const joyTime = typeof data.joy_scheduled_time === "string" ? data.joy_scheduled_time : "";
+    const joyDate = typeof data.joy_scheduled_date === "string" ? data.joy_scheduled_date : "";
+    const joyScheduled = Boolean(joyText && (joyTime || joyDate));
+    if (joyScheduled) {
+      addTask.mutate({
+        title: `Joy: ${joyText}`,
+        category: "live_it",
+        task_type: "joy_moment",
+        time_of_day: joyTime ? `${joyTime}:00` : "09:00:00",
+        scheduled_for: joyDate || undefined,
+        reminder_type: joyDate ? "exact" : "daily",
+        snooze_interval: "none",
+        is_active: true,
+      });
+    }
 
     trackEvent('brick_completed', { ritual_type: activeRitual });
     setActiveRitual(null);
-    toast.success("Brick laid 🧱");
+    toast.success(joyScheduled ? "Brick laid 🧱 · Joy moment scheduled ✨" : "Brick laid 🧱");
   };
 
   const handleSaveJoy = (activity?: string) => {
@@ -286,7 +304,7 @@ const DailyRitual = () => {
           </div>
 
           {/* Joy Moment — Schedulable with Activity Picker */}
-          <div className="bg-gradient-card border border-border rounded-xl p-5 mb-3">
+          <div className="relative z-10 bg-gradient-card border border-border rounded-xl p-5 mb-3">
             <div className="flex items-center gap-3 mb-3">
               <Sparkles className="w-5 h-5 text-accent" />
               <div className="flex-1">
